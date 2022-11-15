@@ -26,10 +26,11 @@
 #    (instead of showing hexdumps) is second priority.
 #
 #  - Print *every field on the wire*, with only minimal / mostly obvious postprocessing.
-#    Exception: lengths, in many cases. Exception: values which have a default (`template`)
-#    set by spec, which may be omitted from output if the value is set to the default, and
-#    `show_defaults` was not set. Exception: big boxes, or long rows of output, may
-#    be summarized through the `max_dump` (for hexdumps) and `max_rows` (for tables) options.
+#    Exception: versions / flags that are restricted to a single value.
+#    Exception: values which have a default (`template`) set by spec, which may be omitted
+#    from output if the value is set to the default, and `show_defaults` was not set.
+#    Exception: big boxes, or long rows of output, may be summarized through the
+#    `max_dump` (for hexdumps) and `max_rows` (for tables) options.
 #
 #  - Option to hide lengths / offset (for i.e. diffs).
 #
@@ -61,7 +62,8 @@ max_dump = bytes_per_line * max_rows
 show_lengths = True
 show_offsets = True
 show_defaults = False
-colorize = True
+show_box_name = True
+colorize = sys.stdout.isatty()
 
 mask = lambda n: ~((~0) << n)
 get_bits = lambda x, end, start: (x & mask(end)) >> start
@@ -116,10 +118,271 @@ def print_hex_dump(data: memoryview, prefix: str):
 
 # CORE PARSING
 
+box_registry = [
+	({
+		'name': 'ISO/IEC 14496-12',
+		'title': 'Information technology — Coding of audio-visual objects — Part 12: ISO base media file format',
+		'version': '2015',
+		'url': 'https://www.iso.org/standard/68960.html',
+	}, {
+		'ftyp': ('FileTypeBox', 'Box'),
+		'mdat': ('MediaDataBox', 'Box'),
+		'pdin': ('ProgressiveDownloadInfoBox', 'FullBox'),
+		'moov': ('MovieBox', 'Box'),
+		'mvhd': ('MovieHeaderBox', 'FullBox'),
+		'trak': ('TrackBox', 'Box'),
+		'tkhd': ('TrackHeaderBox', 'FullBox'),
+		'tref': ('TrackReferenceBox', 'Box'),
+		'mdia': ('MediaBox', 'Box'),
+		'mdhd': ('MediaHeaderBox', 'FullBox'),
+		'hdlr': ('HandlerBox', 'FullBox'),
+		'minf': ('MediaInformationBox', 'Box'),
+		'nmhd': ('NullMediaHeaderBox', 'FullBox'),
+		'elng': ('ExtendedLanguageBox', 'FullBox'),
+		'stbl': ('SampleTableBox', 'Box'),
+		'btrt': ('BitRateBox', 'Box'),
+		'stsd': ('SampleDescriptionBox', 'FullBox'),
+		'stdp': ('DegradationPriorityBox', 'FullBox'),
+		'stts': ('TimeToSampleBox', 'FullBox'),
+		'ctts': ('CompositionOffsetBox', 'FullBox'),
+		'cslg': ('CompositionToDecodeBox', 'FullBox'),
+		'stss': ('SyncSampleBox', 'FullBox'),
+		'stsh': ('ShadowSyncSampleBox', 'FullBox'),
+		'sdtp': ('SampleDependencyTypeBox', 'FullBox'),
+		'edts': ('EditBox', 'Box'),
+		'elst': ('EditListBox', 'FullBox'),
+		'dinf': ('DataInformationBox', 'Box'),
+		'url ': ('DataEntryUrlBox', 'FullBox'),
+		'urn ': ('DataEntryUrnBox', 'FullBox'),
+		'dref': ('DataReferenceBox', 'FullBox'),
+		'stsz': ('SampleSizeBox', 'FullBox'),
+		'stz2': ('CompactSampleSizeBox', 'FullBox'),
+		'stsc': ('SampleToChunkBox', 'FullBox'),
+		'stco': ('ChunkOffsetBox', 'FullBox'),
+		'co64': ('ChunkLargeOffsetBox', 'FullBox'),
+		'padb': ('PaddingBitsBox', 'FullBox'),
+		'subs': ('SubSampleInformationBox', 'FullBox'),
+		'saiz': ('SampleAuxiliaryInformationSizesBox', 'FullBox'),
+		'saio': ('SampleAuxiliaryInformationOffsetsBox', 'FullBox'),
+		'mvex': ('MovieExtendsBox', 'Box'),
+		'mehd': ('MovieExtendsHeaderBox', 'FullBox'),
+		'trex': ('TrackExtendsBox', 'FullBox'),
+		'moof': ('MovieFragmentBox', 'Box'),
+		'mfhd': ('MovieFragmentHeaderBox', 'FullBox'),
+		'traf': ('TrackFragmentBox', 'Box'),
+		'tfhd': ('TrackFragmentHeaderBox', 'FullBox'),
+		'trun': ('TrackRunBox', 'FullBox'),
+		'mfra': ('MovieFragmentRandomAccessBox', 'Box'),
+		'tfra': ('TrackFragmentRandomAccessBox', 'FullBox'),
+		'mfro': ('MovieFragmentRandomAccessOffsetBox', 'FullBox'),
+		'tfdt': ('TrackFragmentBaseMediaDecodeTimeBox', 'FullBox'),
+		'leva': ('LevelAssignmentBox', 'FullBox'),
+		'trep': ('TrackExtensionPropertiesBox', 'FullBox'),
+		'assp': ('AlternativeStartupSequencePropertiesBox', 'FullBox'),
+		'sbgp': ('SampleToGroupBox', 'FullBox'),
+		'sgpd': ('SampleGroupDescriptionBox', 'FullBox'),
+		'udta': ('UserDataBox', 'Box'),
+		'cprt': ('CopyrightBox', 'FullBox'),
+		'tsel': ('TrackSelectionBox', 'FullBox'),
+		'kind': ('KindBox', 'FullBox'),
+		'meta': ('MetaBox', 'FullBox'),
+		'xml ': ('XMLBox', 'FullBox'),
+		'bxml': ('BinaryXMLBox', 'FullBox'),
+		'iloc': ('ItemLocationBox', 'FullBox'),
+		'pitm': ('PrimaryItemBox', 'FullBox'),
+		'ipro': ('ItemProtectionBox', 'FullBox'),
+		'fdel': ('FDItemInfoExtension', 'ItemInfoExtension'),
+		'infe': ('ItemInfoEntry', 'FullBox'),
+		'iinf': ('ItemInfoBox', 'FullBox'),
+		'meco': ('AdditionalMetadataContainerBox', 'Box'),
+		'mere': ('MetaboxRelationBox', 'FullBox'),
+		'idat': ('ItemDataBox', 'Box'),
+		'iref': ('ItemReferenceBox', 'FullBox'),
+		'sinf': ('ProtectionSchemeInfoBox', 'Box'),
+		'frma': ('OriginalFormatBox', 'Box'),
+		'schm': ('SchemeTypeBox', 'FullBox'),
+		'schi': ('SchemeInformationBox', 'Box'),
+		'paen': ('PartitionEntry', 'Box'),
+		'fiin': ('FDItemInformationBox', 'FullBox'),
+		'fpar': ('FilePartitionBox', 'FullBox'),
+		'fecr': ('FECReservoirBox', 'FullBox'),
+		'segr': ('FDSessionGroupBox', 'Box'),
+		'gitn': ('GroupIdToNameBox', 'FullBox'),
+		'fire': ('FileReservoirBox', 'FullBox'),
+		'strk': ('SubTrack', 'Box'),
+		'stri': ('SubTrackInformation', 'FullBox'),
+		'strd': ('SubTrackDefinition', 'Box'),
+		'stsg': ('SubTrackSampleGroupBox', 'FullBox'),
+		'rinf': ('RestrictedSchemeInfoBox', 'Box'),
+		'stvi': ('StereoVideoBox', 'FullBox'),
+		'sidx': ('SegmentIndexBox', 'FullBox'),
+		'ssix': ('SubsegmentIndexBox', 'FullBox'),
+		'prft': ('ProducerReferenceTimeBox', 'FullBox'),
+		'icpv': ('IncompleteAVCSampleEntry', 'VisualSampleEntry'),
+		'cinf': ('CompleteTrackInfoBox', 'Box'),
+		'rtp ': ('RtpHintSampleEntry', 'SampleEntry'),
+		'tims': ('timescaleentry', 'Box'),
+		'tsro': ('timeoffset', 'Box'),
+		'snro': ('sequenceoffset', 'Box'),
+		'srtp': ('SrtpHintSampleEntry', 'SampleEntry'),
+		'srpp': ('SRTPProcessBox', 'FullBox'),
+		'hnti': ('moviehintinformation', 'box'),
+		'rtp ': ('rtpmoviehintinformation', 'box'),
+		'hnti': ('trackhintinformation', 'box'),
+		'sdp ': ('rtptracksdphintinformation', 'box'),
+		'hinf': ('hintstatisticsbox', 'box'),
+		'trpy': ('hintBytesSent', 'box'),
+		'nump': ('hintPacketsSent', 'box'),
+		'tpyl': ('hintBytesSent', 'box'),
+		'totl': ('hintBytesSent', 'box'),
+		'npck': ('hintPacketsSent', 'box'),
+		'tpay': ('hintBytesSent', 'box'),
+		'maxr': ('hintmaxrate', 'box'),
+		'dmed': ('hintmediaBytesSent', 'box'),
+		'dimm': ('hintimmediateBytesSent', 'box'),
+		'drep': ('hintrepeatedBytesSent', 'box'),
+		'tmin': ('hintminrelativetime', 'box'),
+		'tmax': ('hintmaxrelativetime', 'box'),
+		'pmax': ('hintlargestpacket', 'box'),
+		'dmax': ('hintlongestpacket', 'box'),
+		'payt': ('hintpayloadID', 'box'),
+		'fdp ': ('FDHintSampleEntry', 'SampleEntry'),
+		'fdsa': ('FDsample', 'Box'),
+		'fdpa': ('FDpacketBox', 'Box'),
+		'extr': ('ExtraDataBox', 'Box'),
+		'feci': ('FECInformationBox', 'Box'),
+		'rm2t': ('MPEG2TSReceptionSampleEntry', 'MPEG2TSSampleEntry'),
+		'sm2t': ('MPEG2TSServerSampleEntry', 'MPEG2TSSampleEntry'),
+		'tPAT': ('PATBox', 'Box'),
+		'tPMT': ('PMTBox', 'Box'),
+		'tOD ': ('ODBox', 'Box'),
+		'tsti': ('TSTimingBox', 'Box'),
+		'istm': ('InitialSampleTimeBox', 'Box'),
+		'pm2t': ('ProtectedMPEG2TransportStreamSampleEntry', 'MPEG2TransportStreamSampleEntry'),
+		'rrtp': ('ReceivedRtpHintSampleEntry', 'SampleEntry'),
+		'tssy': ('timestampsynchrony', 'Box'),
+		'rssr': ('ReceivedSsrcBox', 'Box'),
+		'rtpx': ('rtphdrextTLV', 'Box'),
+		'rcsr': ('receivedCSRC', 'Box'),
+		'rsrp': ('ReceivedSrtpHintSampleEntry', 'SampleEntry'),
+		'ccid': ('ReceivedCryptoContextIdBox', 'Box'),
+		'sroc': ('RolloverCounterBox', 'Box'),
+		'roll': ('VisualRollRecoveryEntry', 'VisualSampleGroupEntry'),
+		'roll': ('AudioRollRecoveryEntry', 'AudioSampleGroupEntry'),
+		'prol': ('AudioPreRollEntry', 'AudioSampleGroupEntry'),
+		'rash': ('RateShareEntry', 'SampleGroupDescriptionEntry'),
+		'alst': ('AlternativeStartupEntry', 'VisualSampleGroupEntry'),
+		'rap ': ('VisualRandomAccessEntry', 'VisualSampleGroupEntry'),
+		'tele': ('TemporalLevelEntry', 'VisualSampleGroupEntry'),
+		'sap ': ('SAPEntry', 'SampleGroupDescriptionEntry'),
+		'vmhd': ('VideoMediaHeaderBox', 'FullBox'),
+		'pasp': ('PixelAspectRatioBox', 'Box'),
+		'clap': ('CleanApertureBox', 'Box'),
+		'colr': ('ColourInformationBox', 'Box'),
+		'smhd': ('SoundMediaHeaderBox', 'FullBox'),
+		'srat': ('SamplingRateBox', 'FullBox'),
+		'chnl': ('ChannelLayout', 'FullBox'),
+		'dmix': ('DownMixInstructions', 'FullBox'),
+		'tlou': ('TrackLoudnessInfo', 'LoudnessBaseBox'),
+		'alou': ('AlbumLoudnessInfo', 'LoudnessBaseBox'),
+		'ludt': ('LoudnessBox', 'Box'),
+		'metx': ('XMLMetaDataSampleEntry', 'MetaDataSampleEntry'),
+		'txtC': ('TextConfigBox', 'Fullbox'),
+		'mett': ('TextMetaDataSampleEntry', 'MetaDataSampleEntry'),
+		'uri ': ('URIBox', 'FullBox'),
+		'uriI': ('URIInitBox', 'FullBox'),
+		'urim': ('URIMetaSampleEntry', 'MetaDataSampleEntry'),
+		'hmhd': ('HintMediaHeaderBox', 'FullBox'),
+		'stxt': ('SimpleTextSampleEntry', 'PlainTextSampleEntry'),
+		'sthd': ('SubtitleMediaHeaderBox', 'FullBox'),
+		'stpp': ('XMLSubtitleSampleEntry', 'SubtitleSampleEntry'),
+		'sbtt': ('TextSubtitleSampleEntry', 'SubtitleSampleEntry'),
+	}),
+	({
+		'name': 'ISO/IEC 14496-14',
+		'title': 'Information technology — Coding of audio-visual objects — Part 14: MP4 file format',
+		'version': '2003',
+		'url': 'https://www.iso.org/standard/38538.html',
+	}, {
+		'iods': ('ObjectDescriptorBox', 'FullBox'),
+		'esds': ('ESDBox', 'FullBox'),
+		'mp4v': ('MP4VisualSampleEntry', 'VisualSampleEntry'),
+		'mp4a': ('MP4AudioSampleEntry', 'AudioSampleEntry'),
+		'mp4s': ('MpegSampleEntry', 'SampleEntry'),
+	}),
+	({
+		'name': 'ISO/IEC 14496-15',
+		'title': 'Information technology — Coding of audio-visual objects — Part 15: Advanced Video Coding (AVC) file format',
+		'version': '2010',
+		'url': 'https://www.iso.org/standard/55980.html',
+	}, {
+		'avcC': ('AVCConfigurationBox', 'Box'),
+		'm4ds': ('MPEG4ExtensionDescriptorsBox', 'Box'),
+		'avc1': ('AVCSampleEntry', 'VisualSampleEntry'),
+		'avc2': ('AVC2SampleEntry', 'VisualSampleEntry'),
+		'avcp': ('AVCParameterSampleEntry', 'VisualSampleEntry'),
+		'avss': ('AVCSubSequenceEntry', 'VisualSampleGroupEntry'),
+		'avll': ('AVCLayerEntry', 'VisualSampleGroupEntry'),
+		'svcC': ('SVCConfigurationBox', 'Box'),
+		'seib': ('ScalabilityInformationSEIBox', 'Box'),
+		'svcP': ('SVCPriorityAssignmentBox', 'Box'),
+		'avc2': ('AVC2SVCSampleEntry', 'VisualSampleEntry'),
+		'svc1': ('SVCSampleEntry', 'VisualSampleEntry'),
+		'tiri': ('TierInfoBox', 'Box'),
+		'tibr': ('TierBitRateBox', 'Box'),
+		'svpr': ('PriorityRangeBox', 'Box'),
+		'svop': ('SVCDependencyRangeBox', 'Box'),
+		'svip': ('InitialParameterSetBox', 'Box'),
+		'rrgn': ('RectRegionBox', 'Box'),
+		'buff': ('BufferingBox', 'Box'),
+		'ldep': ('TierDependencyBox', 'Box'),
+		'iroi': ('IroiInfoBox', 'Box'),
+		'tran': ('TranscodingInfoBox', 'Box'),
+		'scif': ('ScalableGroupEntry', 'VisualSampleGroupEntry'),
+		'mvif': ('MultiviewGroupEntry', 'VisualSampleGroupEntry'),
+		'scnm': ('ScalableNALUMapEntry', 'VisualSampleGroupEntry'),
+		'dtrt': ('DecodeRetimingEntry', 'VisualSampleGroupEntry'),
+		'vipr': ('ViewPriorityBox', 'Box'),
+		'vipr': ('ViewPriorityEntry', 'VisualSampleGroupEntry'),
+		'svmC': ('SVCMetadataSampleConfigBox', 'FullBox'),
+		'qlif': ('SVCPriorityLayerInfoBox', 'Box'),
+		'svcM': ('SVCMetadataSampleEntry', 'MetadataSampleEntry'),
+		'icam': ('IntrinsicCameraParametersBox', 'FullBox'),
+		'ecam': ('ExtrinsicCameraParametersBox', 'FullBox'),
+		'vwid': ('ViewIdentifierBox', 'FullBox'),
+		'mvcC': ('MVCConfigurationBox', 'Box'),
+		'vsib': ('ViewScalabilityInformationSEIBox', 'Box'),
+		'avc1': ('AVCMVCSampleEntry', 'AVCSampleEntry'),
+		'avc2': ('AVC2MVCSampleEntry', 'AVC2SampleEntry'),
+		'mvcg': ('MultiviewGroupBox', 'FullBox'),
+		'swtc': ('MultiviewGroupRelationBox', 'FullBox'),
+		'vwdi': ('MultiviewSceneInfoBox', 'Box'),
+		'mvcP': ('MVCViewPriorityAssignmentBox', 'Box'),
+		'sdep': ('SampleDependencyBox', 'FullBox'),
+		'mvci': ('MultiviewInformationBox', 'FullBox'),
+		'mvra': ('MultiviewRelationAttributeBox', 'FullBox'),
+	}),
+	({
+		'title': 'Encapsulation of Opus in ISO Base Media File Format',
+		'version': '0.8.1 (incomplete)',
+		'url': 'https://vfrmaniac.fushizen.eu/contents/opus_in_isobmff.html'
+	}, {
+		'Opus': ('OpusSampleEntry', 'AudioSampleEntry'),
+		'dOps': ('OpusSpecificBox', 'Box'),
+	}),
+]
+
+info_by_box = {}
+for std_desc, boxes in box_registry:
+	for k, v in boxes.items():
+		if k in info_by_box:
+			raise Exception(f'duplicate boxes {k} coming from {std_desc} and {info_by_box[k][0]}')
+		info_by_box[k] = (std_desc, *v)
+
 def slice_box(mem: memoryview):
 	assert len(mem) >= 8, f'box too short ({bytes(mem)})'
 	length, btype = struct.unpack('>I4s', mem[0:8])
-	btype = btype.decode('ascii')
+	btype = btype.decode('latin1')
 	assert btype.isprintable(), f'invalid type {repr(btype)}'
 	assert length >= 8, f'invalid {btype} length: {length}'
 	# FIXME: implement length == 1 and length == 0
@@ -133,12 +396,15 @@ def parse_boxes(offset: int, mem: memoryview, indent=0, contents_fn=None):
 		(btype, data), length = slice_box(mem)
 		offset_text = ansi_fg4(f' {offset:#x} - {offset + length:#x}') if show_offsets else ''
 		length_text = ansi_fg4(f' ({len(data)})') if show_lengths else ''
-		print(prefix + ansi_bold(f'[{btype}]') + offset_text + length_text)
+		name_text = ''
+		if show_box_name and (box_desc := info_by_box.get(btype)):
+			name_text = ansi_bold(f' {box_desc[1]}')
+		print(prefix + ansi_bold(f'[{btype}]') + name_text + offset_text + length_text)
 		result.append( (contents_fn or parse_contents)(btype, offset + 8, data, indent + 1) ) # FIXME: offset + 8
 		mem, offset = mem[length:], offset + length
 	return result
 
-nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts' }
+nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'ilst', '\u00a9too' }
 
 def parse_contents(btype: str, offset: int, data: memoryview, indent):
 	prefix = ' ' * (indent * indent_n)
@@ -181,12 +447,12 @@ def parse_hdlr_box(offset: int, data: memoryview, indent: int):
 	version, box_flags = parse_full_box(data, prefix)
 	assert version == 0 and box_flags == 0, 'invalid version / flags'
 	pre_defined, handler_type = struct.unpack('>I4s', data.read(8))
-	handler_type = handler_type.decode('ascii')
+	handler_type = handler_type.decode('latin1')
 	reserved = data.read(4 * 3)
 	assert not pre_defined, f'invalid pre-defined: {pre_defined}'
 	assert not any(reserved), f'invalid reserved: {reserved}'
 	name = data.read().decode('utf-8')
-	print(prefix + f'HandlerBox: handler_type = {repr(handler_type)}, name = {repr(name)}')
+	print(prefix + f'handler_type = {repr(handler_type)}, name = {repr(name)}')
 
 	global last_handler_seen
 	last_handler_seen = handler_type
@@ -196,7 +462,7 @@ def parse_stsd_box(offset: int, data: memoryview, indent: int):
 	data = io.BytesIO(data)
 	version, box_flags = parse_full_box(data, prefix)
 	entry_count, = struct.unpack('>I', data.read(4))
-	print(prefix + f'SampleDescriptionBox: version = {version}, entry_count = {entry_count}')
+	print(prefix + f'version = {version}, entry_count = {entry_count}')
 	assert box_flags == 0, f'invalid flags: {box_flags:08x}'
 
 	contents_fn = lambda *a, **b: parse_sample_entry_contents(*a, **b, version=version)
@@ -247,7 +513,6 @@ def parse_video_sample_entry_contents(btype: str, offset: int, data: memoryview,
 	assert not reserved_2, f'invalid reserved: {reserved_2}'
 	assert pre_defined_3 == -1, f'invalid reserved: {pre_defined_3}'
 
-	# FIXME
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
 def parse_audio_sample_entry_contents(btype: str, offset: int, data: memoryview, indent: int, version: int):
@@ -313,12 +578,12 @@ def parse_ftyp_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
 	major_brand, minor_version = struct.unpack('>4sI', data.read(8))
-	major_brand = major_brand.decode('ascii')
+	major_brand = major_brand.decode('latin1')
 	print(prefix + f'major_brand = {repr(major_brand)}')
 	print(prefix + f'minor_version = {minor_version}')
 	while (compatible_brand := data.read(4)):
 		assert len(compatible_brand), 'invalid brand length'
-		print(prefix + f'- compatible: {repr(compatible_brand.decode("ascii"))}')
+		print(prefix + f'- compatible: {repr(compatible_brand.decode("latin1"))}')
 
 parse_styp_box = parse_ftyp_box
 
@@ -399,6 +664,8 @@ def parse_tkhd_box(offset: int, data: memoryview, indent: int):
 	parse_matrix(data, prefix)
 
 	width, height = struct.unpack('>II', data.read(8))
+	width /= 1 << 16
+	height /= 1 << 16
 	print(prefix + f'size = {width} x {height}')
 
 	left = data.read()
@@ -558,6 +825,30 @@ def parse_svcC_box(offset: int, data: memoryview, indent: int):
 		pps = data.read(size)
 		assert len(sps) == size, f'not enough PPS data: expected {size}, found {len(pps)}'
 		print(prefix + f'PPS: {pps.hex()}')
+
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
+def parse_dOps_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+
+	st = struct.Struct('>BBHIhB')
+	Version, OutputChannelCount, PreSkip, InputSampleRate, OutputGain, ChannelMappingFamily = st.unpack(data.read(st.size))
+	assert Version == 0, f'invalid Version: {Version}'
+	OutputGain /= 1 << 8
+	print(prefix + f'OutputChannelCount = {OutputChannelCount}')
+	print(prefix + f'PreSkip = {PreSkip}')
+	print(prefix + f'InputSampleRate = {InputSampleRate}')
+	print(prefix + f'OutputGain = {OutputGain}')
+	print(prefix + f'ChannelMappingFamily = {ChannelMappingFamily}')
+	if ChannelMappingFamily != 0:
+		StreamCount, CoupledCount = data.read(2)
+		print(prefix + f'StreamCount = {StreamCount}')
+		print(prefix + f'CoupledCount = {CoupledCount}')
+		ChannelMapping = data.read(OutputChannelCount)
+		assert len(ChannelMapping) == OutputChannelCount, 'invalid ChannelMapping length'
+		print(prefix + f'ChannelMapping = {ChannelMapping}')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
