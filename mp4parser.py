@@ -1,48 +1,51 @@
-# Portable* ISO Base Format dissector / parser.
-# Usage: ./mp4parser.py <file name>
-#
-# (*) Needs Python 3.8+
-#
-# Goals / development guidelines:
-#
-#  - Low level. Meant as a dissector, i.e. to obtain info about the structure of the file
-#    rather than high level info.
-# 
-#  - Print offsets to every box to let users inspect deeper. If parsing fails, print an
-#    error for that particular box followed by a hexdump.
-#
-#  - Don't parse non-MP4 structures. It is fine to parse the info in the MP4 boxes,
-#    as long as this info is specific to MP4. Examples of things we don't parse:
-#     - Codec-specific structures (SPS, PPS)
-#     - ID3v2 tags
-#     - H.264 NALUs
-#     - XML
-#    These blobs are just left as hexdump, with their offsets / length printed in case the
-#    user wants to dive deeper.
-#    The only exception is when this info is needed to dissect other MP4 boxes correctly.
-#
-#  - Focus on dissection, not parsing. First priority is to show the box structure correctly
-#    and to 'dig as deeper as possible' if there are nested boxes; decoding non-box info
-#    (instead of showing hexdumps) is second priority.
-#
-#  - Print *every field on the wire*, with only minimal / mostly obvious postprocessing.
-#    Exception: versions / flags that are restricted to a single value.
-#    Exception: values which have a default (`template`) set by spec, which may be omitted
-#    from output if the value is set to the default, and `show_defaults` was not set.
-#    Exception: big boxes, or long rows of output, may be summarized through the
-#    `max_dump` (for hexdumps) and `max_rows` (for tables) options.
-#
-#  - Option to hide lengths / offset (for i.e. diffs).
-#
-#  - In the future we should have options to make the output interoperable (make it machine
-#    friendly like JSON), don't use global variables for config/state, allow output to a
-#    different file (for programmatic use).
-#
-#  - Parsed fields should be named exactly like in the spec's syntax.
-#    Both in code, and in the output.
-#
-#  - Performance isn't a concern. Correctness is more important, but it's also nice for
-#    the code to be 'hacker-friendly' for people who may want to tweak it.
+#!/usr/bin/env python3
+'''
+Portable* ISO Base Media File Format dissector / parser.
+Usage: ./mp4parser.py <file name>
+
+(*) Needs Python 3.8+
+
+Goals / development guidelines:
+
+  - Low level. Meant as a dissector, i.e. to obtain info about the structure of the file
+    rather than high level info.
+
+  - Print offsets to every box to let users inspect deeper. If parsing fails, print an
+    error for that particular box followed by a hexdump.
+
+  - Don't parse non-MP4 structures. It is fine to parse the info in the MP4 boxes,
+    as long as this info is specific to MP4. Examples of things we don't parse:
+     - Codec-specific structures (SPS, PPS)
+     - ID3v2 tags
+     - H.264 NALUs
+     - XML
+    These blobs are just left as hexdump, with their offsets / length printed in case the
+    user wants to dive deeper.
+    The only exception is when this info is needed to dissect other MP4 boxes correctly.
+
+  - Focus on dissection, not parsing. First priority is to show the box structure correctly
+    and to 'dig as deeper as possible' if there are nested boxes; decoding non-box info
+    (instead of showing hexdumps) is second priority.
+
+  - Print *every field on the wire*, with only minimal / mostly obvious postprocessing.
+    Exception: versions / flags that are restricted to a single value.
+    Exception: values which have a default (`template`) set by spec, which may be omitted
+    from output if the value is set to the default, and `show_defaults` was not set.
+    Exception: big boxes, or long rows of output, may be summarized through the
+    `max_dump` (for hexdumps) and `max_rows` (for tables) options.
+
+  - Option to hide lengths / offset (for i.e. diffs).
+
+  - In the future we should have options to make the output interoperable (make it machine
+    friendly like JSON), don't use global variables for config/state, allow output to a
+    different file (for programmatic use).
+
+  - Parsed fields should be named exactly like in the spec's syntax.
+    Both in code, and in the output.
+
+  - Performance isn't a concern. Correctness is more important, but it's also nice for
+    the code to be 'hacker-friendly' for people who may want to tweak it.
+'''
 
 import sys
 import struct
@@ -50,7 +53,12 @@ import mmap
 import io
 import itertools
 
-fname, = sys.argv[1:]
+args = sys.argv[1:]
+if len(args) != 1:
+	print(__doc__.strip(), file=sys.stderr)
+	exit(10)
+fname, = args
+
 mp4file = open(fname, 'rb')
 mp4map = mmap.mmap(mp4file.fileno(), 0, prot=mmap.PROT_READ)
 mp4mem = memoryview(mp4map)
@@ -68,6 +76,10 @@ colorize = sys.stdout.isatty()
 mask = lambda n: ~((~0) << n)
 get_bits = lambda x, end, start: (x & mask(end)) >> start
 split_bits = lambda x, *bits: (get_bits(x, a, b) for a, b in itertools.pairwise(bits))
+
+def unpack(stream, struct_fmt: str) -> tuple:
+	struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
+	return struct_obj.unpack(stream.read(struct_obj.size))
 
 def pad_iter(iterable, size, default=None):
 	iterator = iter(iterable)
@@ -297,6 +309,8 @@ box_registry = [
 		'sthd': ('SubtitleMediaHeaderBox', 'FullBox'),
 		'stpp': ('XMLSubtitleSampleEntry', 'SubtitleSampleEntry'),
 		'sbtt': ('TextSubtitleSampleEntry', 'SubtitleSampleEntry'),
+		'free': ('FreeSpaceBox', 'Box'),
+		'skip': ('FreeSpaceBox', 'Box'),
 	}),
 	({
 		'name': 'ISO/IEC 14496-14',
@@ -363,12 +377,34 @@ box_registry = [
 		'mvra': ('MultiviewRelationAttributeBox', 'FullBox'),
 	}),
 	({
+		'name': 'ISO/IEC 23008-12',
+		'title': 'Information technology — MPEG systems technologies — Part 12: Image File Format',
+		'version': '17 January 2014 working draft',
+		'url': 'https://www.iso.org/standard/83650.html',
+	}, {
+		'ccst': ('CodingConstraintsBox', 'FullBox'),
+		'vsmi': ('VisualSampleToMetadataItemEntry', 'VisualSampleGroupEntry'),
+		'mint': ('MetadataIntegrityBox', 'FullBox'),
+	}),
+	({
 		'title': 'Encapsulation of Opus in ISO Base Media File Format',
 		'version': '0.8.1 (incomplete)',
 		'url': 'https://vfrmaniac.fushizen.eu/contents/opus_in_isobmff.html'
 	}, {
 		'Opus': ('OpusSampleEntry', 'AudioSampleEntry'),
 		'dOps': ('OpusSpecificBox', 'Box'),
+	}),
+	({
+		'title': 'AV1 Codec ISO Media File Format Binding',
+		'version': 'v1.2.0',
+		'url': 'https://aomediacodec.github.io/av1-isobmff/v1.2.0.html',
+	}, {
+		'av01': ('AV1SampleEntry', 'VisualSampleEntry'),
+		'av1C': ('AV1CodecConfigurationBox', 'Box'),
+		'av1f': ('AV1ForwardKeyFrameSampleGroupEntry', 'VisualSampleGroupEntry'),
+		'av1m': ('AV1MultiFrameSampleGroupEntry', 'VisualSampleGroupEntry'),
+		'av1s': ('AV1SwitchFrameSampleGroupEntry', 'VisualSampleGroupEntry'),
+		'av1M': ('AV1MetadataSampleGroupEntry', 'VisualSampleGroupEntry'),
 	}),
 ]
 
@@ -398,7 +434,9 @@ def parse_boxes(offset: int, mem: memoryview, indent=0, contents_fn=None):
 		length_text = ansi_fg4(f' ({len(data)})') if show_lengths else ''
 		name_text = ''
 		if show_box_name and (box_desc := info_by_box.get(btype)):
-			name_text = ansi_bold(f' {box_desc[1]}')
+			desc = box_desc[1]
+			if desc.endswith('Box'): desc = desc[:-3]
+			name_text = ansi_bold(f' {desc}')
 		print(prefix + ansi_bold(f'[{btype}]') + name_text + offset_text + length_text)
 		result.append( (contents_fn or parse_contents)(btype, offset + 8, data, indent + 1) ) # FIXME: offset + 8
 		mem, offset = mem[length:], offset + length
@@ -423,10 +461,19 @@ def parse_contents(btype: str, offset: int, data: memoryview, indent):
 	if not max_dump or not data: return
 	print_hex_dump(data, prefix)
 
-def parse_full_box(data: io.BytesIO, prefix: str):
+def parse_fullbox(data: io.BytesIO, prefix: str):
 	fv = data.read(4)
 	assert len(fv) == 4
 	return fv[0], int.from_bytes(fv[1:], 'big')
+
+def parse_skip_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	if any(bytes(data)):
+		print_hex_dump(data, prefix)
+	else:
+		print(prefix + ansi_dim(ansi_fg2(f'({len(data)} empty bytes)')))
+
+parse_free_box = parse_skip_box
 
 
 # BOX CONTAINERS THAT ALSO HAVE A PREPENDED BINARY STRUCTURE
@@ -434,7 +481,7 @@ def parse_full_box(data: io.BytesIO, prefix: str):
 def parse_meta_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	print(prefix + f'version = {version}, flags = {box_flags:08x}')
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
@@ -444,9 +491,9 @@ last_handler_seen = None
 def parse_hdlr_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert version == 0 and box_flags == 0, 'invalid version / flags'
-	pre_defined, handler_type = struct.unpack('>I4s', data.read(8))
+	pre_defined, handler_type = unpack(data, 'I4s')
 	handler_type = handler_type.decode('latin1')
 	reserved = data.read(4 * 3)
 	assert not pre_defined, f'invalid pre-defined: {pre_defined}'
@@ -460,8 +507,8 @@ def parse_hdlr_box(offset: int, data: memoryview, indent: int):
 def parse_stsd_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
-	entry_count, = struct.unpack('>I', data.read(4))
+	version, box_flags = parse_fullbox(data, prefix)
+	entry_count, = unpack(data, 'I')
 	print(prefix + f'version = {version}, entry_count = {entry_count}')
 	assert box_flags == 0, f'invalid flags: {box_flags:08x}'
 
@@ -499,8 +546,7 @@ def parse_video_sample_entry_contents(btype: str, offset: int, data: memoryview,
 
 	reserved = data.read(16)
 	assert not any(reserved), f'invalid reserved / pre-defined data: {reserved}'
-	st = struct.Struct('>HHIIIH 32s Hh')
-	width, height, horizresolution, vertresolution, reserved_2, frame_count, compressorname, depth, pre_defined_3 = st.unpack(data.read(st.size))
+	width, height, horizresolution, vertresolution, reserved_2, frame_count, compressorname, depth, pre_defined_3 = unpack(data, 'HHIIIH 32s Hh')
 	print(prefix + f'size = {width} x {height}')
 	if show_defaults or horizresolution != 0x00480000 or vertresolution != 0x00480000:
 		print(prefix + f'resolution = {horizresolution} x {vertresolution}')
@@ -521,7 +567,7 @@ def parse_audio_sample_entry_contents(btype: str, offset: int, data: memoryview,
 	assert version <= 1, 'invalid version'
 
 	if version == 0:
-		reserved_1, channelcount, samplesize, pre_defined_1, reserved_2, samplerate = struct.unpack('>8sHHHHI', data.read(20))
+		reserved_1, channelcount, samplesize, pre_defined_1, reserved_2, samplerate = unpack(data, '8sHHHHI')
 		assert not any(reserved_1), f'invalid reserved_1: {reserved_1}'
 		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
 		assert not pre_defined_1, f'invalid pre_defined_1: {pre_defined_1}'
@@ -531,7 +577,7 @@ def parse_audio_sample_entry_contents(btype: str, offset: int, data: memoryview,
 			print(prefix + f'samplesize = {samplesize}')
 		print(prefix + f'samplerate = {samplerate / (1 << 16)}')
 	else:
-		entry_version, reserved_1, channelcount, samplesize, pre_defined_1, reserved_2, samplerate = struct.unpack('>H6sHHHHI', data.read(20))
+		entry_version, reserved_1, channelcount, samplesize, pre_defined_1, reserved_2, samplerate = unpack(data, 'H6sHHHHI')
 		assert entry_version == 1, f'invalid entry_version: {entry_version}'
 		assert not any(reserved_1), f'invalid reserved_1: {reserved_1}'
 		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
@@ -548,7 +594,7 @@ def parse_text_sample_entry_contents(btype: str, offset: int, data: memoryview, 
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
 	assert version == 0, 'invalid version'
-	
+
 	fields = {
 		# meta
 		'metx': ('content_encoding', 'namespace', 'schema_location'),
@@ -572,15 +618,15 @@ def parse_text_sample_entry_contents(btype: str, offset: int, data: memoryview, 
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
 
-# NON-CONTAINER BOXES
+# HEADER BOXES
 
 def parse_ftyp_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	major_brand, minor_version = struct.unpack('>4sI', data.read(8))
+	major_brand, minor_version = unpack(data, '4sI')
 	major_brand = major_brand.decode('latin1')
 	print(prefix + f'major_brand = {repr(major_brand)}')
-	print(prefix + f'minor_version = {minor_version}')
+	print(prefix + f'minor_version = {minor_version:08x}')
 	while (compatible_brand := data.read(4)):
 		assert len(compatible_brand), 'invalid brand length'
 		print(prefix + f'- compatible: {repr(compatible_brand.decode("latin1"))}')
@@ -588,18 +634,18 @@ def parse_ftyp_box(offset: int, data: memoryview, indent: int):
 parse_styp_box = parse_ftyp_box
 
 def parse_matrix(data: io.BytesIO, prefix: str):
-	matrix = [ x / (1 << 16) for x in struct.unpack('>9i', data.read(9 * 4)) ]
+	matrix = [ x / (1 << 16) for x in unpack(data, '9i') ]
 	if show_defaults or matrix != [1,0,0, 0,1,0, 0,0,0x4000]:
 		print(prefix + f'matrix = {matrix}')
 
 def parse_mfhd_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
-	sequence_number, = struct.unpack('>I', data.read(4))
+	sequence_number, = unpack(data, 'I')
 	print(prefix + f'sequence_number = {sequence_number}')
 
 	left = data.read()
@@ -608,13 +654,13 @@ def parse_mfhd_box(offset: int, data: memoryview, indent: int):
 def parse_mvhd_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert version <= 1, f'invalid version: {version}'
 	assert not box_flags, f'invalid flags: {box_flags}'
 	print(prefix + f'version = {version}')
 
-	st = struct.Struct('>' + ('QQIQ' if version == 1 else 'IIII') + 'ih' + 'HII')
-	creation_time, modification_time, timescale, duration, rate, volume, reserved_1, reserved_2, reserved_3 = st.unpack(data.read(st.size))
+	creation_time, modification_time, timescale, duration, rate, volume, reserved_1, reserved_2, reserved_3 = \
+		unpack(data, ('QQIQ' if version == 1 else 'IIII') + 'ih' + 'HII')
 	print(prefix + f'creation_time = {creation_time}')
 	print(prefix + f'modification_time = {modification_time}')
 	print(prefix + f'timescale = {timescale}')
@@ -631,7 +677,7 @@ def parse_mvhd_box(offset: int, data: memoryview, indent: int):
 
 	pre_defined = data.read(6 * 4)
 	assert not any(pre_defined), f'invalid pre_defined: {pre_defined}'
-	next_track_ID, = struct.unpack('>I', data.read(4))
+	next_track_ID, = unpack(data, 'I')
 	print(prefix + f'next_track_ID = {next_track_ID}')
 
 	left = data.read()
@@ -640,12 +686,12 @@ def parse_mvhd_box(offset: int, data: memoryview, indent: int):
 def parse_tkhd_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert version <= 1, f'invalid version: {version}'
 	print(prefix + f'version = {version}, flags = {box_flags:08x}')
 
-	st = struct.Struct('>' + ('QQIIQ' if version == 1 else 'IIIII') + 'II' + 'hhh' + 'H')
-	creation_time, modification_time, track_ID, reserved_1, duration, reserved_2, reserved_3, layer, alternate_group, volume, reserved_4 = st.unpack(data.read(st.size))
+	creation_time, modification_time, track_ID, reserved_1, duration, reserved_2, reserved_3, layer, alternate_group, volume, reserved_4 = \
+		unpack(data, ('QQIIQ' if version == 1 else 'IIIII') + 'II' + 'hhh' + 'H')
 	print(prefix + f'creation_time = {creation_time}')
 	print(prefix + f'modification_time = {modification_time}')
 	print(prefix + f'track_ID = {track_ID}')
@@ -663,7 +709,7 @@ def parse_tkhd_box(offset: int, data: memoryview, indent: int):
 
 	parse_matrix(data, prefix)
 
-	width, height = struct.unpack('>II', data.read(8))
+	width, height = unpack(data, 'II')
 	width /= 1 << 16
 	height /= 1 << 16
 	print(prefix + f'size = {width} x {height}')
@@ -674,13 +720,13 @@ def parse_tkhd_box(offset: int, data: memoryview, indent: int):
 def parse_mdhd_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert version <= 1, f'invalid version: {version}'
 	assert not box_flags, f'invalid flags: {box_flags}'
 	print(prefix + f'version = {version}')
 
-	st = struct.Struct('>' + ('QQIQ' if version == 1 else 'IIII') + 'HH')
-	creation_time, modification_time, timescale, duration, language, pre_defined_1 = st.unpack(data.read(st.size))
+	creation_time, modification_time, timescale, duration, language, pre_defined_1 = \
+		unpack(data, ('QQIQ' if version == 1 else 'IIII') + 'HH')
 	print(prefix + f'creation_time = {creation_time}')
 	print(prefix + f'modification_time = {modification_time}')
 	print(prefix + f'timescale = {timescale}')
@@ -698,13 +744,12 @@ def parse_mdhd_box(offset: int, data: memoryview, indent: int):
 def parse_mehd_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert version <= 1, f'invalid version: {version}'
 	assert not box_flags, f'invalid flags: {box_flags}'
 	print(prefix + f'version = {version}')
 
-	st = struct.Struct('>' + ('Q' if version == 1 else 'I'))
-	fragment_duration, = st.unpack(data.read(st.size))
+	fragment_duration, = unpack(data, ('Q' if version == 1 else 'I'))
 	print(prefix + f'fragment_duration = {fragment_duration}')
 
 	left = data.read()
@@ -713,12 +758,11 @@ def parse_mehd_box(offset: int, data: memoryview, indent: int):
 def parse_smhd_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
-	st = struct.Struct('>hH')
-	balance, reserved = st.unpack(data.read(st.size))
+	balance, reserved = unpack(data, 'hH')
 	if show_defaults or balance != 0:
 		print(prefix + f'balance = {balance}')
 	assert not reserved, f'invalid reserved: {reserved}'
@@ -729,12 +773,11 @@ def parse_smhd_box(offset: int, data: memoryview, indent: int):
 def parse_vmhd_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 1, f'invalid flags: {box_flags}'
 
-	st = struct.Struct('>HHHH')
-	graphicsmode, *opcolor = st.unpack(data.read(st.size))
+	graphicsmode, *opcolor = unpack(data, 'HHHH')
 	if show_defaults or graphicsmode != 0:
 		print(prefix + f'graphicsmode = {graphicsmode}')
 	if show_defaults or opcolor != [0, 0, 0]:
@@ -746,12 +789,12 @@ def parse_vmhd_box(offset: int, data: memoryview, indent: int):
 def parse_trex_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
-	st = struct.Struct('>IIIII')
-	track_ID, default_sample_description_index, default_sample_duration, default_sample_size, default_sample_flags = st.unpack(data.read(st.size))
+	track_ID, default_sample_description_index, default_sample_duration, default_sample_size, default_sample_flags = \
+		unpack(data, 'IIIII')
 	print(prefix + f'track_ID = {track_ID}')
 	print(prefix + f'default_sample_description_index = {default_sample_description_index}')
 	print(prefix + f'default_sample_duration = {default_sample_duration}')
@@ -766,6 +809,38 @@ def parse_trex_box(offset: int, data: memoryview, indent: int):
 # FIXME: mehd
 
 
+# NON CODEC-SPECIFIC BOXES
+
+def parse_btrt_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	bufferSizeDB, maxBitrate, avgBitrate = unpack(data, 'III')
+	print(prefix + f'bufferSizeDB = {bufferSizeDB}')
+	print(prefix + f'maxBitrate = {maxBitrate}')
+	print(prefix + f'avgBitrate = {avgBitrate}')
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
+def parse_pasp_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	hSpacing, vSpacing = unpack(data, 'II')
+	print(prefix + f'pixel aspect ratio = {hSpacing}/{vSpacing}')
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
+def parse_clap_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	cleanApertureWidthN, cleanApertureWidthD, cleanApertureHeightN, cleanApertureHeightD, horizOffN, horizOffD, vertOffN, vertOffD = unpack(data, 'II II II II')
+	print(prefix + f'cleanApertureWidth = {cleanApertureWidthN}/{cleanApertureWidthD}')
+	print(prefix + f'cleanApertureHeight = {cleanApertureHeightN}/{cleanApertureHeightD}')
+	print(prefix + f'horizOff = {horizOffN}/{horizOffD}')
+	print(prefix + f'vertOff = {vertOffN}/{vertOffD}')
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
+
 # CODEC-SPECIFIC BOXES
 
 def parse_avcC_box(offset: int, data: memoryview, indent: int):
@@ -774,7 +849,7 @@ def parse_avcC_box(offset: int, data: memoryview, indent: int):
 	configurationVersion, = data.read(1)
 	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
 	avcProfileCompFlags = data.read(3)
-	print(prefix + f'profile / compat / level: {avcProfileCompFlags.hex()}')
+	print(prefix + f'profile / compat / level = {avcProfileCompFlags.hex()}')
 	composite_1, composite_2 = data.read(2)
 	reserved_1, lengthSizeMinusOne = split_bits(composite_1, 8, 2, 0)
 	reserved_2, numOfSequenceParameterSets = split_bits(composite_2, 8, 5, 0)
@@ -783,16 +858,16 @@ def parse_avcC_box(offset: int, data: memoryview, indent: int):
 	print(prefix + f'lengthSizeMinusOne = {lengthSizeMinusOne}')
 
 	for i in range(numOfSequenceParameterSets):
-		size, = struct.unpack('>H', data.read(2))
+		size, = unpack(data, 'H')
 		sps = data.read(size)
 		assert len(sps) == size, f'not enough SPS data: expected {size}, found {len(sps)}'
-		print(prefix + f'SPS: {sps.hex()}')
+		print(prefix + f'- SPS: {sps.hex()}')
 	numOfPictureParameterSets, = data.read(1)
 	for i in range(numOfPictureParameterSets):
-		size, = struct.unpack('>H', data.read(2))
+		size, = unpack(data, 'H')
 		pps = data.read(size)
 		assert len(pps) == size, f'not enough PPS data: expected {size}, found {len(pps)}'
-		print(prefix + f'PPS: {pps.hex()}')
+		print(prefix + f'- PPS: {pps.hex()}')
 
 	# FIXME: parse extensions
 
@@ -805,7 +880,7 @@ def parse_svcC_box(offset: int, data: memoryview, indent: int):
 	configurationVersion, = data.read(1)
 	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
 	avcProfileCompFlags = data.read(3)
-	print(prefix + f'profile / compat / level: {avcProfileCompFlags.hex()}')
+	print(prefix + f'profile / compat / level = {avcProfileCompFlags.hex()}')
 	composite_1, composite_2 = data.read(2)
 	complete_represenation, reserved_1, lengthSizeMinusOne = split_bits(composite_1, 8, 7, 2, 0)
 	reserved_2, numOfSequenceParameterSets = split_bits(composite_2, 8, 7, 0)
@@ -815,26 +890,27 @@ def parse_svcC_box(offset: int, data: memoryview, indent: int):
 	print(prefix + f'lengthSizeMinusOne = {lengthSizeMinusOne}')
 
 	for i in range(numOfSequenceParameterSets):
-		size, = struct.unpack('>H', data.read(2))
+		size, = unpack(data, 'H')
 		sps = data.read(size)
 		assert len(sps) == size, f'not enough SPS data: expected {size}, found {len(sps)}'
-		print(prefix + f'SPS: {sps.hex()}')
+		print(prefix + f'- SPS: {sps.hex()}')
 	numOfPictureParameterSets, = data.read(1)
 	for i in range(numOfPictureParameterSets):
-		size, = struct.unpack('>H', data.read(2))
+		size, = unpack(data, 'H')
 		pps = data.read(size)
 		assert len(sps) == size, f'not enough PPS data: expected {size}, found {len(pps)}'
-		print(prefix + f'PPS: {pps.hex()}')
+		print(prefix + f'- PPS: {pps.hex()}')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
+
+# FIXME: implement esds, av1C
 
 def parse_dOps_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
 
-	st = struct.Struct('>BBHIhB')
-	Version, OutputChannelCount, PreSkip, InputSampleRate, OutputGain, ChannelMappingFamily = st.unpack(data.read(st.size))
+	Version, OutputChannelCount, PreSkip, InputSampleRate, OutputGain, ChannelMappingFamily = unpack(data, 'BBHIhB')
 	assert Version == 0, f'invalid Version: {Version}'
 	OutputGain /= 1 << 8
 	print(prefix + f'OutputChannelCount = {OutputChannelCount}')
@@ -859,12 +935,12 @@ def parse_dOps_box(offset: int, data: memoryview, indent: int):
 def parse_sidx_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	print(prefix + f'version = {version}')
 
-	st = struct.Struct('>' + 'II' + ('II' if version == 0 else 'QQ') + 'HH')
-	reference_ID, timescale, earliest_presentation_time, first_offset, reserved_1, reference_count = st.unpack(data.read(st.size))
+	reference_ID, timescale, earliest_presentation_time, first_offset, reserved_1, reference_count = \
+		unpack(data, 'II' + ('II' if version == 0 else 'QQ') + 'HH')
 	print(prefix + f'reference_ID = {reference_ID}')
 	print(prefix + f'timescale = {timescale}')
 	print(prefix + f'earliest_presentation_time = {earliest_presentation_time}')
@@ -872,7 +948,7 @@ def parse_sidx_box(offset: int, data: memoryview, indent: int):
 	print(prefix + f'reference_count = {reference_count}')
 	assert not reserved_1, f'invalid reserved_1 = {reserved_1}'
 	for i in range(reference_count):
-		composite_1, subsegment_duration, composite_2 = struct.unpack('>III', data.read(12))
+		composite_1, subsegment_duration, composite_2 = unpack(data, 'III')
 		reference_type, referenced_size = split_bits(composite_1, 32, 31, 0)
 		starts_with_SAP, SAP_type, SAP_delta_time = split_bits(composite_2, 32, 31, 28, 0)
 		if i < max_rows:
@@ -888,15 +964,15 @@ def parse_sidx_box(offset: int, data: memoryview, indent: int):
 def parse_trun_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
-	version, box_flags = parse_full_box(data, prefix)
+	version, box_flags = parse_fullbox(data, prefix)
 
-	sample_count, = struct.unpack('>I', data.read(4))
+	sample_count, = unpack(data, 'I')
 	print(prefix + f'version = {version}, flags = {box_flags:06x}, sample_count = {sample_count}')
 	if box_flags & (1 << 0):
-		data_offset, = struct.unpack('>i', data.read(4))
+		data_offset, = unpack(data, 'i')
 		print(prefix + f'data_offset = {data_offset:#x}')
 	if box_flags & (1 << 2):
-		first_sample_flags, = struct.unpack('>I', data.read(4))
+		first_sample_flags, = unpack(data, 'I')
 		print(prefix + f'first_sample_flags = {first_sample_flags:08x}')
 
 	s_offset = 0
@@ -904,18 +980,18 @@ def parse_trun_box(offset: int, data: memoryview, indent: int):
 	for s_idx in range(sample_count):
 		s_text = []
 		if box_flags & (1 << 8):
-			sample_duration, = struct.unpack('>I', data.read(4))
+			sample_duration, = unpack(data, 'I')
 			s_text.append(f'time={s_time:7} + {sample_duration:5}')
 			s_time += sample_duration
 		if box_flags & (1 << 9):
-			sample_size, = struct.unpack('>I', data.read(4))
+			sample_size, = unpack(data, 'I')
 			s_text.append(f'offset={s_offset:#9x} + {sample_size:5}')
 			s_offset += sample_size
 		if box_flags & (1 << 10):
-			sample_flags, = struct.unpack('>I', data.read(4))
-			s_text.append(f'flags={sample_flags:08x}')	
+			sample_flags, = unpack(data, 'I')
+			s_text.append(f'flags={sample_flags:08x}')
 		if box_flags & (1 << 11):
-			sample_composition_time_offset, = struct.unpack('>I' if version == 0 else '>i', data.read(4))
+			sample_composition_time_offset, = unpack(data, 'I' if version == 0 else 'i')
 			s_text.append(f'{sample_composition_time_offset}')
 		if s_idx < max_rows:
 			print(prefix + f'[sample {s_idx:4}] {", ".join(s_text)}')
