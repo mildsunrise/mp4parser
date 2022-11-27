@@ -461,21 +461,32 @@ def slice_box(mem: memoryview):
 	assert btype.isprintable(), f'invalid type {repr(btype)}'
 
 	last_box = False
+	large_size = False
+	pos = 8
 	if length == 0:
 		length = len(mem)
 		last_box = True
-	# FIXME: implement length == 1
+	elif length == 1:
+		large_size = True
+		assert len(mem) >= pos + 8, f'EOF while reading largesize'
+		length, = struct.unpack('>Q', mem[pos:pos + 8])
+		pos += 8
 
-	assert length >= 8, f'invalid {btype} length: {length}'
+	if btype == 'uuid':
+		assert len(mem) >= pos + 16, f'EOF while reading UUID'
+		btype = mem[pos:pos + 16].hex()
+		pos += 16
+
+	assert length >= pos, f'invalid {btype} length: {length}'
 	assert len(mem) >= length, f'expected {length} {btype}, got {len(mem)}'
-	return (btype, mem[8:length], last_box), length
+	return (btype, mem[pos:length], last_box, large_size), length
 
 def parse_boxes(offset: int, mem: memoryview, indent=0, contents_fn=None):
 	prefix = ' ' * (indent * indent_n)
 	result = []
 	while mem:
-		(btype, data, last_box), length = slice_box(mem)
-		offset_text = ansi_fg4(f' {offset:#x} - {offset + length:#x}') if show_offsets else ''
+		(btype, data, last_box, large_size), length = slice_box(mem)
+		offset_text = ansi_fg4(f' @ {offset:#x}, {offset + length - len(data):#x} - {offset + length:#x}') if show_offsets else ''
 		length_text = ansi_fg4(f' ({len(data)})') if show_lengths else ''
 		name_text = ''
 		if show_descriptions and (box_desc := info_by_box.get(btype)):
@@ -484,12 +495,20 @@ def parse_boxes(offset: int, mem: memoryview, indent=0, contents_fn=None):
 			name_text = ansi_bold(f' {desc}')
 		if last_box:
 			offset_text = ' (last)' + offset_text
-		print(prefix + ansi_bold(f'[{btype}]') + name_text + offset_text + length_text)
-		result.append( (contents_fn or parse_contents)(btype, offset + 8, data, indent + 1) ) # FIXME: offset + 8
+		if large_size:
+			offset_text = ' (large size)' + offset_text
+		type_label = btype
+		if len(btype) != 4: # it's a UUID
+			type_label = '-'.join(btype[s:e] for s, e in itertools.pairwise([0, 8, 12, 16, 20, 32]) )
+			type_label = f'UUID {type_label}'
+		print(prefix + ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text)
+		result.append( (contents_fn or parse_contents)(btype, length - len(data), data, indent + 1) )
 		mem, offset = mem[length:], offset + length
 	return result
 
-nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'ilst', '\u00a9too', '\u00a9nam' }
+nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta' }
+# apple(?) / quicktime metadata
+nesting_boxes |= { 'ilst', '\u00a9too', '\u00a9nam', '\u00a9day', '\u00a9ART', 'aART', '\u00a9alb', '\u00a9cmt', '\u00a9day', 'trkn', 'covr', '----' }
 
 def parse_contents(btype: str, offset: int, data: memoryview, indent):
 	prefix = ' ' * (indent * indent_n)
@@ -533,6 +552,7 @@ def parse_meta_box(offset: int, data: memoryview, indent: int):
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
 # hack: use a global variable because I'm too lazy to rewrite everything to pass this around
+# FIXME: remove this hack, which is sometimes unreliable since there can be inner handlers we don't care about
 last_handler_seen = None
 
 def parse_hdlr_box(offset: int, data: memoryview, indent: int):
@@ -543,6 +563,7 @@ def parse_hdlr_box(offset: int, data: memoryview, indent: int):
 	pre_defined, handler_type = unpack(data, 'I4s')
 	handler_type = handler_type.decode('latin1')
 	reserved = data.read(4 * 3)
+	# FIXME: a lot of videos seem to break the second assertion (apple metadata?), some break the first
 	assert not pre_defined, f'invalid pre-defined: {pre_defined}'
 	assert not any(reserved), f'invalid reserved: {reserved}'
 	name = data.read().decode('utf-8')
@@ -686,8 +707,11 @@ def parse_matrix(data: io.BytesIO, prefix: str):
 
 def parse_language(data: io.BytesIO, prefix: str):
 	language, = unpack(data, 'H')
+	if not language:
+		print(prefix + 'language = (null)') # FIXME: log a warning or something
+		return
 	pad, *language = split_bits(language, 16, 15, 10, 5, 0)
-	assert all(0 <= (x - 1) < 26 for x in language)
+	assert all(0 <= (x - 1) < 26 for x in language), f'invalid language characters: {language}'
 	language = ''.join(chr((x - 1) + ord('a')) for x in language)
 	print(prefix + f'language = {language}')
 	assert not pad, f'invalid pad: {pad}'
@@ -1183,7 +1207,7 @@ def parse_stsc_box(offset: int, data: memoryview, indent: int):
 			assert first_chunk > last_chunk
 			sample += last_spc * (first_chunk - last_chunk)
 		if i < max_rows:
-			print(prefix + f'[entry {i:3}] [sample = {sample:6}] first_chunk = {first_chunk:5}, samples_per_chunk = {samples_per_chunk:2}, sample_description_index = {sample_description_index}')
+			print(prefix + f'[entry {i:3}] [sample = {sample:6}] first_chunk = {first_chunk:5}, samples_per_chunk = {samples_per_chunk:4}, sample_description_index = {sample_description_index}')
 		last_chunk, last_spc = first_chunk, samples_per_chunk
 	if entry_count > max_rows:
 		print(prefix + '...')
@@ -1408,6 +1432,7 @@ def parse_descriptor_contents(tag: int, klasses, data, indent: int):
 	except Exception as e:
 		print_error(e, prefix)
 
+	# FIXME: should we backtrack here a bit? or too much? when a non-indented hexdump is printed, make it clear what it represents
 	# as fall back (or if error), print hex dump
 	data = data.read()
 	if not max_dump or not data: return
@@ -1762,7 +1787,7 @@ object_types = {
 	0x22: { 'kind': 'video', 'name': 'Parameter Sets for ITU-T Recommendation H.264 | ISO/IEC 14496-10',  'short': 'H.264 / AVC (PPS / SPS)',           'notes': ['g'] },
 	0x23: { 'kind': 'video', 'name': 'Visual ISO/IEC 23008-2 | ITU-T Recommendation H.265',               'short': 'H.265 / HEVC',                                     },
 
-	0x40: { 'kind': 'audio', 'name': 'Audio ISO/IEC 14496-3',                                             'short': 'MPEG-4 Audio',                      'notes': ['d'] },
+	0x40: { 'kind': 'audio', 'name': 'Audio ISO/IEC 14496-3',                                             'short': 'AAC',                               'notes': ['d'] },
 
 	0x60: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 Simple Profile',                             'short': 'MPEG-2 Video (Simple Profile)',                    },
 	0x61: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 Main Profile',                               'short': 'MPEG-2 Video (Main Profile)',                      },
@@ -1770,12 +1795,12 @@ object_types = {
 	0x63: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 Spatial Profile',                            'short': 'MPEG-2 Video (Spatial Profile)',                   },
 	0x64: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 High Profile',                               'short': 'MPEG-2 Video (High Profile)',                      },
 	0x65: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 422 Profile',                                'short': 'MPEG-2 Video (422 Profile)',                       },
-	0x66: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-7 Main Profile',                                'short': 'AAC',                                              },
-	0x67: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-7 LowComplexity Profile',                       'short': 'AAC-LC',                                           },
-	0x68: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-7 Scaleable Sampling Rate Profile',             'short': 'AAC-SSR',                                          },
+	0x66: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-7 Main Profile',                                'short': 'MPEG-2 AAC',                                       },
+	0x67: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-7 LowComplexity Profile',                       'short': 'MPEG-2 AAC-LC',                                    },
+	0x68: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-7 Scaleable Sampling Rate Profile',             'short': 'MPEG-2 AAC-SSR',                                   },
 	0x69: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-3',                                             'short': 'MPEG-2 BC Audio',                                  },
 	0x6A: { 'kind': 'video', 'name': 'Visual ISO/IEC 11172-2',                                            'short': 'MPEG-1 Video',                                     },
-	0x6B: { 'kind': 'audio', 'name': 'Audio ISO/IEC 11172-3',                                             'short': 'MPEG-1 Audio',                                     },
+	0x6B: { 'kind': 'audio', 'name': 'Audio ISO/IEC 11172-3',                                             'short': 'MPEG-1 Audio (usually MP3)',                       },
 	0x6C: { 'kind': 'image', 'name': 'Visual ISO/IEC 10918-1',                                            'short': 'JPEG',                                             },
 	0x6D: { 'kind': 'image', 'name': 'Portable Network Graphics',                                         'short': 'PNG',                               'notes': ['f'] },
 	0x6E: { 'kind': 'image', 'name': 'Visual ISO/IEC 15444-1 (JPEG 2000)',                                'short': 'JPEG 2000',                                        },
