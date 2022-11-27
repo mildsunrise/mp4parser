@@ -16,9 +16,10 @@ Goals / development guidelines:
   - Don't parse non-MP4 structures. It is fine to parse the info in the MP4 boxes,
     as long as this info is specific to MP4. Examples of things we don't parse:
      - Codec-specific structures (SPS, PPS)
-     - ID3v2 tags
+     - ID3v2 blobs
      - H.264 NALUs
      - XML
+	 - ICC profiles
     These blobs are just left as hexdump, with their offsets / length printed in case the
     user wants to dive deeper.
     The only exception is when this info is needed to dissect other MP4 boxes correctly.
@@ -52,6 +53,7 @@ import struct
 import mmap
 import io
 import itertools
+import re
 
 args = sys.argv[1:]
 if len(args) != 1:
@@ -70,12 +72,39 @@ max_dump = bytes_per_line * max_rows
 show_lengths = True
 show_offsets = True
 show_defaults = False
-show_box_name = True
+show_descriptions = True
 colorize = sys.stdout.isatty()
 
 mask = lambda n: ~((~0) << n)
 get_bits = lambda x, end, start: (x & mask(end)) >> start
 split_bits = lambda x, *bits: (get_bits(x, a, b) for a, b in itertools.pairwise(bits))
+
+def main():
+	parse_boxes(0, mp4mem)
+
+
+# UTILITIES
+
+def unique_dict(x):
+	r = {}
+	for k, v in x:
+		assert k not in r, f'duplicate key {repr(k)}: existing {repr(r[k])}, got {repr(v)}'
+		r[k] = v
+	return r
+
+# FIXME: display errors more nicely (last two frames, type name, you know)
+
+def read_string(stream, optional=False):
+	result = bytearray()
+	while True:
+		b = stream.read(1)
+		if not b:
+			if optional and not result: return None
+			raise EOFError('EOF while reading string')
+		b = b[0]
+		if not b: break
+		result.append(b)
+	return result.decode('utf-8')
 
 def unpack(stream, struct_fmt: str) -> tuple:
 	struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
@@ -406,6 +435,12 @@ box_registry = [
 		'av1s': ('AV1SwitchFrameSampleGroupEntry', 'VisualSampleGroupEntry'),
 		'av1M': ('AV1MetadataSampleGroupEntry', 'VisualSampleGroupEntry'),
 	}),
+	({
+		'title': '[ad-hoc]',
+		'url': 'https://mp4ra.org/#/references',
+	}, {
+		'ID32': ('ID3v2Box', 'FullBox'),
+	}),
 ]
 
 info_by_box = {}
@@ -420,29 +455,37 @@ def slice_box(mem: memoryview):
 	length, btype = struct.unpack('>I4s', mem[0:8])
 	btype = btype.decode('latin1')
 	assert btype.isprintable(), f'invalid type {repr(btype)}'
+
+	last_box = False
+	if length == 0:
+		length = len(mem)
+		last_box = True
+	# FIXME: implement length == 1
+
 	assert length >= 8, f'invalid {btype} length: {length}'
-	# FIXME: implement length == 1 and length == 0
 	assert len(mem) >= length, f'expected {length} {btype}, got {len(mem)}'
-	return (btype, mem[8:length]), length
+	return (btype, mem[8:length], last_box), length
 
 def parse_boxes(offset: int, mem: memoryview, indent=0, contents_fn=None):
 	prefix = ' ' * (indent * indent_n)
 	result = []
 	while mem:
-		(btype, data), length = slice_box(mem)
+		(btype, data, last_box), length = slice_box(mem)
 		offset_text = ansi_fg4(f' {offset:#x} - {offset + length:#x}') if show_offsets else ''
 		length_text = ansi_fg4(f' ({len(data)})') if show_lengths else ''
 		name_text = ''
-		if show_box_name and (box_desc := info_by_box.get(btype)):
+		if show_descriptions and (box_desc := info_by_box.get(btype)):
 			desc = box_desc[1]
 			if desc.endswith('Box'): desc = desc[:-3]
 			name_text = ansi_bold(f' {desc}')
+		if last_box:
+			offset_text = ' (last)' + offset_text
 		print(prefix + ansi_bold(f'[{btype}]') + name_text + offset_text + length_text)
 		result.append( (contents_fn or parse_contents)(btype, offset + 8, data, indent + 1) ) # FIXME: offset + 8
 		mem, offset = mem[length:], offset + length
 	return result
 
-nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'ilst', '\u00a9too' }
+nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'ilst', '\u00a9too', '\u00a9nam' }
 
 def parse_contents(btype: str, offset: int, data: memoryview, indent):
 	prefix = ' ' * (indent * indent_n)
@@ -482,7 +525,7 @@ def parse_meta_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
 	version, box_flags = parse_fullbox(data, prefix)
-	print(prefix + f'version = {version}, flags = {box_flags:08x}')
+	print(prefix + f'version = {version}, flags = {box_flags:06x}')
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
 # hack: use a global variable because I'm too lazy to rewrite everything to pass this around
@@ -510,7 +553,7 @@ def parse_stsd_box(offset: int, data: memoryview, indent: int):
 	version, box_flags = parse_fullbox(data, prefix)
 	entry_count, = unpack(data, 'I')
 	print(prefix + f'version = {version}, entry_count = {entry_count}')
-	assert box_flags == 0, f'invalid flags: {box_flags:08x}'
+	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
 
 	contents_fn = lambda *a, **b: parse_sample_entry_contents(*a, **b, version=version)
 	boxes = parse_boxes(offset + data.tell(), memoryview(data.read()), indent, contents_fn=contents_fn)
@@ -552,8 +595,13 @@ def parse_video_sample_entry_contents(btype: str, offset: int, data: memoryview,
 		print(prefix + f'resolution = {horizresolution} x {vertresolution}')
 	if show_defaults or frame_count != 1:
 		print(prefix + f'frame count = {frame_count}')
-	while compressorname.endswith(b'\0'): compressorname = compressorname[:-1]
-	print(prefix + f'compressor = {repr(compressorname)}')
+
+	compressorname_len, compressorname = compressorname[0], compressorname[1:]
+	assert compressorname_len <= len(compressorname)
+	assert not any(compressorname[compressorname_len:]), 'invalid compressorname padding'
+	compressorname = compressorname[:compressorname_len].decode('utf-8')
+	print(prefix + f'compressorname = {repr(compressorname)}')
+
 	if show_defaults or depth != 0x0018:
 		print(prefix + f'depth = {depth}')
 	assert not reserved_2, f'invalid reserved: {reserved_2}'
@@ -607,13 +655,7 @@ def parse_text_sample_entry_contents(btype: str, offset: int, data: memoryview, 
 		'stpp': ('namespace', 'schema_location', 'auxiliary_mime_types'),
 	}.get(btype, [])
 	for field_name in fields:
-		value = bytearray()
-		while True:
-			ch = data.read(1)
-			assert ch, f'unexpected end of box without terminating string'
-			if not ch[0]: break
-			value.append(ch[0])
-		print(prefix + f'{field_name} = {bytes(value)}')
+		print(prefix + f'{field_name} = {repr(read_string(data))}')
 
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
@@ -637,6 +679,14 @@ def parse_matrix(data: io.BytesIO, prefix: str):
 	matrix = [ x / (1 << 16) for x in unpack(data, '9i') ]
 	if show_defaults or matrix != [1,0,0, 0,1,0, 0,0,0x4000]:
 		print(prefix + f'matrix = {matrix}')
+
+def parse_language(data: io.BytesIO, prefix: str):
+	language, = unpack(data, 'H')
+	pad, *language = split_bits(language, 16, 15, 10, 5, 0)
+	assert all(0 <= (x - 1) < 26 for x in language)
+	language = ''.join(chr((x - 1) + ord('a')) for x in language)
+	print(prefix + f'language = {language}')
+	assert not pad, f'invalid pad: {pad}'
 
 def parse_mfhd_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
@@ -688,7 +738,7 @@ def parse_tkhd_box(offset: int, data: memoryview, indent: int):
 	data = io.BytesIO(data)
 	version, box_flags = parse_fullbox(data, prefix)
 	assert version <= 1, f'invalid version: {version}'
-	print(prefix + f'version = {version}, flags = {box_flags:08x}')
+	print(prefix + f'version = {version}, flags = {box_flags:06x}')
 
 	creation_time, modification_time, track_ID, reserved_1, duration, reserved_2, reserved_3, layer, alternate_group, volume, reserved_4 = \
 		unpack(data, ('QQIIQ' if version == 1 else 'IIIII') + 'II' + 'hhh' + 'H')
@@ -725,17 +775,14 @@ def parse_mdhd_box(offset: int, data: memoryview, indent: int):
 	assert not box_flags, f'invalid flags: {box_flags}'
 	print(prefix + f'version = {version}')
 
-	creation_time, modification_time, timescale, duration, language, pre_defined_1 = \
-		unpack(data, ('QQIQ' if version == 1 else 'IIII') + 'HH')
+	creation_time, modification_time, timescale, duration = \
+		unpack(data, 'QQIQ' if version == 1 else 'IIII')
 	print(prefix + f'creation_time = {creation_time}')
 	print(prefix + f'modification_time = {modification_time}')
 	print(prefix + f'timescale = {timescale}')
 	print(prefix + f'duration = {duration}')
-	pad, *language = split_bits(language, 16, 15, 10, 5, 0)
-	assert all(0 <= (x - 1) < 26 for x in language)
-	language = ''.join(chr((x - 1) + ord('a')) for x in language)
-	print(prefix + f'language = {language}')
-	assert not pad, f'invalid pad: {pad}'
+	parse_language(data, prefix)
+	pre_defined_1, = unpack(data, 'H')
 	assert not pre_defined_1, f'invalid reserved_1: {pre_defined_1}'
 
 	left = data.read()
@@ -810,6 +857,82 @@ def parse_trex_box(offset: int, data: memoryview, indent: int):
 
 
 # NON CODEC-SPECIFIC BOXES
+
+def parse_ID32_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	assert version == 0, f'invalid version: {version}'
+	print(prefix + f'flags = {box_flags:06x}')
+	parse_language(data, prefix)
+	print(prefix + f'ID3v2 data =')
+	print_hex_dump(data.read(), prefix + '  ')
+
+def parse_dref_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	entry_count, = unpack(data, 'I')
+	assert version == 0, f'invalid version: {version}'
+	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
+	print(prefix + f'version = {version}, entry_count = {entry_count}')
+
+	boxes = parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
+	assert len(boxes) == entry_count, f'entry_count not matching boxes present'
+
+def parse_url_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	assert version == 0, f'invalid version: {version}'
+	print(prefix + f'flags = {box_flags:06x}')
+	if (location := read_string(data, optional=True)) != None:
+		print(prefix + f'location = {repr(location)}')
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
+def parse_urn_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	assert version == 0, f'invalid version: {version}'
+	print(prefix + f'flags = {box_flags:06x}')
+	if (location := read_string(data, optional=True)) != None:
+		print(prefix + f'location = {repr(location)}')
+	if (name := read_string(data, optional=True)) != None:
+		print(prefix + f'name = {repr(name)}')
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
+globals()['parse_url _box'] = parse_url_box
+globals()['parse_urn _box'] = parse_urn_box
+
+def parse_colr_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	colour_type, = unpack(data, '4s')
+	colour_type = colour_type.decode('latin1')
+	descriptions = {
+		'nclx': 'on-screen colours',
+		'rICC': 'restricted ICC profile',
+		'prof': 'unrestricted ICC profile',
+	}
+	description = f' ({descriptions[colour_type]})' if show_descriptions and colour_type in descriptions else ''
+	print(prefix + f'colour_type = {repr(colour_type)}' + description)
+	if colour_type == 'nclx':
+		colour_primaries, transfer_characteristics, matrix_coefficients, flags = unpack(data, 'HHHB')
+		print(prefix + f'colour_primaries = {colour_primaries}')
+		print(prefix + f'transfer_characteristics = {transfer_characteristics}')
+		print(prefix + f'matrix_coefficients = {matrix_coefficients}')
+		full_range_flag, reserved = split_bits(flags, 8, 7, 0)
+		assert not reserved, f'invalid reserved: {reserved}'
+		print(prefix + f'full_range_flag = {bool(full_range_flag)}')
+	else:
+		name = 'ICC_profile' if colour_type in { 'rICC', 'prof' } else 'data'
+		print(prefix + f'{name} =')
+		print_hex_dump(data.read(), prefix + '  ')
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_btrt_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
@@ -904,7 +1027,19 @@ def parse_svcC_box(offset: int, data: memoryview, indent: int):
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-# FIXME: implement esds, av1C
+# FIXME: implement av1C
+
+def parse_esds_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	assert version == 0, f'invalid version: {version}'
+	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
+	parse_descriptor(data, indent, expected=3)
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
+parse_iods_box = parse_esds_box
 
 def parse_dOps_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
@@ -1001,6 +1136,508 @@ def parse_trun_box(offset: int, data: memoryview, indent: int):
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
+# FIXME: describe handlers, boxes (from RA, also look at the 'handlers' and 'unlisted' pages), brands
 
 
-parse_boxes(0, mp4mem)
+# MPEG-4 part 1 DESCRIPTORS (based on 2010 edition)
+# (these aren't specific to ISOBMFF and so we shouldn't parse them buuuut
+# they're still part of MPEG-4 and not widely known so we'll make an exception)
+
+def parse_descriptor(data, indent: int, expected=None, namespace='default', contents_fn=None, optional=False):
+	tag = data.read(1)
+	if optional and not tag: return None
+	tag, = tag
+	assert tag != 0x00 and tag != 0xFF, f'forbidden tag number: {tag}'
+
+	size = 0
+	n_size_bytes = 0
+	while True:
+		b = data.read(1)
+		assert b, f'unexpected EOF when reading descriptor size'
+		next_byte, size_byte = split_bits(b[0], 8, 7, 0)
+		size = (size << 7) | size_byte
+		n_size_bytes += 1
+		if not next_byte: break
+
+	payload = data.read(size)
+	assert len(payload) == size, f'unexpected EOF within descriptor data: expected {size}, got {len(payload)}'
+	data = io.BytesIO(payload)
+
+	prefix = ' ' * (indent * indent_n)
+	size_text = ''
+	if size.bit_length() <= (n_size_bytes - 1) * 7:
+		size_text = ansi_fg4(f' ({n_size_bytes} length bytes)')
+
+	def get_class_chain(k):
+		r = [k]
+		while k['base_class'] != None:
+			k = class_registry[k['base_class']][1]
+			r.append(k)
+		return r
+	nsdata = descriptor_namespaces[namespace]
+	labels = []
+	if tag in nsdata['tag_registry']:
+		klasses = get_class_chain(nsdata['tag_registry'][tag])
+	else:
+		labels.append(ansi_fg4('reserved for ISO use' if tag < nsdata['user_private'] else 'user private'))
+		if k := next((k for (s, e, k) in nsdata['ranges'] if s <= tag < e), None):
+			klasses = get_class_chain(class_registry[k][1])
+	labels += [ ansi_bold(k['name']) for k in klasses ]
+
+	print(prefix + ansi_bold(f'[{tag}]') + (' ' + ' -> '.join(labels) if show_descriptions else '') + size_text)
+	(contents_fn or parse_descriptor_contents)(tag, klasses, data, indent + 1)
+
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing descriptor data'
+	return tag,
+
+def parse_descriptors(data, indent: int, **kwargs):
+	while parse_descriptor(data, indent, **kwargs, optional=True) != None:
+		pass
+
+def parse_descriptor_contents(tag: int, klasses, data, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	try:
+		for k in klasses[::-1]:
+			if 'handler' not in k: break
+			k['handler'](data, indent)
+	except Exception as e:
+		print(prefix + f'{ansi_bold(ansi_fg1("ERROR:"))} {ansi_fg1(e)}\n')
+
+	# as fall back (or if error), print hex dump
+	data = data.read()
+	if not max_dump or not data: return
+	print_hex_dump(data, prefix)
+
+def parse_BaseDescriptor_descriptor(data, indent: int):
+	pass
+
+def parse_ObjectDescriptorBase_descriptor(data, indent: int):
+	pass
+
+def parse_ExtensionDescriptor_descriptor(data, indent: int):
+	pass
+
+def parse_OCI_Descriptor_descriptor(data, indent: int):
+	pass
+
+def parse_IP_IdentificationDataSet_descriptor(data, indent: int):
+	pass
+
+def parse_ES_Descriptor_descriptor(data, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	ES_ID, composite_1 = unpack(data, 'HB')
+	streamDependenceFlag, URL_Flag, OCRstreamFlag, streamPriority = split_bits(composite_1, 8, 7, 6, 5, 0)
+	print(prefix + f'ES_ID = {ES_ID}')
+	print(prefix + f'streamPriority = {streamPriority}')
+	if streamDependenceFlag:
+		dependsOn_ES_ID, = unpack(data, 'H')
+		print(prefix + f'dependsOn_ES_ID = {dependsOn_ES_ID}')
+	if URL_Flag:
+		URLlength, = unpack(data, 'B')
+		URLstring = data.read(URLlength)
+		assert len(URLstring) == URLlength, f'unexpected EOF while reading URL, expected {URLlength}, found {len(URLstring)}'
+		URLstring = URLstring.decode('utf-8')
+		print(prefix + f'URL = {repr(URLstring)}')
+	if OCRstreamFlag:
+		OCR_ES_ID, = unpack(data, 'H')
+		print(prefix + f'OCR_ES_ID = {OCR_ES_ID}')
+	parse_descriptors(data, indent)
+
+def parse_DecoderConfigDescriptor_descriptor(data, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	objectTypeIndication, composite, maxBitrate, avgBitrate = unpack(data, 'BIII')
+	streamType, upStream, reserved, bufferSizeDB = split_bits(composite, 32, 26, 25, 24, 0)
+	print(prefix + f'objectTypeIndication = {objectTypeIndication}' + (f' ({format_object_type(objectTypeIndication)})' if show_descriptions else ''))
+	print(prefix + f'streamType = {streamType}' + (f' ({format_stream_type(streamType)})' if show_descriptions else ''))
+	print(prefix + f'upStream = {bool(upStream)}')
+	print(prefix + f'bufferSizeDB = {bufferSizeDB}')
+	print(prefix + f'maxBitrate = {maxBitrate}')
+	print(prefix + f'avgBitrate = {avgBitrate}')
+	assert reserved == 1, f'invalid reserved: {reserved}'
+	parse_descriptors(data, indent)
+
+def parse_SLConfigDescriptor_descriptor(data, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	predefined, = unpack(data, 'B')
+	predefined_description = {
+		0x00: 'Custom',
+		0x01: 'null SL packet header',
+		0x02: 'Reserved for use in MP4 files',
+	}.get(predefined, 'Reserved for ISO use')
+	print(prefix + f'predefined = {predefined}' + (f' ({predefined_description})' if show_descriptions else ''))
+	if predefined != 0: return
+
+	flags, timeStampResolution, OCRResolution, timeStampLength, OCRLength, AU_Length, instantBitrateLength, composite = \
+		unpack(data, 'BIIBBBBH')
+	useAccessUnitStartFlag, useAccessUnitEndFlag, useRandomAccessPointFlag, hasRandomAccessUnitsOnlyFlag, usePaddingFlag, useTimeStampsFlag, useIdleFlag, durationFlag = \
+		split_bits(flags, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+	print(prefix + f'useAccessUnitStartFlag = {bool(useAccessUnitStartFlag)}')
+	print(prefix + f'useAccessUnitEndFlag = {bool(useAccessUnitEndFlag)}')
+	print(prefix + f'useRandomAccessPointFlag = {bool(useRandomAccessPointFlag)}')
+	print(prefix + f'hasRandomAccessUnitsOnlyFlag = {bool(hasRandomAccessUnitsOnlyFlag)}')
+	print(prefix + f'usePaddingFlag = {bool(usePaddingFlag)}')
+	print(prefix + f'useTimeStampsFlag = {bool(useTimeStampsFlag)}')
+	print(prefix + f'useIdleFlag = {bool(useIdleFlag)}')
+	print(prefix + f'durationFlag = {bool(durationFlag)}')
+	print(prefix + f'timeStampResolution = {timeStampResolution}')
+	print(prefix + f'OCRResolution = {OCRResolution}')
+	print(prefix + f'timeStampLength = {timeStampLength}')
+	assert timeStampLength <= 64, f'invalid timeStampLength: {timeStampLength}'
+	print(prefix + f'OCRLength = {OCRLength}')
+	assert OCRLength <= 64, f'invalid OCRLength: {OCRLength}'
+	print(prefix + f'AU_Length = {AU_Length}')
+	assert AU_Length <= 32, f'invalid AU_Length: {AU_Length}'
+	print(prefix + f'instantBitrateLength = {instantBitrateLength}')
+	degradationPriorityLength, AU_seqNumLength, packetSeqNumLength, reserved = split_bits(composite, 16, 12, 7, 2, 0)
+	print(prefix + f'degradationPriorityLength = {degradationPriorityLength}')
+	print(prefix + f'AU_seqNumLength = {AU_seqNumLength}')
+	assert AU_seqNumLength <= 16, f'invalid AU_seqNumLength: {AU_seqNumLength}'
+	print(prefix + f'packetSeqNumLength = {packetSeqNumLength}')
+	assert packetSeqNumLength <= 16, f'invalid packetSeqNumLength: {packetSeqNumLength}'
+	assert reserved == 0b11, f'invalid reserved: {reserved}'
+	if durationFlag:
+		timeScale, accessUnitDuration, compositionUnitDuration = unpack(data, 'IHH')
+		print(prefix + f'timeScale = {timeScale}')
+		print(prefix + f'accessUnitDuration = {accessUnitDuration}')
+		print(prefix + f'compositionUnitDuration = {compositionUnitDuration}')
+	if not useTimeStampsFlag:
+		assert False, 'FIXME: not implemented yet'
+		# bit(timeStampLength) startDecodingTimeStamp;
+		# bit(timeStampLength) startCompositionTimeStamp;
+
+def parse_ES_ID_Inc_descriptor(data, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	Track_ID, = unpack(data, 'I')
+	print(prefix + f'Track_ID = {Track_ID}')
+
+def parse_ES_ID_Ref_descriptor(data, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	ref_index, = unpack(data, 'H')
+	print(prefix + f'ref_index = {ref_index}')
+
+def parse_ExtendedSLConfigDescriptor_descriptor(data, indent: int):
+	parse_descriptors(data, indent)
+
+def parse_QoS_Descriptor_descriptor(data, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	predefined, = unpack(data, 'B')
+	predefined_description = {
+		0x00: 'Custom',
+	}.get(predefined, 'Reserved')
+	print(prefix + f'predefined = {predefined}' + (f' ({predefined_description})' if show_descriptions else ''))
+	if predefined != 0: return
+	parse_descriptors(data, indent, namespace='QoS')
+
+def parse_QoS_Qualifier_descriptor(data, indent: int):
+	pass
+
+def parse_BaseCommand_descriptor(data, indent: int):
+	pass
+
+'''
+class Namespace(TypedDict):
+	# classes defined within this namespace
+	classes: list[ClassEntry]
+	# ranges for this namespace, if any
+	ranges: list[NamespaceRange]
+	# number over which entries are user private, otherwise reserved for ISO
+	user_private: int
+
+NamespaceRange = tuple[
+	int, # start (inclusive)
+	int, # end (noninclusive)
+	str, # class name
+]
+
+class ClassEntry(TypedDict):
+	# tag number, if any (unset on some base classes)
+	tag: Optional[int]
+	# identifier used to refer to the tag number, if any
+	# (if typos are found, we prefer the name in the tag list)
+	tag_name: Optional[str]
+	# class name (will be used to look up handler)
+	name: str
+	# name of base class (None for root class)
+	base_class: Optional[str]
+	# handler function to parse this class (will be set automatically from globals)
+	handler: Callable[...]
+
+descriptor_namespaces: dict[str, Namespace]
+'''
+descriptor_namespaces = {
+
+	'default': {
+		'classes': [
+			{ 'name': 'BaseDescriptor', 'base_class': None },
+
+			{ 'tag': 0x03, 'base_class': 'BaseDescriptor', 'name': 'ES_Descriptor', 'tag_name': 'ES_DescrTag' },
+			{ 'tag': 0x05, 'base_class': 'BaseDescriptor', 'name': 'DecoderSpecificInfo', 'tag_name': 'DecSpecificInfoTag' },
+			{ 'tag': 0x04, 'base_class': 'BaseDescriptor', 'name': 'DecoderConfigDescriptor', 'tag_name': 'DecoderConfigDescrTag' },
+			{ 'tag': 0x09, 'base_class': 'BaseDescriptor', 'name': 'IPI_DescrPointer', 'tag_name': 'IPI_DescrPointerTag' },
+			{ 'tag': 0x0a, 'base_class': 'BaseDescriptor', 'name': 'IPMP_DescriptorPointer', 'tag_name': 'IPMP_DescrPointerTag' },
+			{ 'tag': 0x0b, 'base_class': 'BaseDescriptor', 'name': 'IPMP_Descriptor', 'tag_name': 'IPMP_DescrTag' },
+			{ 'tag': 0x60, 'base_class': 'BaseDescriptor', 'name': 'IPMP_ToolListDescriptor', 'tag_name': 'IPMP_ToolsListDescrTag' },
+			{ 'tag': 0x61, 'base_class': 'BaseDescriptor', 'name': 'IPMP_Tool', 'tag_name': 'IPMP_ToolTag' },
+			{ 'tag': 0x0c, 'base_class': 'BaseDescriptor', 'name': 'QoS_Descriptor', 'tag_name': 'QoS_DescrTag' },
+			{ 'tag': 0x0d, 'base_class': 'BaseDescriptor', 'name': 'RegistrationDescriptor', 'tag_name': 'RegistrationDescrTag' },
+
+			{ 'name': 'ObjectDescriptorBase', 'base_class': 'BaseDescriptor' },
+			{ 'tag': 0x01, 'base_class': 'ObjectDescriptorBase', 'name': 'ObjectDescriptor', 'tag_name': 'ObjectDescrTag' },
+			{ 'tag': 0x02, 'base_class': 'ObjectDescriptorBase', 'name': 'InitialObjectDescriptor', 'tag_name': 'InitialObjectDescrTag' },
+			{ 'name': 'IP_IdentificationDataSet', 'base_class': 'BaseDescriptor' },
+			{ 'tag': 0x07, 'base_class': 'IP_IdentificationDataSet', 'name': 'ContentIdentificationDescriptor', 'tag_name': 'ContentIdentDescrTag' },
+			{ 'tag': 0x08, 'base_class': 'IP_IdentificationDataSet', 'name': 'SupplementaryContentIdentificationDescriptor', 'tag_name': 'SupplContentIdentDescrTag' },
+
+			{ 'name': 'OCI_Descriptor', 'base_class': 'BaseDescriptor' },
+			{ 'tag': 0x40, 'base_class': 'OCI_Descriptor', 'name': 'ContentClassificationDescriptor', 'tag_name': 'ContentClassificationDescrTag' },
+			{ 'tag': 0x41, 'base_class': 'OCI_Descriptor', 'name': 'KeyWordDescriptor', 'tag_name': 'KeyWordDescrTag' },
+			{ 'tag': 0x42, 'base_class': 'OCI_Descriptor', 'name': 'RatingDescriptor', 'tag_name': 'RatingDescrTag' },
+			{ 'tag': 0x43, 'base_class': 'OCI_Descriptor', 'name': 'LanguageDescriptor', 'tag_name': 'LanguageDescrTag' },
+			{ 'tag': 0x44, 'base_class': 'OCI_Descriptor', 'name': 'ShortTextualDescriptor', 'tag_name': 'ShortTextualDescrTag' },
+			{ 'tag': 0x45, 'base_class': 'OCI_Descriptor', 'name': 'ExpandedTextualDescriptor', 'tag_name': 'ExpandedTextualDescrTag' },
+			{ 'tag': 0x46, 'base_class': 'OCI_Descriptor', 'name': 'ContentCreatorNameDescriptor', 'tag_name': 'ContentCreatorNameDescrTag' },
+			{ 'tag': 0x47, 'base_class': 'OCI_Descriptor', 'name': 'ContentCreationDateDescriptor', 'tag_name': 'ContentCreationDateDescrTag' },
+			{ 'tag': 0x48, 'base_class': 'OCI_Descriptor', 'name': 'OCICreatorNameDescriptor', 'tag_name': 'OCICreatorNameDescrTag' },
+			{ 'tag': 0x49, 'base_class': 'OCI_Descriptor', 'name': 'OCICreationDateDescriptor', 'tag_name': 'OCICreationDateDescrTag' },
+			{ 'tag': 0x4a, 'base_class': 'OCI_Descriptor', 'name': 'SmpteCameraPositionDescriptor', 'tag_name': 'SmpteCameraPositionDescrTag' },
+			{ 'tag': 0x4b, 'base_class': 'OCI_Descriptor', 'name': 'SegmentDescriptor', 'tag_name': 'SegmentDescrTag' },
+			{ 'tag': 0x4c, 'base_class': 'OCI_Descriptor', 'name': 'MediaTimeDescriptor', 'tag_name': 'MediaTimeDescrTag' },
+
+			{ 'name': 'ExtensionDescriptor', 'base_class': 'BaseDescriptor' },
+			{ 'tag': 0x13, 'base_class': 'ExtensionDescriptor', 'name': 'ExtensionProfileLevelDescriptor', 'tag_name': 'ExtensionProfileLevelDescrTag' },
+			{ 'tag': 0x14, 'base_class': 'BaseDescriptor', 'name': 'ProfileLevelIndicationIndexDescriptor', 'tag_name': 'ProfileLevelIndicationIndexDescrTag' },
+
+			{ 'tag': 0x06, 'base_class': 'BaseDescriptor', 'name': 'SLConfigDescriptor', 'tag_name': 'SLConfigDescrTag' },
+			{ 'tag': 0x64, 'base_class': 'SLConfigDescriptor', 'name': 'ExtendedSLConfigDescriptor', 'tag_name': 'ExtSLConfigDescrTag' },
+			{ 'name': 'SLExtensionDescriptor', 'base_class': 'BaseDescriptor' },  # quirk, this class doesn't have a base class in the spec
+			{ 'tag': 0x67, 'base_class': 'SLExtensionDescriptor', 'name': 'DependencyPointer', 'tag_name': 'DependencyPointerTag' },
+			{ 'tag': 0x68, 'base_class': 'SLExtensionDescriptor', 'name': 'MarkerDescriptor', 'tag_name': 'DependencyMarkerTag' },
+
+			{ 'tag': 0x69, 'base_class': 'BaseDescriptor', 'name': 'M4MuxChannelDescriptor', 'tag_name': 'M4MuxChannelDescrTag' },
+			{ 'tag': 0x65, 'base_class': 'BaseDescriptor', 'name': 'M4MuxBufferSizeDescriptor', 'tag_name': 'M4MuxBufferSizeDescrTag' },
+			{ 'tag': 0x62, 'base_class': 'BaseDescriptor', 'name': 'M4MuxTimingDescriptor', 'tag_name': 'M4MuxTimingDescrTag' },
+			{ 'tag': 0x63, 'base_class': 'BaseDescriptor', 'name': 'M4MuxCodeTableDescriptor', 'tag_name': 'M4MuxCodeTableDescrTag' },
+			{ 'tag': 0x66, 'base_class': 'BaseDescriptor', 'name': 'M4MuxIdentDescriptor', 'tag_name': 'M4MuxIdentDescrTag' },
+
+			# defined in ISO/IEC 14496-14. names for the last two are made up as not defined formally anywhere
+			{ 'tag': 0x0e, 'base_class': 'BaseDescriptor', 'name': 'ES_ID_Inc', 'tag_name': 'ES_ID_IncTag' },
+			{ 'tag': 0x0f, 'base_class': 'BaseDescriptor', 'name': 'ES_ID_Ref', 'tag_name': 'ES_ID_RefTag' },
+			{ 'tag': 0x11, 'base_class': 'ObjectDescriptor', 'name': '<MP4ObjectDescriptor>', 'tag_name': 'MP4_OD_Tag' },
+			{ 'tag': 0x10, 'base_class': 'InitialObjectDescriptor', 'name': '<MP4InitialObjectDescriptor>', 'tag_name': 'MP4_IOD_Tag' },
+
+			# was unable to find where this is defined
+			{ 'tag': 0x12, 'base_class': 'BaseDescriptor', 'name': '<IPL_DescrPointerRef>', 'tag_name': 'IPL_DescrPointerRefTag' },
+		],
+		'ranges': [
+			(0x40, 0x60, 'OCI_Descriptor'),
+			(0x6A, 0xFF, 'ExtensionDescriptor'),
+		],
+		'user_private': 0xC0,
+	},
+
+	'command': {
+		'classes': [
+			{ 'name': 'BaseCommand', 'base_class': None },
+
+			{ 'tag': 0x01, 'base_class': 'BaseCommand', 'name': 'ObjectDescriptorUpdate', 'tag_name': 'ObjectDescrUpdateTag' },
+			{ 'tag': 0x02, 'base_class': 'BaseCommand', 'name': 'ObjectDescriptorRemove', 'tag_name': 'ObjectDescrRemoveTag' },
+			{ 'tag': 0x03, 'base_class': 'BaseCommand', 'name': 'ES_DescriptorUpdate', 'tag_name': 'ES_DescrUpdateTag' },
+			{ 'tag': 0x04, 'base_class': 'BaseCommand', 'name': 'ES_DescriptorRemove', 'tag_name': 'ES_DescrRemoveTag' },
+			{ 'tag': 0x05, 'base_class': 'BaseCommand', 'name': 'IPMP_DescriptorUpdate', 'tag_name': 'IPMP_DescrUpdateTag' },
+			{ 'tag': 0x06, 'base_class': 'BaseCommand', 'name': 'IPMP_DescriptorRemove', 'tag_name': 'IPMP_DescrRemoveTag' },
+			{ 'tag': 0x08, 'base_class': 'BaseCommand', 'name': 'ObjectDescriptorExecute', 'tag_name': 'ObjectDescrExecuteTag' },
+
+			# defined in ISO/IEC 14496-14. names is made up as not defined formally anywhere
+			{ 'tag': 0x07, 'base_class': 'ES_DescriptorRemove', 'name': '<ES_DescriptorRemoveRef>', 'tag_name': 'ES_DescrRemoveRefTag' },
+		],
+		'user_private': 0xC0,
+	},
+
+	'QoS': {
+		'classes': [
+			{ 'name': 'QoS_Qualifier', 'base_class': None },
+
+			{ 'tag': 0x01, 'base_class': 'QoS_Qualifier', 'name': 'QoS_Qualifier_MAX_DELAY' },
+			{ 'tag': 0x02, 'base_class': 'QoS_Qualifier', 'name': 'QoS_Qualifier_PREF_MAX_DELAY' },
+			{ 'tag': 0x03, 'base_class': 'QoS_Qualifier', 'name': 'QoS_Qualifier_LOSS_PROB' },
+			{ 'tag': 0x04, 'base_class': 'QoS_Qualifier', 'name': 'QoS_Qualifier_MAX_GAP_LOSS' },
+			{ 'tag': 0x41, 'base_class': 'QoS_Qualifier', 'name': 'QoS_Qualifier_MAX_AU_SIZE' },
+			{ 'tag': 0x42, 'base_class': 'QoS_Qualifier', 'name': 'QoS_Qualifier_AVG_AU_SIZE' },
+			{ 'tag': 0x43, 'base_class': 'QoS_Qualifier', 'name': 'QoS_Qualifier_MAX_AU_RATE' },
+			{ 'tag': 0x44, 'base_class': 'QoS_Qualifier', 'name': 'QoS_Qualifier_REBUFFERING_RATIO' },
+		],
+		'user_private': 0x80,
+	},
+
+	'IPMP': {
+		'classes': [
+			{ 'name': 'IPMP_Data_BaseClass', 'base_class': None },  # <- keep in mind this has fields
+
+			{ 'tag': 0x10, 'base_class': 'IPMP_Data_BaseClass', 'name': 'IPMP_ParamtericDescription', 'tag_name': 'IPMP_ParamtericDescription_tag' },
+
+			# tag numbers defined in ISO/IEC 14496-13
+			# FIXME: define them here, and set user_private
+		],
+	},
+
+}
+
+def init_descriptors():
+	global class_registry
+	# do sanity checks on the data defined above. for every namespace, make sure:
+	#  - class names are globally unique
+	class_registry = unique_dict((k['name'], (nsname, k)) for nsname, ns in descriptor_namespaces.items() for k in ns['classes'])
+	for nsname, ns in descriptor_namespaces.items():
+		#  - there's exactly one root class
+		assert len({ k['name'] for k in ns['classes'] if k['base_class'] == None }) == 1, f'namespace {nsname} must have 1 root'
+		#  - tags are unique
+		ns['tag_registry'] = unique_dict(( k['tag'], k ) for k in ns['classes'] if 'tag' in k)
+		#  - range class names are valid
+		assert all(class_registry.get(klname, (None,))[0] == nsname for (_, _, klname) in ns.get('ranges', [])), f'namespace {nsname} has invalid ranges'
+		#  - base classes are valid, and there are no cycles
+		for k in ns['classes']:
+			while k['base_class'] != None:
+				assert class_registry.get(k['base_class'], (None,))[0] == nsname, f'class {k["base_class"]} not defined'
+				k = class_registry[k['base_class']][1]
+
+	# register handlers defined above
+	for k, v in globals().items():
+		if m := re.fullmatch(r'parse_(.+)_descriptor', k):
+			k = m.group(1)
+			assert k in class_registry, f'descriptor {k} not defined'
+			class_registry[k][1]['handler'] = v
+
+	# check base classes of defined handlers also have a defined handler
+	for k in class_registry.items():
+		if 'handler' in k:
+			while k['base_class'] != None:
+				k = class_registry[k['base_class']][1]
+				assert 'handler' in k
+
+init_descriptors()
+
+# FIXME: implement decoder specific info:
+#  - ISO/IEC 14496-2 Annex K
+#  - ISO/IEC 14496-3 1.1.6
+#  - ISO/IEC 14496-11
+#  - ISO/IEC 13818-7 „adif_header()“
+#  - ISO/IEC 11172-3 or ISO/IEC 13818-3 -> empty
+#  - defined locally:
+#    - IPMPDecoderConfiguration
+#    - OCIDecoderConfiguration
+#    - JPEG_DecoderConfig
+#    - UIConfig
+#    - BIFSConfigEx
+#    - AFXConfig
+#    - JPEG2000_DecoderConfig
+#    - AVCDecoderSpecificInfo
+
+# FIXME: Implements AFXExtDescriptor, which has its own namespace
+
+# based on <https://github.com/mp4ra/mp4ra.github.io/blob/5a9966617f953a65c708eb05d1bdc778ecc7e6bd/CSV/oti.csv>
+# kind: Optional[Literal['audio', 'video', 'image', 'text', 'font']
+# name: str # full name
+# notes: Optional[list[str]] # notes indicated in CSV, if any
+# short: Optional[str] # short / common name
+# withdrawn: Optional[bool] # true if removed and shouldn't be used
+object_types = {
+	0x01: {                  'name': 'Systems ISO/IEC 14496-1',                                                                                         'notes': ['a'] },
+	0x02: {                  'name': 'Systems ISO/IEC 14496-1',                                                                                         'notes': ['b'] },
+	0x03: {                  'name': 'Interaction Stream',                                                                                                             },
+	0x04: {                  'name': 'Extended BIFS',                                                                                                   'notes': ['h'] },
+	0x05: {                  'name': 'AFX Stream',                                                                                                      'notes': ['i'] },
+	0x06: { 'kind': 'font',  'name': 'Font Data Stream',                                                                                                               },
+	0x07: {                  'name': 'Synthetised Texture',                                                                                                            },
+	0x08: { 'kind': 'text',  'name': 'Text Stream',                                                                                                                    },
+	0x09: {                  'name': 'LASeR Stream',                                                                                                                   },
+	0x0A: {                  'name': 'Simple Aggregation Format (SAF) Stream',                                                                                         },
+
+	0x20: { 'kind': 'video', 'name': 'Visual ISO/IEC 14496-2',                                            'short': 'MPEG-4 Video',                      'notes': ['c'] },
+	0x21: { 'kind': 'video', 'name': 'Visual ITU-T Recommendation H.264 | ISO/IEC 14496-10',              'short': 'H.264 / AVC',                       'notes': ['g'] },
+	0x22: { 'kind': 'video', 'name': 'Parameter Sets for ITU-T Recommendation H.264 | ISO/IEC 14496-10',  'short': 'H.264 / AVC (PPS / SPS)',           'notes': ['g'] },
+	0x23: { 'kind': 'video', 'name': 'Visual ISO/IEC 23008-2 | ITU-T Recommendation H.265',               'short': 'H.265 / HEVC',                                     },
+
+	0x40: { 'kind': 'audio', 'name': 'Audio ISO/IEC 14496-3',                                             'short': 'MPEG-4 Audio',                      'notes': ['d'] },
+
+	0x60: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 Simple Profile',                             'short': 'MPEG-2 Video (Simple Profile)',                    },
+	0x61: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 Main Profile',                               'short': 'MPEG-2 Video (Main Profile)',                      },
+	0x62: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 SNR Profile',                                'short': 'MPEG-2 Video (SNR Profile)',                       },
+	0x63: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 Spatial Profile',                            'short': 'MPEG-2 Video (Spatial Profile)',                   },
+	0x64: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 High Profile',                               'short': 'MPEG-2 Video (High Profile)',                      },
+	0x65: { 'kind': 'video', 'name': 'Visual ISO/IEC 13818-2 422 Profile',                                'short': 'MPEG-2 Video (422 Profile)',                       },
+	0x66: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-7 Main Profile',                                'short': 'AAC',                                              },
+	0x67: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-7 LowComplexity Profile',                       'short': 'AAC-LC',                                           },
+	0x68: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-7 Scaleable Sampling Rate Profile',             'short': 'AAC-SSR',                                          },
+	0x69: { 'kind': 'audio', 'name': 'Audio ISO/IEC 13818-3',                                             'short': 'MPEG-2 BC Audio',                                  },
+	0x6A: { 'kind': 'video', 'name': 'Visual ISO/IEC 11172-2',                                            'short': 'MPEG-1 Video',                                     },
+	0x6B: { 'kind': 'audio', 'name': 'Audio ISO/IEC 11172-3',                                             'short': 'MPEG-1 Audio',                                     },
+	0x6C: { 'kind': 'image', 'name': 'Visual ISO/IEC 10918-1',                                            'short': 'JPEG',                                             },
+	0x6D: { 'kind': 'image', 'name': 'Portable Network Graphics',                                         'short': 'PNG',                               'notes': ['f'] },
+	0x6E: { 'kind': 'image', 'name': 'Visual ISO/IEC 15444-1 (JPEG 2000)',                                'short': 'JPEG 2000',                                        },
+
+	0xA0: { 'kind': 'audio', 'name': 'EVRC Voice',                                                                                                                     },
+	0xA1: { 'kind': 'audio', 'name': 'SMV Voice',                                                                                                                      },
+	0xA2: {                  'name': '3GPP2 Compact Multimedia Format (CMF)',                             'short': 'CMF',                                              },
+	0xA3: { 'kind': 'video', 'name': 'SMPTE VC-1 Video',                                                                                                               },
+	0xA4: { 'kind': 'video', 'name': 'Dirac Video Coder',                                                                                                              },
+	0xA5: { 'kind': 'audio', 'name': 'AC-3',                                                              'withdrawn': True,                                           },
+	0xA6: { 'kind': 'audio', 'name': 'Enhanced AC-3',                                                     'withdrawn': True,                                           },
+	0xA7: { 'kind': 'audio', 'name': 'DRA Audio',                                                                                                                      },
+	0xA8: { 'kind': 'audio', 'name': 'ITU G.719 Audio',                                                                                                                },
+	0xA9: {                  'name': 'Core Substream',                                                                                                                 },
+	0xAA: {                  'name': 'Core Substream + Extension Substream',                                                                                           },
+	0xAB: {                  'name': 'Extension Substream containing only XLL',                                                                                        },
+	0xAC: {                  'name': 'Extension Substream containing only LBR',                                                                                        },
+	0xAD: { 'kind': 'audio', 'name': 'Opus audio',                                                        'short': 'Opus',                                             },
+	0xAE: { 'kind': 'audio', 'name': 'AC-4',                                                              'withdrawn': True,                                           },
+	0xAF: { 'kind': 'audio', 'name': 'Auro-Cx 3D audio',                                                                                                               },
+	0xB0: { 'kind': 'video', 'name': 'RealVideo Codec 11',                                                                                                             },
+	0xB1: { 'kind': 'video', 'name': 'VP9 Video',                                                         'short': 'VP9',                                              },
+	0xB2: { 'kind': 'audio', 'name': 'DTS-UHD profile 2',                                                                                                              },
+	0xB3: { 'kind': 'audio', 'name': 'DTS-UHD profile 3 or higher',                                                                                                    },
+
+	0xE1: { 'kind': 'audio', 'name': '13K Voice',                                                                                                                      },
+}
+
+def format_object_type(oti: int) -> str:
+	assert 0 <= oti < 0x100
+	if oti == 0x00:
+		raise AssertionError('forbidden object type')
+	elif oti == 0xFF:
+		return ansi_dim('no object type specified')
+	elif e := (object_types.get(oti)):
+		description = e.get('short') or e['name']
+		if e.get('withdrawn'):
+			description += ansi_fg1(' (withdrawn, unused, do not use)')
+		return description
+	else:
+		return ansi_fg4('reserved for ISO use' if oti < 0xC0 else 'user private')
+
+stream_types = {
+	0x01: 'ObjectDescriptorStream',
+	0x02: 'ClockReferenceStream',
+	0x03: 'SceneDescriptionStream',
+	0x04: 'VisualStream',
+	0x05: 'AudioStream',
+	0x06: 'MPEG7Stream',
+	0x07: 'IPMPStream',
+	0x08: 'ObjectContentInfoStream',
+	0x09: 'MPEGJStream',
+	0x0A: 'Interaction Stream',
+	0x0B: 'IPMPToolStream',
+	0x0C: 'FontDataStream',
+	0x0D: 'StreamingText',
+}
+
+def format_stream_type(sti: int) -> str:
+	assert 0 <= sti < 0x40
+	if sti == 0x00:
+		raise AssertionError('forbidden stream type')
+	elif e := (stream_types.get(sti)):
+		return e
+	else:
+		return ansi_fg4('reserved for ISO use' if sti < 0x20 else 'user private')
+
+
+main()
