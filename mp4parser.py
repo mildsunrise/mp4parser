@@ -359,22 +359,24 @@ box_registry = [
 	}),
 	({
 		'name': 'ISO/IEC 14496-15',
-		'title': 'Information technology — Coding of audio-visual objects — Part 15: Advanced Video Coding (AVC) file format',
-		'version': '2010',
-		'url': 'https://www.iso.org/standard/55980.html',
+		'title': 'Information technology — Coding of audio-visual objects — Part 15: Carriage of network abstraction layer (NAL) unit structured video in ISO base media file format',
+		'version': '2014',
+		'url': 'https://www.iso.org/standard/65216.html',
 	}, {
 		'avcC': ('AVCConfigurationBox', 'Box'),
 		'm4ds': ('MPEG4ExtensionDescriptorsBox', 'Box'),
 		'avc1': ('AVCSampleEntry', 'VisualSampleEntry'),
+		'avc3': ('AVCSampleEntry', 'VisualSampleEntry'),
 		'avc2': ('AVC2SampleEntry', 'VisualSampleEntry'),
+		'avc4': ('AVC2SampleEntry', 'VisualSampleEntry'),
 		'avcp': ('AVCParameterSampleEntry', 'VisualSampleEntry'),
 		'avss': ('AVCSubSequenceEntry', 'VisualSampleGroupEntry'),
 		'avll': ('AVCLayerEntry', 'VisualSampleGroupEntry'),
 		'svcC': ('SVCConfigurationBox', 'Box'),
 		'seib': ('ScalabilityInformationSEIBox', 'Box'),
 		'svcP': ('SVCPriorityAssignmentBox', 'Box'),
-		'avc2': ('AVC2SVCSampleEntry', 'VisualSampleEntry'),
 		'svc1': ('SVCSampleEntry', 'VisualSampleEntry'),
+		'svc2': ('SVCSampleEntry', 'VisualSampleEntry'),
 		'tiri': ('TierInfoBox', 'Box'),
 		'tibr': ('TierBitRateBox', 'Box'),
 		'svpr': ('PriorityRangeBox', 'Box'),
@@ -391,6 +393,10 @@ box_registry = [
 		'dtrt': ('DecodeRetimingEntry', 'VisualSampleGroupEntry'),
 		'vipr': ('ViewPriorityBox', 'Box'),
 		'vipr': ('ViewPriorityEntry', 'VisualSampleGroupEntry'),
+		'sstl': ('SVCSubTrackLayerBox', 'FullBox'),
+		'mstv': ('MVCSubTrackViewBox', 'FullBox'),
+		'stti': ('SubTrackTierBox', 'FullBox'),
+		'stmg': ('MVCSubTrackMultiviewGroupBox', 'FullBox'),
 		'svmC': ('SVCMetadataSampleConfigBox', 'FullBox'),
 		'qlif': ('SVCPriorityLayerInfoBox', 'Box'),
 		'svcM': ('SVCMetadataSampleEntry', 'MetadataSampleEntry'),
@@ -399,13 +405,19 @@ box_registry = [
 		'vwid': ('ViewIdentifierBox', 'FullBox'),
 		'mvcC': ('MVCConfigurationBox', 'Box'),
 		'vsib': ('ViewScalabilityInformationSEIBox', 'Box'),
-		'avc1': ('AVCMVCSampleEntry', 'AVCSampleEntry'),
-		'avc2': ('AVC2MVCSampleEntry', 'AVC2SampleEntry'),
 		'mvcg': ('MultiviewGroupBox', 'FullBox'),
 		'swtc': ('MultiviewGroupRelationBox', 'FullBox'),
 		'vwdi': ('MultiviewSceneInfoBox', 'Box'),
 		'mvcP': ('MVCViewPriorityAssignmentBox', 'Box'),
+		'hvcC': ('HEVCConfigurationBox', 'Box'),
+		'hvc1': ('HEVCSampleEntry', 'VisualSampleEntry'),
+		'hev1': ('HEVCSampleEntry', 'VisualSampleEntry'),
+		'sync': ('SyncSampleEntry', 'VisualSampleGroupEntry'),
+		'tscl': ('TemporalLayerEntry', 'VisualSampleGroupEntry'),
+		'tsas': ('TemporalSubLayerEntry', 'VisualSampleGroupEntry'),
+		'stsa': ('StepwiseTemporalLayerEntry', 'VisualSampleGroupEntry'),
 		'sdep': ('SampleDependencyBox', 'FullBox'),
+		'seii': ('SeiInformationBox', 'Box'),
 		'mvci': ('MultiviewInformationBox', 'FullBox'),
 		'mvra': ('MultiviewRelationAttributeBox', 'FullBox'),
 	}),
@@ -1055,6 +1067,77 @@ def parse_svcC_box(offset: int, data: memoryview, indent: int):
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
+def parse_hvcC_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	configurationVersion, = data.read(1)
+	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
+
+	composite_1, general_profile_compatibility_flags, general_constraint_indicator_flags, general_level_idc, min_spatial_segmentation_idc, \
+	parallelismType, chromaFormat, bitDepthLumaMinus8, bitDepthChromaMinus8, \
+	avgFrameRate, composite_2 = \
+		unpack(data, 'B I 6s B H  B B B B  H B')
+	general_constraint_indicator_flags = int.from_bytes(general_constraint_indicator_flags, 'big')
+	general_profile_space, general_tier_flag, general_profile_idc = split_bits(composite_1, 8, 6, 5, 0)
+	constantFrameRate, numTemporalLayers, temporalIdNested, lengthSizeMinusOne = split_bits(composite_2, 8, 6, 3, 2, 0)
+
+	print(prefix + f'general_profile_space = {general_profile_space}')
+	print(prefix + f'general_tier_flag = {general_tier_flag}')
+	print(prefix + f'general_profile_idc = {general_profile_idc:02x}')
+
+	print(prefix + f'general_profile_compatibility_flags = {general_profile_compatibility_flags:08x}')
+	print(prefix + f'general_constraint_indicator_flags = {general_constraint_indicator_flags:012x}')
+	print(prefix + f'general_level_idc = {general_level_idc:02x}')
+
+	reserved, min_spatial_segmentation_idc = split_bits(min_spatial_segmentation_idc, 16, 12, 0)
+	assert reserved == mask(4), f'invalid reserved: {reserved}'
+	print(prefix + f'min_spatial_segmentation_idc = {min_spatial_segmentation_idc}')
+	reserved, parallelismType = split_bits(parallelismType, 8, 2, 0)
+	assert reserved == mask(6), f'invalid reserved: {reserved}'
+	print(prefix + f'parallelismType = {parallelismType}')
+	reserved, chromaFormat = split_bits(chromaFormat, 8, 2, 0)
+	assert reserved == mask(6), f'invalid reserved: {reserved}'
+	print(prefix + f'chromaFormat = {chromaFormat}')
+	reserved, bitDepthLumaMinus8 = split_bits(bitDepthLumaMinus8, 8, 3, 0)
+	assert reserved == mask(5), f'invalid reserved: {reserved}'
+	print(prefix + f'bitDepthLumaMinus8 = {bitDepthLumaMinus8}')
+	reserved, bitDepthChromaMinus8 = split_bits(bitDepthChromaMinus8, 8, 3, 0)
+	assert reserved == mask(5), f'invalid reserved: {reserved}'
+	print(prefix + f'bitDepthChromaMinus8 = {bitDepthChromaMinus8}')
+
+	print(prefix + f'avgFrameRate = {avgFrameRate}')
+	print(prefix + f'constantFrameRate = {constantFrameRate}')
+	print(prefix + f'numTemporalLayers = {numTemporalLayers}')
+	print(prefix + f'temporalIdNested = {bool(temporalIdNested)}')
+	print(prefix + f'lengthSizeMinusOne = {lengthSizeMinusOne}')
+
+	numOfArrays, = unpack(data, 'B')
+	#print(prefix + f'numOfArrays = {numOfArrays}')
+	for i in range(numOfArrays):
+		print(prefix + f'- array {i}:')
+		composite, numNalus = unpack(data, 'BH')
+		array_completeness, reserved, NAL_unit_type = split_bits(composite, 8, 7, 6, 0)
+		assert reserved == 0, f'invalid reserved: {reserved}'
+
+		print(prefix + f'    array_completeness = {bool(array_completeness)}')
+		print(prefix + f'    NAL_unit_type = {NAL_unit_type}')
+		#print(prefix + f'    numNalus = {numNalus}')
+
+		for n in range(numNalus):
+			entry_start = offset + data.tell()
+			nalUnitLength, = unpack(data, 'H')
+			data_start = offset + data.tell()
+			nalData = data.read(nalUnitLength)
+			assert len(nalData) == nalUnitLength, f'EOF when reading NALU: expected {nalUnitLength}, got {len(nalData)}'
+
+			offset_text = ansi_fg4(f' @ {entry_start:#x}, {data_start:#x} - {data_start + nalUnitLength:#x}') if show_offsets else ''
+			length_text = ansi_fg4(f' ({nalUnitLength})') if show_lengths else ''
+			print(prefix + f'    - NALU {n}' + offset_text + length_text)
+			print_hex_dump(nalData, prefix + '        ')
+
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
 # FIXME: implement av1C
 
 def parse_esds_box(offset: int, data: memoryview, indent: int):
@@ -1068,6 +1151,12 @@ def parse_esds_box(offset: int, data: memoryview, indent: int):
 	assert not left, f'{len(left)} bytes of trailing data'
 
 parse_iods_box = parse_esds_box
+
+def parse_m4ds_box(offset: int, data: memoryview, indent: int):
+	data = io.BytesIO(data)
+	parse_descriptors(data, indent)
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_dOps_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
