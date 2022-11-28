@@ -502,7 +502,7 @@ def parse_boxes(offset: int, mem: memoryview, indent=0, contents_fn=None):
 			type_label = '-'.join(btype[s:e] for s, e in itertools.pairwise([0, 8, 12, 16, 20, 32]) )
 			type_label = f'UUID {type_label}'
 		print(prefix + ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text)
-		result.append( (contents_fn or parse_contents)(btype, length - len(data), data, indent + 1) )
+		result.append( (contents_fn or parse_contents)(btype, offset + length - len(data), data, indent + 1) )
 		mem, offset = mem[length:], offset + length
 	return result
 
@@ -590,7 +590,7 @@ def parse_sample_entry_contents(btype: str, offset: int, data: memoryview, inden
 	assert len(data) >= 6 + 2, 'entry too short'
 	assert data[:6] == b'\x00\x00\x00\x00\x00\x00', f'invalid reserved field: {data[:6]}'
 	data_reference_index, = struct.unpack('>H', data[6:8])
-	data = data[8:]
+	data = data[8:]; offset += 8
 	print(prefix + f'data_reference_index = {data_reference_index}')
 
 	try:
