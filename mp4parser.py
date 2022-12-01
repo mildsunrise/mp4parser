@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 '''
+Code by Alba Mendez, manually copied and pasted, had 8 revisions when copied.
+https://gist.github.com/mildsunrise/ffd74730504e4dc44f47fc7528e7bf59
+
 Portable* ISO Base Media File Format dissector / parser.
 Usage: ./mp4parser.py <file name>
 
@@ -1412,6 +1415,44 @@ def parse_sbgp_box(offset: int, data: memoryview, indent: int):
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
+
+def parse_tfdt_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	assert version <= 1, f'invalid version: {version}'
+
+	base_media_decode_time, = unpack(data, 'I' if version == 0 else 'Q')
+	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+	print(prefix + f'baseMediaDecodeTime = {base_media_decode_time}')
+
+def parse_tfhd_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	assert version == 0, f'invalid version: {version}'
+
+	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+	track_ID, = unpack(data, 'I')
+	print(prefix + f'track_ID = {track_ID}')
+	if box_flags & 0x10000:  # duration‐is‐empty
+		print(prefix + 'duration-is-empty flag set')
+	if box_flags & 0x20000:  # default-base-is-moof
+		print(prefix + 'default-base-is-moof flag set')
+
+	if box_flags & 0x1:  # base‐data‐offset‐present
+		base_data_offset, = unpack(data, 'Q')
+		print(prefix + f'base_data_offset = {base_data_offset}')
+	if box_flags & 0x2:  # sample-description-index-present
+		sample_description_index, = unpack(data, 'I')
+		print(prefix + f'sample_description_index = {sample_description_index}')
+	if box_flags & 0x8:  # default‐sample‐duration‐present
+		default_sample_duration, = unpack(data, 'I')
+		print(prefix + f'default_sample_duration = {default_sample_duration}')
+	if box_flags & 0x10:  # default‐sample‐size‐present
+		default_sample_size, = unpack(data, 'I')
+		print(prefix + f'default_sample_size = {default_sample_size}')
+
 
 def parse_trun_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
