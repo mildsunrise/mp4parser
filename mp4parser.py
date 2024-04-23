@@ -1015,6 +1015,41 @@ def parse_clap_box(offset: int, data: memoryview, indent: int):
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
+def parse_sgpd_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
+	print(prefix + f'version = {version}')
+
+	grouping_type, = unpack(data, '4s')
+	grouping_type = grouping_type.decode('latin1')
+	print(prefix + f'grouping_type = {repr(grouping_type)}')
+
+	if version == 1:
+		default_length, = unpack(data, 'I')
+		print(prefix + f'default_length = {default_length}')
+	elif version >= 2:
+		default_sample_description_index, = unpack(data, 'I')
+		print(prefix + f'default_sample_description_index = {default_sample_description_index}')
+
+	entry_count, = unpack(data, 'I')
+	for i in range(entry_count):
+		print(prefix + f'- entry {i+1}:')
+		if version == 1:
+			if (description_length := default_length) == 0:
+				description_length, = unpack(data, 'I')
+				print(prefix + f'  description_length = {description_length}')
+			description = data.read(description_length)
+			assert len(description) == description_length, \
+				f'unexpected EOF within description: expected {description_length}, got {len(description)}'
+			print_hex_dump(description, prefix + '  ')
+		else:
+			raise NotImplementedError('TODO: parse box')
+
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
 
 # CODEC-SPECIFIC BOXES
 
@@ -1425,6 +1460,57 @@ def parse_sbgp_box(offset: int, data: memoryview, indent: int):
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
+def parse_saiz_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	assert version == 0, f'invalid version: {version}'
+	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+
+	if box_flags & 1:
+		aux_info_type, aux_info_type_parameter = unpack(data, '4sI')
+		aux_info_type = aux_info_type.decode('latin1')
+		print(prefix + f'aux_info_type = {repr(aux_info_type)}')
+		print(prefix + f'aux_info_type_parameter = {aux_info_type_parameter:#x}')
+
+	default_sample_info_size, sample_count = unpack(data, 'BI')
+	print(prefix + f'default_sample_info_size = {default_sample_info_size}')
+	print(prefix + f'sample_count = {sample_count}')
+	if default_sample_info_size == 0:
+		for i in range(sample_count):
+			sample_info_size, = unpack(data, 'B')
+			if i < max_rows:
+				print(prefix + f'[sample {i+1:6}] sample_info_size = {sample_info_size:5}')
+		if sample_count > max_rows:
+			print(prefix + '...')
+
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
+def parse_saio_box(offset: int, data: memoryview, indent: int):
+	prefix = ' ' * (indent * indent_n)
+	data = io.BytesIO(data)
+	version, box_flags = parse_fullbox(data, prefix)
+	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+
+	if box_flags & 1:
+		aux_info_type, aux_info_type_parameter = unpack(data, '4sI')
+		aux_info_type = aux_info_type.decode('latin1')
+		print(prefix + f'aux_info_type = {repr(aux_info_type)}')
+		print(prefix + f'aux_info_type_parameter = {aux_info_type_parameter:#x}')
+
+	entry_count, = unpack(data, 'I')
+	print(prefix + f'entry_count = {entry_count}')
+	for i in range(entry_count):
+		offset, = unpack(data, 'I' if version == 0 else 'Q')
+		if i < max_rows:
+			print(prefix + f'[entry {i+1:6}] offset = {offset:#08x}')
+	if entry_count > max_rows:
+		print(prefix + '...')
+
+	left = data.read()
+	assert not left, f'{len(left)} bytes of trailing data'
+
 def parse_tfdt_box(offset: int, data: memoryview, indent: int):
 	prefix = ' ' * (indent * indent_n)
 	data = io.BytesIO(data)
@@ -1584,6 +1670,7 @@ def parse_pssh_box(offset: int, data: memoryview, indent: int):
 			print(prefix + f'- KID: {KID.hex()}')
 
 	DataSize, = unpack(data, 'I')
+	print(prefix + f'DataSize = {DataSize}')
 	Data = data.read(DataSize)
 	assert len(Data) == DataSize, f'unexpected EOF within Data: expected {DataSize}, got {len(Data)}'
 	print(prefix + f'Data =')
