@@ -11,6 +11,8 @@ import itertools
 import re
 import options
 from parser_tables import *
+from typing import Optional, Union, Callable, TypeVar
+T = TypeVar('T')
 
 args = options.parser.parse_args()
 fname = args.filename
@@ -41,6 +43,97 @@ def main():
 
 # UTILITIES
 
+class MVIO:
+	''' like BytesIO, but returns memoryviews instead of bytes. it also contains higher-level methods '''
+
+	# core
+
+	def __init__(self, buffer: memoryview, pos=0):
+		self.buffer = memoryview(buffer)
+		self.pos = pos
+
+	@property
+	def remaining(self) -> int:
+		return len(self.buffer) - self.pos
+
+	@property
+	def ended(self) -> bool:
+		return self.remaining == 0
+
+	def peek(self, n = -1) -> memoryview:
+		n = n if n >= 0 else self.remaining
+		res = self.buffer[self.pos:][:n]
+		if len(res) != n:
+			raise EOFError(f'unexpected EOF (needed {n}, got {len(res)})')
+		return res
+
+	def read(self, n = -1) -> memoryview:
+		res = self.peek(n)
+		self.pos += len(res)
+		return res
+
+	# common primitives
+
+	def int(self, n: int) -> int:
+		return int.from_bytes(self.read(n))
+
+	def string(self, encoding='utf-8') -> str:
+		data = self.peek()
+		if (size := data.tobytes().find(b'\0')) == -1:
+			raise EOFError('EOF while reading string')
+		self.pos += size + 1
+		return data[:size].tobytes().decode(encoding)
+
+	# FIXME: to ease migration, remove afterwards
+	def unpack(self, struct_fmt: str) -> tuple:
+		struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
+		return struct_obj.unpack(self.read(struct_obj.size))
+
+	# less common primitives
+
+	def fourcc(self) -> str:
+		return self.read(4).tobytes().decode('latin-1')
+
+	def uuid(self) -> str:
+		return format_uuid(self.read(16).tobytes())
+
+	# support for 'with' (checks all data is consumed)
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, exc_type, exc_value, traceback):
+		if exc_type == None and (remaining := self.remaining):
+			raise AssertionError(f'{remaining} unparsed trailing bytes')
+
+class Parser(MVIO):
+	''' subclass of MVIO that holds the rest of the parsing state '''
+
+	def __init__(self, buffer: memoryview, start: int, indent: int):
+		super().__init__(buffer)
+		self.start = start
+		self.indent = indent
+		self.prefix = ' ' * (self.indent * indent_n)
+
+	@property
+	def offset(self) -> int:
+		return self.start + self.pos
+
+	def print(self, val: str):
+		print(self.prefix + val)
+
+	def raw_field(self, name: str, value: str):
+		self.print(name + ' = ' + value)
+
+	def field(self, name: str, value: T, format: Union[str, Callable[[T], str]]=repr):
+		self.raw_field(name,
+			value.__format__(format) if isinstance(format, str) else format(value))
+
+# FIXME: to ease migration, remove afterwards
+def unpack(stream, struct_fmt: str) -> tuple:
+		struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
+		return struct_obj.unpack(stream.read(struct_obj.size))
+
 def unique_dict(x):
 	r = {}
 	for k, v in x:
@@ -50,22 +143,6 @@ def unique_dict(x):
 
 # FIXME: give it a proper CLI interface
 # FIXME: display errors more nicely (last two frames, type name, you know)
-
-def read_string(stream, optional=False):
-	result = bytearray()
-	while True:
-		b = stream.read(1)
-		if not b:
-			if optional and not result: return None
-			raise EOFError('EOF while reading string')
-		b = b[0]
-		if not b: break
-		result.append(b)
-	return result.decode('utf-8')
-
-def unpack(stream, struct_fmt: str) -> tuple:
-	struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
-	return struct_obj.unpack(stream.read(struct_obj.size))
 
 def pad_iter(iterable, size, default=None):
 	iterator = iter(iterable)
@@ -155,8 +232,7 @@ def slice_box(mem: memoryview):
 	assert len(mem) >= length, f'expected {length} {btype}, got {len(mem)}'
 	return (btype, mem[pos:length], last_box, large_size), length
 
-def parse_boxes(offset: int, mem: memoryview, indent=0, contents_fn=None):
-	prefix = ' ' * (indent * indent_n)
+def parse_boxes(ps: Parser, contents_fn=None):
 	result = []
 	while mem:
 		(btype, data, last_box, large_size), length = slice_box(mem)
@@ -183,34 +259,33 @@ nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof'
 # apple(?) / quicktime metadata
 nesting_boxes |= { 'ilst', '\u00a9too', '\u00a9nam', '\u00a9day', '\u00a9ART', 'aART', '\u00a9alb', '\u00a9cmt', '\u00a9day', 'trkn', 'covr', '----' }
 
-def parse_contents(btype: str, offset: int, data: memoryview, indent):
-	prefix = ' ' * (indent * indent_n)
+def parse_contents(btype: str, ps: Parser):
 	try:
 
 		if (handler := globals().get(f'parse_{btype}_box')):
-			return handler(offset, data, indent)
+			return handler(ps)
 
 		if btype in nesting_boxes:
-			return parse_boxes(offset, data, indent)
+			return parse_boxes(ps)
 
 	except Exception as e:
-		print_error(e, prefix)
+		print_error(e, ps.prefix)
 
 	# as fall back (or if error), print hex dump
-	if not max_dump or not data: return
-	print_hex_dump(data, prefix)
+	if not max_dump or ps.buffer: return
+	print_hex_dump(ps.buffer, ps.prefix)
 
 def parse_fullbox(data: io.BytesIO, prefix: str):
 	fv = data.read(4)
 	assert len(fv) == 4
 	return fv[0], int.from_bytes(fv[1:], 'big')
 
-def parse_skip_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
+def parse_skip_box(ps: Parser):
+	data = ps.read()
 	if any(bytes(data)):
-		print_hex_dump(data, prefix)
+		print_hex_dump(data, ps.prefix)
 	else:
-		print(prefix + ansi_dim(ansi_fg2(f'({len(data)} empty bytes)')))
+		print(ps.prefix + ansi_dim(ansi_fg2(f'({len(data)} empty bytes)')))
 
 parse_free_box = parse_skip_box
 
@@ -257,9 +332,7 @@ def parse_stsd_box(offset: int, data: memoryview, indent: int):
 	boxes = parse_boxes(offset + data.tell(), memoryview(data.read()), indent, contents_fn=contents_fn)
 	assert len(boxes) == entry_count, f'entry_count not matching boxes present'
 
-def parse_sample_entry_contents(btype: str, offset: int, data: memoryview, indent: int, version: int):
-	prefix = ' ' * (indent * indent_n)
-
+def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert len(data) >= 6 + 2, 'entry too short'
 	assert data[:6] == b'\x00\x00\x00\x00\x00\x00', f'invalid reserved field: {data[:6]}'
 	data_reference_index, = struct.unpack('>H', data[6:8])
@@ -280,9 +353,7 @@ def parse_sample_entry_contents(btype: str, offset: int, data: memoryview, inden
 	if not max_dump or not data: return
 	print_hex_dump(data, prefix)
 
-def parse_video_sample_entry_contents(btype: str, offset: int, data: memoryview, indent: int, version: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
 
 	reserved = data.read(16)
@@ -307,9 +378,7 @@ def parse_video_sample_entry_contents(btype: str, offset: int, data: memoryview,
 
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
-def parse_audio_sample_entry_contents(btype: str, offset: int, data: memoryview, indent: int, version: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version <= 1, 'invalid version'
 
 	if version == 0:
@@ -336,9 +405,7 @@ def parse_audio_sample_entry_contents(btype: str, offset: int, data: memoryview,
 
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
-def parse_text_sample_entry_contents(btype: str, offset: int, data: memoryview, indent: int, version: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_text_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
 
 	fields = {
