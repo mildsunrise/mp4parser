@@ -537,9 +537,6 @@ def parse_mfhd_box(ps: Parser):
 	sequence_number, = unpack(data, 'I')
 	ps.field('sequence_number', sequence_number)
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_mvhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
@@ -566,9 +563,6 @@ def parse_mvhd_box(ps: Parser):
 	assert not any(pre_defined), f'invalid pre_defined: {pre_defined}'
 	next_track_ID, = unpack(data, 'I')
 	ps.field('next_track_ID', next_track_ID)
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_tkhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -599,9 +593,6 @@ def parse_tkhd_box(ps: Parser):
 	height /= 1 << 16
 	ps.field('size', (width, height), format_size)
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_mdhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
@@ -618,9 +609,6 @@ def parse_mdhd_box(ps: Parser):
 	pre_defined_1, = unpack(data, 'H')
 	assert not pre_defined_1, f'invalid reserved_1: {pre_defined_1}'
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_mehd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
@@ -629,9 +617,6 @@ def parse_mehd_box(ps: Parser):
 
 	fragment_duration, = unpack(data, ('Q' if version == 1 else 'I'))
 	ps.field('fragment_duration', fragment_duration)
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_smhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -643,9 +628,6 @@ def parse_smhd_box(ps: Parser):
 		ps.field('balance', balance)
 	assert not reserved, f'invalid reserved: {reserved}'
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_vmhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
@@ -656,9 +638,6 @@ def parse_vmhd_box(ps: Parser):
 		ps.field('graphicsmode', graphicsmode)
 	if show_defaults or opcolor != [0, 0, 0]:
 		ps.field('opcolor', opcolor)
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_trex_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -672,9 +651,6 @@ def parse_trex_box(ps: Parser):
 	ps.field('default_sample_duration', default_sample_duration)
 	ps.field('default_sample_size', default_sample_size)
 	ps.field('default_sample_flags', default_sample_flags, '08x')
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 # TODO: mvhd, trhd, mdhd
 # FIXME: vmhd, smhd, hmhd, sthd, nmhd
@@ -707,8 +683,6 @@ def parse_url_box(ps: Parser):
 	ps.print(f'flags = {box_flags:06x}')
 	if ps.ended: return
 	ps.field('location', ps.string())
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_urn_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -718,8 +692,6 @@ def parse_urn_box(ps: Parser):
 	ps.field('location', ps.string())
 	if ps.ended: return
 	ps.field('name', ps.string())
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 globals()['parse_url _box'] = parse_url_box
 globals()['parse_urn _box'] = parse_urn_box
@@ -747,22 +719,16 @@ def parse_colr_box(ps: Parser):
 		name = 'ICC_profile' if colour_type in { 'rICC', 'prof' } else 'data'
 		ps.print(f'{name} =')
 		print_hex_dump(data.read(), ps.prefix + '  ')
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_btrt_box(ps: Parser):
 	bufferSizeDB, maxBitrate, avgBitrate = unpack(data, 'III')
 	ps.field('bufferSizeDB', bufferSizeDB)
 	ps.field('maxBitrate', maxBitrate)
 	ps.field('avgBitrate', avgBitrate)
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_pasp_box(ps: Parser):
 	hSpacing, vSpacing = unpack(data, 'II')
 	ps.field('pixel aspect ratio', (hSpacing, vSpacing), format_fraction)
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_clap_box(ps: Parser):
 	cleanApertureWidthN, cleanApertureWidthD, cleanApertureHeightN, cleanApertureHeightD, horizOffN, horizOffD, vertOffN, vertOffD = unpack(data, 'II II II II')
@@ -770,8 +736,6 @@ def parse_clap_box(ps: Parser):
 	ps.field('cleanApertureHeight', (cleanApertureHeightN, cleanApertureHeightD), format_fraction)
 	ps.field('horizOff', (horizOffN, horizOffD), format_fraction)
 	ps.field('vertOff', (vertOffN, vertOffD), format_fraction)
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_sgpd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -803,9 +767,6 @@ def parse_sgpd_box(ps: Parser):
 		else:
 			raise NotImplementedError('TODO: parse box')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 
 # CODEC-SPECIFIC BOXES
 
@@ -834,9 +795,6 @@ def parse_avcC_box(ps: Parser):
 
 	# FIXME: parse extensions
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_svcC_box(ps: Parser):
 	configurationVersion, = data.read(1)
 	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
@@ -861,9 +819,6 @@ def parse_svcC_box(ps: Parser):
 		pps = data.read(size)
 		assert len(sps) == size, f'not enough PPS data: expected {size}, found {len(pps)}'
 		ps.print(f'- PPS: {pps.hex()}')
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_hvcC_box(ps: Parser):
 	configurationVersion, = data.read(1)
@@ -931,9 +886,6 @@ def parse_hvcC_box(ps: Parser):
 			ps.print(f'    - NALU {n}' + offset_text + length_text)
 			print_hex_dump(nalData, ps.prefix + '        ')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 # FIXME: implement av1C
 
 def parse_esds_box(ps: Parser):
@@ -941,15 +893,11 @@ def parse_esds_box(ps: Parser):
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
 	parse_descriptor(io.BytesIO(ps.read()), ps.indent, expected=3)
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 parse_iods_box = parse_esds_box
 
 def parse_m4ds_box(ps: Parser):
 	parse_descriptors(io.BytesIO(ps.read()), ps.indent)
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_dOps_box(ps: Parser):
 	Version, OutputChannelCount, PreSkip, InputSampleRate, OutputGain, ChannelMappingFamily = unpack(data, 'BBHIhB')
@@ -967,9 +915,6 @@ def parse_dOps_box(ps: Parser):
 		ChannelMapping = data.read(OutputChannelCount)
 		assert len(ChannelMapping) == OutputChannelCount, 'invalid ChannelMapping length'
 		ps.field('ChannelMapping', ChannelMapping)
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 
 # TABLES
@@ -990,9 +935,6 @@ def parse_elst_box(ps: Parser):
 			ps.print(f'[edit segment {i:3}] duration = {segment_duration:6}, media_time = {media_time:6}, media_rate = {media_rate}')
 	if entry_count > max_rows:
 		ps.print('...')
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_sidx_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -1017,9 +959,6 @@ def parse_sidx_box(ps: Parser):
 	if reference_count > max_rows:
 		ps.print('...')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_stts_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
@@ -1038,9 +977,6 @@ def parse_stts_box(ps: Parser):
 		ps.print('...')
 	ps.print(f'[samples = {sample-1:6}, time = {time:6}]')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_ctts_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
@@ -1058,9 +994,6 @@ def parse_ctts_box(ps: Parser):
 	if entry_count > max_rows:
 		ps.print('...')
 	ps.print(f'[samples = {sample-1:6}]')
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_stsc_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -1082,9 +1015,6 @@ def parse_stsc_box(ps: Parser):
 	if entry_count > max_rows:
 		ps.print('...')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_stsz_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
@@ -1102,9 +1032,6 @@ def parse_stsz_box(ps: Parser):
 		if sample_count > max_rows:
 			ps.print('...')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_stco_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
@@ -1118,9 +1045,6 @@ def parse_stco_box(ps: Parser):
 			ps.print(f'[chunk {i+1:5}] offset = {chunk_offset:#08x}')
 	if entry_count > max_rows:
 		ps.print('...')
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_co64_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -1136,9 +1060,6 @@ def parse_co64_box(ps: Parser):
 	if entry_count > max_rows:
 		ps.print('...')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_stss_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
@@ -1152,9 +1073,6 @@ def parse_stss_box(ps: Parser):
 			ps.print(f'[sync sample {i:5}] sample_number = {sample_number:6}')
 	if entry_count > max_rows:
 		ps.print('...')
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_sbgp_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -1181,9 +1099,6 @@ def parse_sbgp_box(ps: Parser):
 		ps.print('...')
 	ps.print(f'[samples = {sample-1:6}]')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_saiz_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
@@ -1206,9 +1121,6 @@ def parse_saiz_box(ps: Parser):
 		if sample_count > max_rows:
 			ps.print('...')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_saio_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
@@ -1227,9 +1139,6 @@ def parse_saio_box(ps: Parser):
 			ps.print(f'[entry {i+1:6}] offset = {offset:#08x}')
 	if entry_count > max_rows:
 		ps.print('...')
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_tfdt_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -1300,9 +1209,6 @@ def parse_trun_box(ps: Parser):
 	if sample_count > max_rows:
 		ps.print('...')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 # FIXME: describe handlers, boxes (from RA, also look at the 'handlers' and 'unlisted' pages), brands
 
 
@@ -1312,9 +1218,6 @@ def parse_frma_box(ps: Parser):
 	data_format, = unpack(data, '4s')
 	data_format = data_format.decode('latin1')
 	ps.field('data_format', data_format)
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_schm_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -1328,9 +1231,6 @@ def parse_schm_box(ps: Parser):
 	if box_flags & 1:
 		scheme_uri = read_string(data)
 		ps.field('scheme_uri', scheme_uri)
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_tenc_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -1360,9 +1260,6 @@ def format_system_id(SystemID: str) -> str:
 	system_name, system_comment = protection_systems.get(SystemID, (None, None))
 	return SystemID + (f' ({system_name})' if system_name else '')
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
-
 def parse_pssh_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
@@ -1381,9 +1278,6 @@ def parse_pssh_box(ps: Parser):
 	assert len(Data) == DataSize, f'unexpected EOF within Data: expected {DataSize}, got {len(Data)}'
 	ps.print(f'Data =')
 	print_hex_dump(Data, ps.prefix + '  ')
-
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing data'
 
 
 # MPEG-4 part 1 DESCRIPTORS (based on 2010 edition)
