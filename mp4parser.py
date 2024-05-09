@@ -321,7 +321,7 @@ def parse_boxes(ps: Parser, contents_fn=None):
 		type_label = btype
 		if len(btype) != 4: # it's a UUID
 			type_label = f'UUID {format_uuid(btype)}'
-		print(prefix + ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text)
+		ps.print(ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text)
 		result.append( (contents_fn or parse_contents)(btype, offset + length - len(data), data, indent + 1) )
 		mem, offset = mem[length:], offset + length
 	return result
@@ -356,28 +356,24 @@ def parse_skip_box(ps: Parser):
 	if any(bytes(data)):
 		print_hex_dump(data, ps.prefix)
 	else:
-		print(ps.prefix + ansi_dim(ansi_fg2(f'({len(data)} empty bytes)')))
+		ps.print(ansi_dim(ansi_fg2(f'({len(data)} empty bytes)')))
 
 parse_free_box = parse_skip_box
 
 
 # BOX CONTAINERS THAT ALSO HAVE A PREPENDED BINARY STRUCTURE
 
-def parse_meta_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
-	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+def parse_meta_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
 # hack: use a global variable because I'm too lazy to rewrite everything to pass this around
 # FIXME: remove this hack, which is sometimes unreliable since there can be inner handlers we don't care about
 last_handler_seen = None
 
-def parse_hdlr_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_hdlr_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0 and box_flags == 0, 'invalid version / flags'
 	pre_defined, handler_type = unpack(data, 'I4s')
 	handler_type = handler_type.decode('latin1')
@@ -386,17 +382,15 @@ def parse_hdlr_box(offset: int, data: memoryview, indent: int):
 	assert not pre_defined, f'invalid pre-defined: {pre_defined}'
 	assert not any(reserved), f'invalid reserved: {reserved}'
 	name = data.read().decode('utf-8')
-	print(prefix + f'handler_type = {repr(handler_type)}, name = {repr(name)}')
+	ps.print(f'handler_type = {repr(handler_type)}, name = {repr(name)}')
 
 	global last_handler_seen
 	last_handler_seen = handler_type
 
-def parse_stsd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_stsd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'version = {version}, entry_count = {entry_count}')
+	ps.print(f'version = {version}, entry_count = {entry_count}')
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
 
 	contents_fn = lambda *a, **b: parse_sample_entry_contents(*a, **b, version=version)
@@ -408,7 +402,7 @@ def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert data[:6] == b'\x00\x00\x00\x00\x00\x00', f'invalid reserved field: {data[:6]}'
 	data_reference_index, = struct.unpack('>H', data[6:8])
 	data = data[8:]; offset += 8
-	print(prefix + f'data_reference_index = {data_reference_index}')
+	ps.field('data_reference_index', data_reference_index)
 
 	try:
 		if last_handler_seen == 'vide':
@@ -418,11 +412,11 @@ def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
 		if last_handler_seen in {'meta', 'text', 'subt'}:
 			return parse_text_sample_entry_contents(btype, offset, data, indent, version)
 	except Exception as e:
-		print_error(e, prefix)
+		print_error(e, ps.prefix)
 
 	# as fall back (or if error), print hex dump
 	if not max_dump or not data: return
-	print_hex_dump(data, prefix)
+	print_hex_dump(data, ps.prefix)
 
 def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
@@ -430,20 +424,20 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	reserved = data.read(16)
 	assert not any(reserved), f'invalid reserved / pre-defined data: {reserved}'
 	width, height, horizresolution, vertresolution, reserved_2, frame_count, compressorname, depth, pre_defined_3 = unpack(data, 'HHIIIH 32s Hh')
-	print(prefix + f'size = {width} x {height}')
+	ps.print(f'size = {width} x {height}')
 	if show_defaults or horizresolution != 0x00480000 or vertresolution != 0x00480000:
-		print(prefix + f'resolution = {horizresolution} x {vertresolution}')
+		ps.print(f'resolution = {horizresolution} x {vertresolution}')
 	if show_defaults or frame_count != 1:
-		print(prefix + f'frame count = {frame_count}')
+		ps.print(f'frame count = {frame_count}')
 
 	compressorname_len, compressorname = compressorname[0], compressorname[1:]
 	assert compressorname_len <= len(compressorname)
 	assert not any(compressorname[compressorname_len:]), 'invalid compressorname padding'
 	compressorname = compressorname[:compressorname_len].decode('utf-8')
-	print(prefix + f'compressorname = {repr(compressorname)}')
+	ps.print(f'compressorname = {repr(compressorname)}')
 
 	if show_defaults or depth != 0x0018:
-		print(prefix + f'depth = {depth}')
+		ps.field('depth', depth)
 	assert not reserved_2, f'invalid reserved: {reserved_2}'
 	assert pre_defined_3 == -1, f'invalid reserved: {pre_defined_3}'
 
@@ -458,21 +452,21 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
 		assert not pre_defined_1, f'invalid pre_defined_1: {pre_defined_1}'
 		if show_defaults or channelcount != 2:
-			print(prefix + f'channelcount = {channelcount}')
+			ps.field('channelcount', channelcount)
 		if show_defaults or samplesize != 16:
-			print(prefix + f'samplesize = {samplesize}')
-		print(prefix + f'samplerate = {samplerate / (1 << 16)}')
+			ps.field('samplesize', samplesize)
+		ps.print(f'samplerate = {samplerate / (1 << 16)}')
 	else:
 		entry_version, reserved_1, channelcount, samplesize, pre_defined_1, reserved_2, samplerate = unpack(data, 'H6sHHHHI')
 		assert entry_version == 1, f'invalid entry_version: {entry_version}'
 		assert not any(reserved_1), f'invalid reserved_1: {reserved_1}'
 		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
 		assert not pre_defined_1, f'invalid pre_defined_1: {pre_defined_1}'
-		print(prefix + f'channelcount = {channelcount}')
+		ps.field('channelcount', channelcount)
 		if show_defaults or samplesize != 16:
-			print(prefix + f'samplesize = {samplesize}')
+			ps.field('samplesize', samplesize)
 		if show_defaults or samplerate != (1 << 16):
-			print(prefix + f'samplerate = {samplerate / (1 << 16)}')
+			ps.print(f'samplerate = {samplerate / (1 << 16)}')
 
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
@@ -491,201 +485,183 @@ def parse_text_sample_entry_contents(btype: str, ps: Parser, version: int):
 		'stpp': ('namespace', 'schema_location', 'auxiliary_mime_types'),
 	}.get(btype, [])
 	for field_name in fields:
-		print(prefix + f'{field_name} = {repr(read_string(data))}')
+		ps.print(f'{field_name} = {repr(read_string(data))}')
 
 	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 
 
 # HEADER BOXES
 
-def parse_ftyp_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_ftyp_box(ps: Parser):
 	major_brand, minor_version = unpack(data, '4sI')
 	major_brand = major_brand.decode('latin1')
-	print(prefix + f'major_brand = {repr(major_brand)}')
-	print(prefix + f'minor_version = {minor_version:08x}')
+	ps.print(f'major_brand = {repr(major_brand)}')
+	ps.print(f'minor_version = {minor_version:08x}')
 	while (compatible_brand := data.read(4)):
 		assert len(compatible_brand), 'invalid brand length'
-		print(prefix + f'- compatible: {repr(compatible_brand.decode("latin1"))}')
+		ps.print(f'- compatible: {repr(compatible_brand.decode("latin1"))}')
 
 parse_styp_box = parse_ftyp_box
 
 def parse_matrix(data: io.BytesIO, prefix: str):
 	matrix = [ x / (1 << 16) for x in unpack(data, '9i') ]
 	if show_defaults or matrix != [1,0,0, 0,1,0, 0,0,0x4000]:
-		print(prefix + f'matrix = {matrix}')
+		ps.field('matrix', matrix)
 
 def parse_language(data: io.BytesIO, prefix: str):
 	language, = unpack(data, 'H')
 	if not language:
-		print(prefix + 'language = (null)') # FIXME: log a warning or something
+		ps.print('language = (null)') # FIXME: log a warning or something
 		return
 	pad, *language = split_bits(language, 16, 15, 10, 5, 0)
 	assert all(0 <= (x - 1) < 26 for x in language), f'invalid language characters: {language}'
 	language = ''.join(chr((x - 1) + ord('a')) for x in language)
-	print(prefix + f'language = {language}')
+	ps.field('language', language)
 	assert not pad, f'invalid pad: {pad}'
 
-def parse_mfhd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_mfhd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
 	sequence_number, = unpack(data, 'I')
-	print(prefix + f'sequence_number = {sequence_number}')
+	ps.field('sequence_number', sequence_number)
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_mvhd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_mvhd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
 	assert not box_flags, f'invalid flags: {box_flags}'
-	print(prefix + f'version = {version}')
+	ps.field('version', version)
 
 	creation_time, modification_time, timescale, duration, rate, volume, reserved_1, reserved_2, reserved_3 = \
 		unpack(data, ('QQIQ' if version == 1 else 'IIII') + 'ih' + 'HII')
-	print(prefix + f'creation_time = {creation_time}')
-	print(prefix + f'modification_time = {modification_time}')
-	print(prefix + f'timescale = {timescale}')
-	print(prefix + f'duration = {duration}')
+	ps.field('creation_time', creation_time)
+	ps.field('modification_time', modification_time)
+	ps.field('timescale', timescale)
+	ps.field('duration', duration)
 	rate /= 1 << 16
-	if show_defaults or rate != 1: print(prefix + f'rate = {rate}')
+	if show_defaults or rate != 1: ps.field('rate', rate)
 	volume /= 1 << 8
-	if show_defaults or volume != 1: print(prefix + f'volume = {volume}')
+	if show_defaults or volume != 1: ps.field('volume', volume)
 	assert not reserved_1, f'invalid reserved_1: {reserved_1}'
-	assert not reserved_2, f'invalid reserved_1: {reserved_2}'
-	assert not reserved_3, f'invalid reserved_1: {reserved_3}'
+	assert not reserved_2, f'invalid reserved_2: {reserved_2}'
+	assert not reserved_3, f'invalid reserved_3: {reserved_3}'
 
-	parse_matrix(data, prefix)
+	parse_matrix(data, ps.prefix)
 
 	pre_defined = data.read(6 * 4)
 	assert not any(pre_defined), f'invalid pre_defined: {pre_defined}'
 	next_track_ID, = unpack(data, 'I')
-	print(prefix + f'next_track_ID = {next_track_ID}')
+	ps.field('next_track_ID', next_track_ID)
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_tkhd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_tkhd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
-	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
 	creation_time, modification_time, track_ID, reserved_1, duration, reserved_2, reserved_3, layer, alternate_group, volume, reserved_4 = \
 		unpack(data, ('QQIIQ' if version == 1 else 'IIIII') + 'II' + 'hhh' + 'H')
-	print(prefix + f'creation_time = {creation_time}')
-	print(prefix + f'modification_time = {modification_time}')
-	print(prefix + f'track_ID = {track_ID}')
-	print(prefix + f'duration = {duration}')
+	ps.field('creation_time', creation_time)
+	ps.field('modification_time', modification_time)
+	ps.field('track_ID', track_ID)
+	ps.field('duration', duration)
 	if show_defaults or layer != 0:
-		print(prefix + f'layer = {layer}')
+		ps.field('layer', layer)
 	if show_defaults or alternate_group != 0:
-		print(prefix + f'alternate_group = {alternate_group}')
+		ps.field('alternate_group', alternate_group)
 	volume /= 1 << 8
-	print(prefix + f'volume = {volume}')
+	ps.field('volume', volume)
 	assert not reserved_1, f'invalid reserved_1: {reserved_1}'
 	assert not reserved_2, f'invalid reserved_1: {reserved_2}'
 	assert not reserved_3, f'invalid reserved_1: {reserved_3}'
 	assert not reserved_4, f'invalid reserved_1: {reserved_4}'
 
-	parse_matrix(data, prefix)
+	parse_matrix(data, ps.prefix)
 
 	width, height = unpack(data, 'II')
 	width /= 1 << 16
 	height /= 1 << 16
-	print(prefix + f'size = {width} x {height}')
+	ps.print(f'size = {width} x {height}')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_mdhd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_mdhd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
 	assert not box_flags, f'invalid flags: {box_flags}'
-	print(prefix + f'version = {version}')
+	ps.field('version', version)
 
 	creation_time, modification_time, timescale, duration = \
 		unpack(data, 'QQIQ' if version == 1 else 'IIII')
-	print(prefix + f'creation_time = {creation_time}')
-	print(prefix + f'modification_time = {modification_time}')
-	print(prefix + f'timescale = {timescale}')
-	print(prefix + f'duration = {duration}')
-	parse_language(data, prefix)
+	ps.field('creation_time', creation_time)
+	ps.field('modification_time', modification_time)
+	ps.field('timescale', timescale)
+	ps.field('duration', duration)
+	parse_language(data, ps.prefix)
 	pre_defined_1, = unpack(data, 'H')
 	assert not pre_defined_1, f'invalid reserved_1: {pre_defined_1}'
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_mehd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_mehd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
 	assert not box_flags, f'invalid flags: {box_flags}'
-	print(prefix + f'version = {version}')
+	ps.field('version', version)
 
 	fragment_duration, = unpack(data, ('Q' if version == 1 else 'I'))
-	print(prefix + f'fragment_duration = {fragment_duration}')
+	ps.field('fragment_duration', fragment_duration)
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_smhd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_smhd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
 	balance, reserved = unpack(data, 'hH')
 	if show_defaults or balance != 0:
-		print(prefix + f'balance = {balance}')
+		ps.field('balance', balance)
 	assert not reserved, f'invalid reserved: {reserved}'
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_vmhd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_vmhd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 1, f'invalid flags: {box_flags}'
 
 	graphicsmode, *opcolor = unpack(data, 'HHHH')
 	if show_defaults or graphicsmode != 0:
-		print(prefix + f'graphicsmode = {graphicsmode}')
+		ps.field('graphicsmode', graphicsmode)
 	if show_defaults or opcolor != [0, 0, 0]:
-		print(prefix + f'opcolor = {opcolor}')
+		ps.field('opcolor', opcolor)
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_trex_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_trex_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
 	track_ID, default_sample_description_index, default_sample_duration, default_sample_size, default_sample_flags = \
 		unpack(data, 'IIIII')
-	print(prefix + f'track_ID = {track_ID}')
-	print(prefix + f'default_sample_description_index = {default_sample_description_index}')
-	print(prefix + f'default_sample_duration = {default_sample_duration}')
-	print(prefix + f'default_sample_size = {default_sample_size}')
-	print(prefix + f'default_sample_flags = {default_sample_flags:08x}')
+	ps.field('track_ID', track_ID)
+	ps.field('default_sample_description_index', default_sample_description_index)
+	ps.field('default_sample_duration', default_sample_duration)
+	ps.field('default_sample_size', default_sample_size)
+	ps.print(f'default_sample_flags = {default_sample_flags:08x}')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
@@ -697,58 +673,48 @@ def parse_trex_box(offset: int, data: memoryview, indent: int):
 
 # NON CODEC-SPECIFIC BOXES
 
-def parse_ID32_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_ID32_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
-	print(prefix + f'flags = {box_flags:06x}')
-	parse_language(data, prefix)
-	print(prefix + f'ID3v2 data =')
-	print_hex_dump(data.read(), prefix + '  ')
+	ps.print(f'flags = {box_flags:06x}')
+	parse_language(data, ps.prefix)
+	ps.print(f'ID3v2 data =')
+	print_hex_dump(data.read(), ps.prefix + '  ')
 
-def parse_dref_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_dref_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	entry_count, = unpack(data, 'I')
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
-	print(prefix + f'version = {version}, entry_count = {entry_count}')
+	ps.print(f'version = {version}, entry_count = {entry_count}')
 
 	boxes = parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
 	assert len(boxes) == entry_count, f'entry_count not matching boxes present'
 
-def parse_url_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_url_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
-	print(prefix + f'flags = {box_flags:06x}')
+	ps.print(f'flags = {box_flags:06x}')
 	if (location := read_string(data, optional=True)) != None:
-		print(prefix + f'location = {repr(location)}')
+		ps.print(f'location = {repr(location)}')
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_urn_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_urn_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
-	print(prefix + f'flags = {box_flags:06x}')
+	ps.print(f'flags = {box_flags:06x}')
 	if (location := read_string(data, optional=True)) != None:
-		print(prefix + f'location = {repr(location)}')
+		ps.print(f'location = {repr(location)}')
 	if (name := read_string(data, optional=True)) != None:
-		print(prefix + f'name = {repr(name)}')
+		ps.print(f'name = {repr(name)}')
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
 globals()['parse_url _box'] = parse_url_box
 globals()['parse_urn _box'] = parse_urn_box
 
-def parse_colr_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_colr_box(ps: Parser):
 	colour_type, = unpack(data, '4s')
 	colour_type = colour_type.decode('latin1')
 	descriptions = {
@@ -757,80 +723,72 @@ def parse_colr_box(offset: int, data: memoryview, indent: int):
 		'prof': 'unrestricted ICC profile',
 	}
 	description = f' ({descriptions[colour_type]})' if show_descriptions and colour_type in descriptions else ''
-	print(prefix + f'colour_type = {repr(colour_type)}' + description)
+	ps.print(f'colour_type = {repr(colour_type)}' + description)
 	if colour_type == 'nclx':
 		colour_primaries, transfer_characteristics, matrix_coefficients, flags = unpack(data, 'HHHB')
-		print(prefix + f'colour_primaries = {colour_primaries}')
-		print(prefix + f'transfer_characteristics = {transfer_characteristics}')
-		print(prefix + f'matrix_coefficients = {matrix_coefficients}')
+		ps.field('colour_primaries', colour_primaries)
+		ps.field('transfer_characteristics', transfer_characteristics)
+		ps.field('matrix_coefficients', matrix_coefficients)
 		full_range_flag, reserved = split_bits(flags, 8, 7, 0)
 		assert not reserved, f'invalid reserved: {reserved}'
-		print(prefix + f'full_range_flag = {bool(full_range_flag)}')
+		ps.print(f'full_range_flag = {bool(full_range_flag)}')
 	else:
 		name = 'ICC_profile' if colour_type in { 'rICC', 'prof' } else 'data'
-		print(prefix + f'{name} =')
-		print_hex_dump(data.read(), prefix + '  ')
+		ps.print(f'{name} =')
+		print_hex_dump(data.read(), ps.prefix + '  ')
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_btrt_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_btrt_box(ps: Parser):
 	bufferSizeDB, maxBitrate, avgBitrate = unpack(data, 'III')
-	print(prefix + f'bufferSizeDB = {bufferSizeDB}')
-	print(prefix + f'maxBitrate = {maxBitrate}')
-	print(prefix + f'avgBitrate = {avgBitrate}')
+	ps.field('bufferSizeDB', bufferSizeDB)
+	ps.field('maxBitrate', maxBitrate)
+	ps.field('avgBitrate', avgBitrate)
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_pasp_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_pasp_box(ps: Parser):
 	hSpacing, vSpacing = unpack(data, 'II')
-	print(prefix + f'pixel aspect ratio = {hSpacing}/{vSpacing}')
+	ps.print(f'pixel aspect ratio = {hSpacing}/{vSpacing}')
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_clap_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_clap_box(ps: Parser):
 	cleanApertureWidthN, cleanApertureWidthD, cleanApertureHeightN, cleanApertureHeightD, horizOffN, horizOffD, vertOffN, vertOffD = unpack(data, 'II II II II')
-	print(prefix + f'cleanApertureWidth = {cleanApertureWidthN}/{cleanApertureWidthD}')
-	print(prefix + f'cleanApertureHeight = {cleanApertureHeightN}/{cleanApertureHeightD}')
-	print(prefix + f'horizOff = {horizOffN}/{horizOffD}')
-	print(prefix + f'vertOff = {vertOffN}/{vertOffD}')
+	ps.print(f'cleanApertureWidth = {cleanApertureWidthN}/{cleanApertureWidthD}')
+	ps.print(f'cleanApertureHeight = {cleanApertureHeightN}/{cleanApertureHeightD}')
+	ps.print(f'horizOff = {horizOffN}/{horizOffD}')
+	ps.print(f'vertOff = {vertOffN}/{vertOffD}')
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_sgpd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_sgpd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
-	print(prefix + f'version = {version}')
+	ps.field('version', version)
 
 	grouping_type, = unpack(data, '4s')
 	grouping_type = grouping_type.decode('latin1')
-	print(prefix + f'grouping_type = {repr(grouping_type)}')
+	ps.print(f'grouping_type = {repr(grouping_type)}')
 
 	if version == 1:
 		default_length, = unpack(data, 'I')
-		print(prefix + f'default_length = {default_length}')
+		ps.field('default_length', default_length)
 	elif version >= 2:
 		default_sample_description_index, = unpack(data, 'I')
-		print(prefix + f'default_sample_description_index = {default_sample_description_index}')
+		ps.field('default_sample_description_index', default_sample_description_index)
 
 	entry_count, = unpack(data, 'I')
 	for i in range(entry_count):
-		print(prefix + f'- entry {i+1}:')
+		ps.print(f'- entry {i+1}:')
 		if version == 1:
 			if (description_length := default_length) == 0:
 				description_length, = unpack(data, 'I')
-				print(prefix + f'  description_length = {description_length}')
+				ps.print(f'  description_length = {description_length}')
 			description = data.read(description_length)
 			assert len(description) == description_length, \
 				f'unexpected EOF within description: expected {description_length}, got {len(description)}'
-			print_hex_dump(description, prefix + '  ')
+			print_hex_dump(description, ps.prefix + '  ')
 		else:
 			raise NotImplementedError('TODO: parse box')
 
@@ -840,70 +798,64 @@ def parse_sgpd_box(offset: int, data: memoryview, indent: int):
 
 # CODEC-SPECIFIC BOXES
 
-def parse_avcC_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_avcC_box(ps: Parser):
 	configurationVersion, = data.read(1)
 	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
 	avcProfileCompFlags = data.read(3)
-	print(prefix + f'profile / compat / level = {avcProfileCompFlags.hex()}')
+	ps.print(f'profile / compat / level = {avcProfileCompFlags.hex()}')
 	composite_1, composite_2 = data.read(2)
 	reserved_1, lengthSizeMinusOne = split_bits(composite_1, 8, 2, 0)
 	reserved_2, numOfSequenceParameterSets = split_bits(composite_2, 8, 5, 0)
 	assert reserved_1 == mask(6), f'invalid reserved_1: {reserved_1}'
 	assert reserved_2 == mask(3), f'invalid reserved_2: {reserved_2}'
-	print(prefix + f'lengthSizeMinusOne = {lengthSizeMinusOne}')
+	ps.field('lengthSizeMinusOne', lengthSizeMinusOne)
 
 	for i in range(numOfSequenceParameterSets):
 		size, = unpack(data, 'H')
 		sps = data.read(size)
 		assert len(sps) == size, f'not enough SPS data: expected {size}, found {len(sps)}'
-		print(prefix + f'- SPS: {sps.hex()}')
+		ps.print(f'- SPS: {sps.hex()}')
 	numOfPictureParameterSets, = data.read(1)
 	for i in range(numOfPictureParameterSets):
 		size, = unpack(data, 'H')
 		pps = data.read(size)
 		assert len(pps) == size, f'not enough PPS data: expected {size}, found {len(pps)}'
-		print(prefix + f'- PPS: {pps.hex()}')
+		ps.print(f'- PPS: {pps.hex()}')
 
 	# FIXME: parse extensions
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_svcC_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_svcC_box(ps: Parser):
 	configurationVersion, = data.read(1)
 	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
 	avcProfileCompFlags = data.read(3)
-	print(prefix + f'profile / compat / level = {avcProfileCompFlags.hex()}')
+	ps.print(f'profile / compat / level = {avcProfileCompFlags.hex()}')
 	composite_1, composite_2 = data.read(2)
 	complete_represenation, reserved_1, lengthSizeMinusOne = split_bits(composite_1, 8, 7, 2, 0)
 	reserved_2, numOfSequenceParameterSets = split_bits(composite_2, 8, 7, 0)
 	assert reserved_1 == mask(5), f'invalid reserved_1: {reserved_1}'
 	assert reserved_2 == 0, f'invalid reserved_2: {reserved_2}'
-	print(prefix + f'complete_represenation = {bool(complete_represenation)}')
-	print(prefix + f'lengthSizeMinusOne = {lengthSizeMinusOne}')
+	ps.print(f'complete_represenation = {bool(complete_represenation)}')
+	ps.field('lengthSizeMinusOne', lengthSizeMinusOne)
 
 	for i in range(numOfSequenceParameterSets):
 		size, = unpack(data, 'H')
 		sps = data.read(size)
 		assert len(sps) == size, f'not enough SPS data: expected {size}, found {len(sps)}'
-		print(prefix + f'- SPS: {sps.hex()}')
+		ps.print(f'- SPS: {sps.hex()}')
 	numOfPictureParameterSets, = data.read(1)
 	for i in range(numOfPictureParameterSets):
 		size, = unpack(data, 'H')
 		pps = data.read(size)
 		assert len(sps) == size, f'not enough PPS data: expected {size}, found {len(pps)}'
-		print(prefix + f'- PPS: {pps.hex()}')
+		ps.print(f'- PPS: {pps.hex()}')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_hvcC_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_hvcC_box(ps: Parser):
 	configurationVersion, = data.read(1)
 	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
 
@@ -915,47 +867,47 @@ def parse_hvcC_box(offset: int, data: memoryview, indent: int):
 	general_profile_space, general_tier_flag, general_profile_idc = split_bits(composite_1, 8, 6, 5, 0)
 	constantFrameRate, numTemporalLayers, temporalIdNested, lengthSizeMinusOne = split_bits(composite_2, 8, 6, 3, 2, 0)
 
-	print(prefix + f'general_profile_space = {general_profile_space}')
-	print(prefix + f'general_tier_flag = {general_tier_flag}')
-	print(prefix + f'general_profile_idc = {general_profile_idc:02x}')
+	ps.field('general_profile_space', general_profile_space)
+	ps.field('general_tier_flag', general_tier_flag)
+	ps.print(f'general_profile_idc = {general_profile_idc:02x}')
 
-	print(prefix + f'general_profile_compatibility_flags = {general_profile_compatibility_flags:08x}')
-	print(prefix + f'general_constraint_indicator_flags = {general_constraint_indicator_flags:012x}')
-	print(prefix + f'general_level_idc = {general_level_idc:02x}')
+	ps.print(f'general_profile_compatibility_flags = {general_profile_compatibility_flags:08x}')
+	ps.print(f'general_constraint_indicator_flags = {general_constraint_indicator_flags:012x}')
+	ps.print(f'general_level_idc = {general_level_idc:02x}')
 
 	reserved, min_spatial_segmentation_idc = split_bits(min_spatial_segmentation_idc, 16, 12, 0)
 	assert reserved == mask(4), f'invalid reserved: {reserved}'
-	print(prefix + f'min_spatial_segmentation_idc = {min_spatial_segmentation_idc}')
+	ps.field('min_spatial_segmentation_idc', min_spatial_segmentation_idc)
 	reserved, parallelismType = split_bits(parallelismType, 8, 2, 0)
 	assert reserved == mask(6), f'invalid reserved: {reserved}'
-	print(prefix + f'parallelismType = {parallelismType}')
+	ps.field('parallelismType', parallelismType)
 	reserved, chromaFormat = split_bits(chromaFormat, 8, 2, 0)
 	assert reserved == mask(6), f'invalid reserved: {reserved}'
-	print(prefix + f'chromaFormat = {chromaFormat}')
+	ps.field('chromaFormat', chromaFormat)
 	reserved, bitDepthLumaMinus8 = split_bits(bitDepthLumaMinus8, 8, 3, 0)
 	assert reserved == mask(5), f'invalid reserved: {reserved}'
-	print(prefix + f'bitDepthLumaMinus8 = {bitDepthLumaMinus8}')
+	ps.field('bitDepthLumaMinus8', bitDepthLumaMinus8)
 	reserved, bitDepthChromaMinus8 = split_bits(bitDepthChromaMinus8, 8, 3, 0)
 	assert reserved == mask(5), f'invalid reserved: {reserved}'
-	print(prefix + f'bitDepthChromaMinus8 = {bitDepthChromaMinus8}')
+	ps.field('bitDepthChromaMinus8', bitDepthChromaMinus8)
 
-	print(prefix + f'avgFrameRate = {avgFrameRate}')
-	print(prefix + f'constantFrameRate = {constantFrameRate}')
-	print(prefix + f'numTemporalLayers = {numTemporalLayers}')
-	print(prefix + f'temporalIdNested = {bool(temporalIdNested)}')
-	print(prefix + f'lengthSizeMinusOne = {lengthSizeMinusOne}')
+	ps.field('avgFrameRate', avgFrameRate)
+	ps.field('constantFrameRate', constantFrameRate)
+	ps.field('numTemporalLayers', numTemporalLayers)
+	ps.print(f'temporalIdNested = {bool(temporalIdNested)}')
+	ps.field('lengthSizeMinusOne', lengthSizeMinusOne)
 
 	numOfArrays, = unpack(data, 'B')
-	#print(prefix + f'numOfArrays = {numOfArrays}')
+	#ps.field('numOfArrays', numOfArrays)
 	for i in range(numOfArrays):
-		print(prefix + f'- array {i}:')
+		ps.print(f'- array {i}:')
 		composite, numNalus = unpack(data, 'BH')
 		array_completeness, reserved, NAL_unit_type = split_bits(composite, 8, 7, 6, 0)
 		assert reserved == 0, f'invalid reserved: {reserved}'
 
-		print(prefix + f'    array_completeness = {bool(array_completeness)}')
-		print(prefix + f'    NAL_unit_type = {NAL_unit_type}')
-		#print(prefix + f'    numNalus = {numNalus}')
+		ps.print(f'    array_completeness = {bool(array_completeness)}')
+		ps.print(f'    NAL_unit_type = {NAL_unit_type}')
+		#ps.print(f'    numNalus = {numNalus}')
 
 		for n in range(numNalus):
 			entry_start = offset + data.tell()
@@ -966,18 +918,16 @@ def parse_hvcC_box(offset: int, data: memoryview, indent: int):
 
 			offset_text = ansi_fg4(f' @ {entry_start:#x}, {data_start:#x} - {data_start + nalUnitLength:#x}') if show_offsets else ''
 			length_text = ansi_fg4(f' ({nalUnitLength})') if show_lengths else ''
-			print(prefix + f'    - NALU {n}' + offset_text + length_text)
-			print_hex_dump(nalData, prefix + '        ')
+			ps.print(f'    - NALU {n}' + offset_text + length_text)
+			print_hex_dump(nalData, ps.prefix + '        ')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
 # FIXME: implement av1C
 
-def parse_esds_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_esds_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
 	parse_descriptor(data, indent, expected=3)
@@ -992,25 +942,23 @@ def parse_m4ds_box(offset: int, data: memoryview, indent: int):
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_dOps_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_dOps_box(ps: Parser):
 
 	Version, OutputChannelCount, PreSkip, InputSampleRate, OutputGain, ChannelMappingFamily = unpack(data, 'BBHIhB')
 	assert Version == 0, f'invalid Version: {Version}'
 	OutputGain /= 1 << 8
-	print(prefix + f'OutputChannelCount = {OutputChannelCount}')
-	print(prefix + f'PreSkip = {PreSkip}')
-	print(prefix + f'InputSampleRate = {InputSampleRate}')
-	print(prefix + f'OutputGain = {OutputGain}')
-	print(prefix + f'ChannelMappingFamily = {ChannelMappingFamily}')
+	ps.field('OutputChannelCount', OutputChannelCount)
+	ps.field('PreSkip', PreSkip)
+	ps.field('InputSampleRate', InputSampleRate)
+	ps.field('OutputGain', OutputGain)
+	ps.field('ChannelMappingFamily', ChannelMappingFamily)
 	if ChannelMappingFamily != 0:
 		StreamCount, CoupledCount = data.read(2)
-		print(prefix + f'StreamCount = {StreamCount}')
-		print(prefix + f'CoupledCount = {CoupledCount}')
+		ps.field('StreamCount', StreamCount)
+		ps.field('CoupledCount', CoupledCount)
 		ChannelMapping = data.read(OutputChannelCount)
 		assert len(ChannelMapping) == OutputChannelCount, 'invalid ChannelMapping length'
-		print(prefix + f'ChannelMapping = {ChannelMapping}')
+		ps.field('ChannelMapping', ChannelMapping)
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
@@ -1018,112 +966,102 @@ def parse_dOps_box(offset: int, data: memoryview, indent: int):
 
 # TABLES
 
-def parse_elst_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_elst_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version <= 1, f'invalid version: {version}'
-	print(prefix + f'version = {version}')
+	ps.field('version', version)
 
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'entry_count = {entry_count}')
+	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		segment_duration, media_time, media_rate = \
 			unpack(data, ('Qq' if version == 1 else 'Ii') + 'i')
 		media_rate /= 1 << 16
 		if i < max_rows:
-			print(prefix + f'[edit segment {i:3}] duration = {segment_duration:6}, media_time = {media_time:6}, media_rate = {media_rate}')
+			ps.print(f'[edit segment {i:3}] duration = {segment_duration:6}, media_time = {media_time:6}, media_rate = {media_rate}')
 	if entry_count > max_rows:
-		print(prefix + '...')
+		ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_sidx_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_sidx_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version <= 1, f'invalid version: {version}'
-	print(prefix + f'version = {version}')
+	ps.field('version', version)
 
 	reference_ID, timescale, earliest_presentation_time, first_offset, reserved_1, reference_count = \
 		unpack(data, 'II' + ('II' if version == 0 else 'QQ') + 'HH')
-	print(prefix + f'reference_ID = {reference_ID}')
-	print(prefix + f'timescale = {timescale}')
-	print(prefix + f'earliest_presentation_time = {earliest_presentation_time}')
-	print(prefix + f'first_offset = {first_offset}')
-	print(prefix + f'reference_count = {reference_count}')
+	ps.field('reference_ID', reference_ID)
+	ps.field('timescale', timescale)
+	ps.field('earliest_presentation_time', earliest_presentation_time)
+	ps.field('first_offset', first_offset)
+	ps.field('reference_count', reference_count)
 	assert not reserved_1, f'invalid reserved_1 = {reserved_1}'
 	for i in range(reference_count):
 		composite_1, subsegment_duration, composite_2 = unpack(data, 'III')
 		reference_type, referenced_size = split_bits(composite_1, 32, 31, 0)
 		starts_with_SAP, SAP_type, SAP_delta_time = split_bits(composite_2, 32, 31, 28, 0)
 		if i < max_rows:
-			print(prefix + f'[reference {i:3}] type = {reference_type}, size = {referenced_size}, duration = {subsegment_duration}, starts_with_SAP = {starts_with_SAP}, SAP_type = {SAP_type}, SAP_delta_time = {SAP_delta_time}')
+			ps.print(f'[reference {i:3}] type = {reference_type}, size = {referenced_size}, duration = {subsegment_duration}, starts_with_SAP = {starts_with_SAP}, SAP_type = {SAP_type}, SAP_delta_time = {SAP_delta_time}')
 	if reference_count > max_rows:
-		print(prefix + '...')
+		ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_stts_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_stts_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
 	sample, time = 1, 0
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'entry_count = {entry_count}')
+	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		sample_count, sample_delta = unpack(data, 'II')
 		if i < max_rows:
-			print(prefix + f'[entry {i:3}] [sample = {sample:6}, time = {time:6}] sample_count = {sample_count:5}, sample_delta = {sample_delta:5}')
+			ps.print(f'[entry {i:3}] [sample = {sample:6}, time = {time:6}] sample_count = {sample_count:5}, sample_delta = {sample_delta:5}')
 		sample += sample_count
 		time += sample_count * sample_delta
 	if entry_count > max_rows:
-		print(prefix + '...')
-	print(prefix + f'[samples = {sample-1:6}, time = {time:6}]')
+		ps.print('...')
+	ps.print(f'[samples = {sample-1:6}, time = {time:6}]')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_ctts_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_ctts_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version <= 1, f'invalid version: {version}'
-	print(prefix + f'version = {version}')
+	ps.field('version', version)
 
 	sample = 1
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'entry_count = {entry_count}')
+	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		sample_count, sample_offset = unpack(data, 'I' + ('i' if version==1 else 'I'))
 		if i < max_rows:
-			print(prefix + f'[entry {i:3}] [sample = {sample:6}] sample_count = {sample_count:5}, sample_offset = {sample_offset:5}')
+			ps.print(f'[entry {i:3}] [sample = {sample:6}] sample_count = {sample_count:5}, sample_offset = {sample_offset:5}')
 		sample += sample_count
 	if entry_count > max_rows:
-		print(prefix + '...')
-	print(prefix + f'[samples = {sample-1:6}]')
+		ps.print('...')
+	ps.print(f'[samples = {sample-1:6}]')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_stsc_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_stsc_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
 	sample, last = 1, None
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'entry_count = {entry_count}')
+	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		first_chunk, samples_per_chunk, sample_description_index = unpack(data, 'III')
 		if last != None:
@@ -1131,225 +1069,205 @@ def parse_stsc_box(offset: int, data: memoryview, indent: int):
 			assert first_chunk > last_chunk
 			sample += last_spc * (first_chunk - last_chunk)
 		if i < max_rows:
-			print(prefix + f'[entry {i:3}] [sample = {sample:6}] first_chunk = {first_chunk:5}, samples_per_chunk = {samples_per_chunk:4}, sample_description_index = {sample_description_index}')
+			ps.print(f'[entry {i:3}] [sample = {sample:6}] first_chunk = {first_chunk:5}, samples_per_chunk = {samples_per_chunk:4}, sample_description_index = {sample_description_index}')
 		last = first_chunk, samples_per_chunk
 	if entry_count > max_rows:
-		print(prefix + '...')
+		ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_stsz_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_stsz_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
 	sample_size, sample_count = unpack(data, 'II')
 	if show_defaults or sample_size != 0:
-		print(prefix + f'sample_size = {sample_size}')
-	print(prefix + f'sample_count = {sample_count}')
+		ps.field('sample_size', sample_size)
+	ps.field('sample_count', sample_count)
 	if sample_size == 0:
 		for i in range(sample_count):
 			sample_size, = unpack(data, 'I')
 			if i < max_rows:
-				print(prefix + f'[sample {i+1:6}] sample_size = {sample_size:5}')
+				ps.print(f'[sample {i+1:6}] sample_size = {sample_size:5}')
 		if sample_count > max_rows:
-			print(prefix + '...')
+			ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_stco_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_stco_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'entry_count = {entry_count}')
+	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		chunk_offset, = unpack(data, 'I')
 		if i < max_rows:
-			print(prefix + f'[chunk {i+1:5}] offset = {chunk_offset:#08x}')
+			ps.print(f'[chunk {i+1:5}] offset = {chunk_offset:#08x}')
 	if entry_count > max_rows:
-		print(prefix + '...')
+		ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_co64_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_co64_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'entry_count = {entry_count}')
+	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		chunk_offset, = unpack(data, 'Q')
 		if i < max_rows:
-			print(prefix + f'[chunk {i+1:5}] offset = {chunk_offset:#016x}')
+			ps.print(f'[chunk {i+1:5}] offset = {chunk_offset:#016x}')
 	if entry_count > max_rows:
-		print(prefix + '...')
+		ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_stss_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_stss_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'entry_count = {entry_count}')
+	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		sample_number, = unpack(data, 'I')
 		if i < max_rows:
-			print(prefix + f'[sync sample {i:5}] sample_number = {sample_number:6}')
+			ps.print(f'[sync sample {i:5}] sample_number = {sample_number:6}')
 	if entry_count > max_rows:
-		print(prefix + '...')
+		ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_sbgp_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_sbgp_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version <= 1, f'invalid version: {version}'
-	print(prefix + f'version = {version}')
+	ps.field('version', version)
 
 	grouping_type, = unpack(data, '4s')
 	grouping_type = grouping_type.decode('latin1')
-	print(prefix + f'grouping_type = {repr(grouping_type)}')
+	ps.print(f'grouping_type = {repr(grouping_type)}')
 	if version == 1:
 		grouping_type_parameter, = unpack(data, 'I')
-		print(prefix + f'grouping_type_parameter = {grouping_type_parameter}')
+		ps.field('grouping_type_parameter', grouping_type_parameter)
 
 	sample = 1
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'entry_count = {entry_count}')
+	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		sample_count, group_description_index = unpack(data, 'II')
 		if i < max_rows:
-			print(prefix + f'[entry {i+1:5}] [sample = {sample:6}] sample_count = {sample_count:5}, group_description_index = {group_description_index:5}')
+			ps.print(f'[entry {i+1:5}] [sample = {sample:6}] sample_count = {sample_count:5}, group_description_index = {group_description_index:5}')
 		sample += sample_count
 	if entry_count > max_rows:
-		print(prefix + '...')
-	print(prefix + f'[samples = {sample-1:6}]')
+		ps.print('...')
+	ps.print(f'[samples = {sample-1:6}]')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_saiz_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_saiz_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
-	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
 	if box_flags & 1:
 		aux_info_type, aux_info_type_parameter = unpack(data, '4sI')
 		aux_info_type = aux_info_type.decode('latin1')
-		print(prefix + f'aux_info_type = {repr(aux_info_type)}')
-		print(prefix + f'aux_info_type_parameter = {aux_info_type_parameter:#x}')
+		ps.print(f'aux_info_type = {repr(aux_info_type)}')
+		ps.print(f'aux_info_type_parameter = {aux_info_type_parameter:#x}')
 
 	default_sample_info_size, sample_count = unpack(data, 'BI')
-	print(prefix + f'default_sample_info_size = {default_sample_info_size}')
-	print(prefix + f'sample_count = {sample_count}')
+	ps.field('default_sample_info_size', default_sample_info_size)
+	ps.field('sample_count', sample_count)
 	if default_sample_info_size == 0:
 		for i in range(sample_count):
 			sample_info_size, = unpack(data, 'B')
 			if i < max_rows:
-				print(prefix + f'[sample {i+1:6}] sample_info_size = {sample_info_size:5}')
+				ps.print(f'[sample {i+1:6}] sample_info_size = {sample_info_size:5}')
 		if sample_count > max_rows:
-			print(prefix + '...')
+			ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_saio_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
-	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+def parse_saio_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
 	if box_flags & 1:
 		aux_info_type, aux_info_type_parameter = unpack(data, '4sI')
 		aux_info_type = aux_info_type.decode('latin1')
-		print(prefix + f'aux_info_type = {repr(aux_info_type)}')
-		print(prefix + f'aux_info_type_parameter = {aux_info_type_parameter:#x}')
+		ps.print(f'aux_info_type = {repr(aux_info_type)}')
+		ps.print(f'aux_info_type_parameter = {aux_info_type_parameter:#x}')
 
 	entry_count, = unpack(data, 'I')
-	print(prefix + f'entry_count = {entry_count}')
+	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		offset, = unpack(data, 'I' if version == 0 else 'Q')
 		if i < max_rows:
-			print(prefix + f'[entry {i+1:6}] offset = {offset:#08x}')
+			ps.print(f'[entry {i+1:6}] offset = {offset:#08x}')
 	if entry_count > max_rows:
-		print(prefix + '...')
+		ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_tfdt_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_tfdt_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
 
 	base_media_decode_time, = unpack(data, 'I' if version == 0 else 'Q')
-	print(prefix + f'version = {version}, flags = {box_flags:06x}')
-	print(prefix + f'baseMediaDecodeTime = {base_media_decode_time}')
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
+	ps.print(f'baseMediaDecodeTime = {base_media_decode_time}')
 
-def parse_tfhd_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_tfhd_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 
-	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
 	track_ID, = unpack(data, 'I')
-	print(prefix + f'track_ID = {track_ID}')
+	ps.field('track_ID', track_ID)
 	if box_flags & 0x10000:  # duration‐is‐empty
-		print(prefix + 'duration-is-empty flag set')
+		ps.print('duration-is-empty flag set')
 	if box_flags & 0x20000:  # default-base-is-moof
-		print(prefix + 'default-base-is-moof flag set')
+		ps.print('default-base-is-moof flag set')
 
 	if box_flags & 0x1:  # base‐data‐offset‐present
 		base_data_offset, = unpack(data, 'Q')
-		print(prefix + f'base_data_offset = {base_data_offset}')
+		ps.field('base_data_offset', base_data_offset)
 	if box_flags & 0x2:  # sample-description-index-present
 		sample_description_index, = unpack(data, 'I')
-		print(prefix + f'sample_description_index = {sample_description_index}')
+		ps.field('sample_description_index', sample_description_index)
 	if box_flags & 0x8:  # default‐sample‐duration‐present
 		default_sample_duration, = unpack(data, 'I')
-		print(prefix + f'default_sample_duration = {default_sample_duration}')
+		ps.field('default_sample_duration', default_sample_duration)
 	if box_flags & 0x10:  # default‐sample‐size‐present
 		default_sample_size, = unpack(data, 'I')
-		print(prefix + f'default_sample_size = {default_sample_size}')
+		ps.field('default_sample_size', default_sample_size)
 
 
-def parse_trun_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_trun_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 
 	sample_count, = unpack(data, 'I')
-	print(prefix + f'version = {version}, flags = {box_flags:06x}, sample_count = {sample_count}')
+	ps.print(f'version = {version}, flags = {box_flags:06x}, sample_count = {sample_count}')
 	if box_flags & (1 << 0):
 		data_offset, = unpack(data, 'i')
-		print(prefix + f'data_offset = {data_offset:#x}')
+		ps.print(f'data_offset = {data_offset:#x}')
 	if box_flags & (1 << 2):
 		first_sample_flags, = unpack(data, 'I')
-		print(prefix + f'first_sample_flags = {first_sample_flags:08x}')
+		ps.print(f'first_sample_flags = {first_sample_flags:08x}')
 
 	s_offset = 0
 	s_time = 0
@@ -1370,9 +1288,9 @@ def parse_trun_box(offset: int, data: memoryview, indent: int):
 			sample_composition_time_offset, = unpack(data, 'I' if version == 0 else 'i')
 			s_text.append(f'{sample_composition_time_offset}')
 		if s_idx < max_rows:
-			print(prefix + f'[sample {s_idx:4}] {", ".join(s_text)}')
+			ps.print(f'[sample {s_idx:4}] {", ".join(s_text)}')
 	if sample_count > max_rows:
-		print(prefix + '...')
+		ps.print('...')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
@@ -1382,87 +1300,79 @@ def parse_trun_box(offset: int, data: memoryview, indent: int):
 
 # DRM boxes
 
-def parse_frma_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
+def parse_frma_box(ps: Parser):
 
 	data_format, = unpack(data, '4s')
 	data_format = data_format.decode('latin1')
-	print(prefix + f'data_format = {repr(data_format)}')
+	ps.print(f'data_format = {repr(data_format)}')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_schm_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
+def parse_schm_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
-	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
 	scheme_type, scheme_version = unpack(data, '4sI')
 	scheme_type = scheme_type.decode('latin1')
-	print(prefix + f'scheme_type = {repr(scheme_type)}')
-	print(prefix + f'scheme_version = {scheme_version:#x}')
+	ps.print(f'scheme_type = {repr(scheme_type)}')
+	ps.print(f'scheme_version = {scheme_version:#x}')
 	if box_flags & 1:
 		scheme_uri = read_string(data)
-		print(prefix + f'scheme_uri = {repr(scheme_uri)}')
+		ps.print(f'scheme_uri = {repr(scheme_uri)}')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_tenc_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
-	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+def parse_tenc_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
 	reserved_1, reserved_2 = unpack(data, 'BB')
 	assert reserved_1 == 0, f'invalid reserved 1: {reserved_1}'
 	if version > 0:
 		default_crypt_byte_block, default_skip_byte_block = split_bits(reserved_2, 8, 4, 0)
-		print(prefix + f'default_crypt_byte_block = {default_crypt_byte_block}')
-		print(prefix + f'default_skip_byte_block = {default_skip_byte_block}')
+		ps.field('default_crypt_byte_block', default_crypt_byte_block)
+		ps.field('default_skip_byte_block', default_skip_byte_block)
 	else:
 		assert reserved_2 == 0, f'invalid reserved 2: {reserved_2}'
 
 	default_isProtected, default_Per_Sample_IV_Size, default_KID = unpack(data, 'BB16s')
-	print(prefix + f'default_isProtected = {default_isProtected}')
-	print(prefix + f'default_Per_Sample_IV_Size = {default_Per_Sample_IV_Size}')
-	print(prefix + f'default_KID = {default_KID.hex()}')
+	ps.field('default_isProtected', default_isProtected)
+	ps.field('default_Per_Sample_IV_Size', default_Per_Sample_IV_Size)
+	ps.print(f'default_KID = {default_KID.hex()}')
 	if default_isProtected == 1 and default_Per_Sample_IV_Size == 0:
 		default_constant_IV_size, = unpack(data, 'B')
 		default_constant_IV = data.read(default_constant_IV_size)
 		assert len(default_constant_IV) == default_constant_IV_size, \
 			f'unexpected EOF within default_constant_IV: expected {default_constant_IV_size}, got {len(default_constant_IV)}'
-		print(prefix + f'default_constant_IV = {default_constant_IV.hex()}')
+		ps.print(f'default_constant_IV = {default_constant_IV.hex()}')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
-def parse_pssh_box(offset: int, data: memoryview, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	data = io.BytesIO(data)
-	version, box_flags = parse_fullbox(data, prefix)
-	print(prefix + f'version = {version}, flags = {box_flags:06x}')
+def parse_pssh_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps)
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
 	SystemID, = unpack(data, '16s')
 	system_name, system_comment = protection_systems.get(format_uuid(SystemID), (None, None))
 	system_desc = f' ({system_name})' if system_name else ''
-	print(prefix + f'SystemID = {format_uuid(SystemID)}{system_desc}')
+	ps.print(f'SystemID = {format_uuid(SystemID)}{system_desc}')
 
 	if version > 0:
 		KID_count, = unpack(data, 'I')
 		for i in range(KID_count):
 			KID, = unpack(data, '16s')
-			print(prefix + f'- KID: {KID.hex()}')
+			ps.print(f'- KID: {KID.hex()}')
 
 	DataSize, = unpack(data, 'I')
-	print(prefix + f'DataSize = {DataSize}')
+	ps.field('DataSize', DataSize)
 	Data = data.read(DataSize)
 	assert len(Data) == DataSize, f'unexpected EOF within Data: expected {DataSize}, got {len(Data)}'
-	print(prefix + f'Data =')
-	print_hex_dump(Data, prefix + '  ')
+	ps.print(f'Data =')
+	print_hex_dump(Data, ps.prefix + '  ')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
