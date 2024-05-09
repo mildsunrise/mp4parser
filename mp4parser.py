@@ -39,7 +39,7 @@ get_bits = lambda x, end, start: (x & mask(end)) >> start
 split_bits = lambda x, *bits: (get_bits(x, a, b) for a, b in itertools.pairwise(bits))
 
 def main():
-	parse_boxes(0, mp4mem)
+	parse_boxes(Parser(mp4mem, 0, 0))
 
 
 # UTILITIES
@@ -343,13 +343,13 @@ def parse_contents(btype: str, ps: Parser):
 		print_error(e, ps.prefix)
 
 	# as fall back (or if error), print hex dump
-	if not max_dump or ps.buffer: return
+	if not max_dump or not ps.buffer: return
 	print_hex_dump(ps.buffer, ps.prefix)
 
-def parse_fullbox(data: io.BytesIO, prefix: str):
-	fv = data.read(4)
-	assert len(fv) == 4
-	return fv[0], int.from_bytes(fv[1:], 'big')
+def parse_fullbox(ps: Parser):
+	version = ps.int(1)
+	flags = ps.int(3)
+	return version, flags
 
 def parse_skip_box(ps: Parser):
 	data = ps.read()
@@ -366,7 +366,7 @@ parse_free_box = parse_skip_box
 def parse_meta_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
-	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
+	parse_boxes(ps)
 
 # hack: use a global variable because I'm too lazy to rewrite everything to pass this around
 # FIXME: remove this hack, which is sometimes unreliable since there can be inner handlers we don't care about
@@ -394,7 +394,7 @@ def parse_stsd_box(ps: Parser):
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
 
 	contents_fn = lambda *a, **b: parse_sample_entry_contents(*a, **b, version=version)
-	boxes = parse_boxes(offset + data.tell(), memoryview(data.read()), indent, contents_fn=contents_fn)
+	boxes = parse_boxes(ps, contents_fn=contents_fn)
 	assert len(boxes) == entry_count, f'entry_count not matching boxes present'
 
 def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
@@ -406,17 +406,17 @@ def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
 
 	try:
 		if last_handler_seen == 'vide':
-			return parse_video_sample_entry_contents(btype, offset, data, indent, version)
+			return parse_video_sample_entry_contents(btype, ps, version)
 		if last_handler_seen == 'soun':
-			return parse_audio_sample_entry_contents(btype, offset, data, indent, version)
+			return parse_audio_sample_entry_contents(btype, ps, version)
 		if last_handler_seen in {'meta', 'text', 'subt'}:
-			return parse_text_sample_entry_contents(btype, offset, data, indent, version)
+			return parse_text_sample_entry_contents(btype, ps, version)
 	except Exception as e:
 		print_error(e, ps.prefix)
 
 	# as fall back (or if error), print hex dump
-	if not max_dump or not data: return
-	print_hex_dump(data, ps.prefix)
+	if not max_dump or not ps.buffer: return
+	print_hex_dump(ps.buffer, ps.prefix)
 
 def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
@@ -441,7 +441,7 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert not reserved_2, f'invalid reserved: {reserved_2}'
 	assert pre_defined_3 == -1, f'invalid reserved: {pre_defined_3}'
 
-	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
+	parse_boxes(ps)
 
 def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version <= 1, 'invalid version'
@@ -468,7 +468,7 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 		if show_defaults or samplerate != (1 << 16):
 			ps.print(f'samplerate = {samplerate / (1 << 16)}')
 
-	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
+	parse_boxes(ps)
 
 def parse_text_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
@@ -485,9 +485,9 @@ def parse_text_sample_entry_contents(btype: str, ps: Parser, version: int):
 		'stpp': ('namespace', 'schema_location', 'auxiliary_mime_types'),
 	}.get(btype, [])
 	for field_name in fields:
-		ps.print(f'{field_name} = {repr(read_string(data))}')
+		ps.field(field_name, ps.string())
 
-	parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
+	parse_boxes(ps)
 
 
 # HEADER BOXES
@@ -503,12 +503,12 @@ def parse_ftyp_box(ps: Parser):
 
 parse_styp_box = parse_ftyp_box
 
-def parse_matrix(data: io.BytesIO, prefix: str):
+def parse_matrix(ps: Parser):
 	matrix = [ x / (1 << 16) for x in unpack(data, '9i') ]
 	if show_defaults or matrix != [1,0,0, 0,1,0, 0,0,0x4000]:
 		ps.field('matrix', matrix)
 
-def parse_language(data: io.BytesIO, prefix: str):
+def parse_language(ps: Parser):
 	language, = unpack(data, 'H')
 	if not language:
 		ps.print('language = (null)') # FIXME: log a warning or something
@@ -550,7 +550,7 @@ def parse_mvhd_box(ps: Parser):
 	assert not reserved_2, f'invalid reserved_2: {reserved_2}'
 	assert not reserved_3, f'invalid reserved_3: {reserved_3}'
 
-	parse_matrix(data, ps.prefix)
+	parse_matrix(ps)
 
 	pre_defined = data.read(6 * 4)
 	assert not any(pre_defined), f'invalid pre_defined: {pre_defined}'
@@ -582,7 +582,7 @@ def parse_tkhd_box(ps: Parser):
 	assert not reserved_3, f'invalid reserved_1: {reserved_3}'
 	assert not reserved_4, f'invalid reserved_1: {reserved_4}'
 
-	parse_matrix(data, ps.prefix)
+	parse_matrix(ps)
 
 	width, height = unpack(data, 'II')
 	width /= 1 << 16
@@ -604,7 +604,7 @@ def parse_mdhd_box(ps: Parser):
 	ps.field('modification_time', modification_time)
 	ps.field('timescale', timescale)
 	ps.field('duration', duration)
-	parse_language(data, ps.prefix)
+	parse_language(ps)
 	pre_defined_1, = unpack(data, 'H')
 	assert not pre_defined_1, f'invalid reserved_1: {pre_defined_1}'
 
@@ -677,7 +677,7 @@ def parse_ID32_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	ps.print(f'flags = {box_flags:06x}')
-	parse_language(data, ps.prefix)
+	parse_language(ps)
 	ps.print(f'ID3v2 data =')
 	print_hex_dump(data.read(), ps.prefix + '  ')
 
@@ -688,15 +688,15 @@ def parse_dref_box(ps: Parser):
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
 	ps.print(f'version = {version}, entry_count = {entry_count}')
 
-	boxes = parse_boxes(offset + data.tell(), memoryview(data.read()), indent)
+	boxes = parse_boxes(ps)
 	assert len(boxes) == entry_count, f'entry_count not matching boxes present'
 
 def parse_url_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	ps.print(f'flags = {box_flags:06x}')
-	if (location := read_string(data, optional=True)) != None:
-		ps.print(f'location = {repr(location)}')
+	if ps.ended: return
+	ps.field('location', ps.string())
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
@@ -704,10 +704,10 @@ def parse_urn_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	ps.print(f'flags = {box_flags:06x}')
-	if (location := read_string(data, optional=True)) != None:
-		ps.print(f'location = {repr(location)}')
-	if (name := read_string(data, optional=True)) != None:
-		ps.print(f'name = {repr(name)}')
+	if ps.ended: return
+	ps.field('location', ps.string())
+	if ps.ended: return
+	ps.field('name', ps.string())
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
@@ -930,15 +930,14 @@ def parse_esds_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
-	parse_descriptor(data, indent, expected=3)
+	parse_descriptor(io.BytesIO(ps.read()), ps.indent, expected=3)
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
 parse_iods_box = parse_esds_box
 
-def parse_m4ds_box(offset: int, data: memoryview, indent: int):
-	data = io.BytesIO(data)
-	parse_descriptors(data, indent)
+def parse_m4ds_box(ps: Parser):
+	parse_descriptors(io.BytesIO(ps.read()), ps.indent)
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
