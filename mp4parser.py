@@ -983,17 +983,18 @@ def parse_stsc_box(offset: int, data: memoryview, indent: int):
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
-	sample, last_chunk, last_spc = 1, None, None
+	sample, last = 1, None
 	entry_count, = unpack(data, 'I')
 	print(prefix + f'entry_count = {entry_count}')
 	for i in range(entry_count):
 		first_chunk, samples_per_chunk, sample_description_index = unpack(data, 'III')
-		if last_chunk != None:
+		if last != None:
+			last_chunk, last_spc = last
 			assert first_chunk > last_chunk
 			sample += last_spc * (first_chunk - last_chunk)
 		if i < max_rows:
 			print(prefix + f'[entry {i:3}] [sample = {sample:6}] first_chunk = {first_chunk:5}, samples_per_chunk = {samples_per_chunk:4}, sample_description_index = {sample_description_index}')
-		last_chunk, last_spc = first_chunk, samples_per_chunk
+		last = first_chunk, samples_per_chunk
 	if entry_count > max_rows:
 		print(prefix + '...')
 
