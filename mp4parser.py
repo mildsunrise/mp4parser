@@ -183,7 +183,9 @@ class Parser(MVIO):
 	def raw_field(self, name: str, value: str):
 		self.print(name + ' = ' + value)
 
-	def field(self, name: str, value: T, format: Union[str, Callable[[T], str]]=repr):
+	def field(self, name: str, value: T, format: Union[str, Callable[[T], str]]=repr, default: Optional[T]=None):
+		if not show_defaults and value == default:
+			return
 		self.raw_field(name,
 			value.__format__(format) if isinstance(format, str) else format(value))
 
