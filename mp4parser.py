@@ -384,11 +384,9 @@ def parse_hdlr_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0 and box_flags == 0, 'invalid version / flags'
 	# FIXME: a lot of videos seem to break the second assertion (apple metadata?), some break the first
-	pre_defined = ps.int(4)
-	assert not pre_defined, f'invalid pre-defined: {pre_defined}'
+	ps.reserved('pre_defined', ps.int(4))
 	handler_type = ps.fourcc()
-	reserved = ps.bytes(4 * 3)
-	assert not any(reserved), f'invalid reserved: {reserved}'
+	ps.reserved('reserved', ps.bytes(4 * 3))
 	name = ps.bytes().decode('utf-8')
 	ps.print(f'handler_type = {repr(handler_type)}, name = {repr(name)}')
 
@@ -406,8 +404,7 @@ def parse_stsd_box(ps: Parser):
 	assert len(boxes) == entry_count, f'entry_count not matching boxes present'
 
 def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
-	reserved = ps.bytes(6)
-	assert not any(reserved), f'invalid reserved field: {reserved}'
+	ps.reserved('reserved', ps.bytes(6))
 	ps.field('data_reference_index', ps.int(2))
 
 	try:
@@ -427,23 +424,19 @@ def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
 def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
 
-	reserved = ps.bytes(16)
-	assert not any(reserved), f'invalid reserved / pre-defined data: {reserved}'
+	ps.reserved('reserved', ps.bytes(16))
 
 	ps.field('size', (ps.int(2), ps.int(2)), format_size)
 	ps.field('resolution', (ps.int(4), ps.int(4)), format_size, default=(0x00480000,)*2)
-	reserved_2 = ps.int(4)
-	assert not reserved_2, f'invalid reserved: {reserved_2}'
+	ps.reserved('reserved_2', ps.int(4))
 	ps.field('frame_count', ps.int(2), default=1)
 
 	with ps.subparser(32) as ps2:
 		ps.field('compressorname', ps2.bytes(ps2.int(1)).decode('utf-8'))
-		compressorname_pad = ps2.bytes()
-		assert not any(compressorname_pad), f'invalid compressorname_pad: {compressorname_pad}'
+		ps.reserved('compressorname_pad', ps2.bytes())
 
 	ps.field('depth', ps.int(2), default=0x18)
-	pre_defined_3 = ps.sint(2)
-	assert pre_defined_3 == -1, f'invalid reserved: {pre_defined_3}'
+	ps.reserved('pre_defined_3', ps.sint(2), -1)
 
 	parse_boxes(ps)
 
@@ -451,26 +444,19 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version <= 1, 'invalid version'
 
 	if version == 0:
-		reserved_1 = ps.bytes(8)
-		assert not any(reserved_1), f'invalid reserved_1: {reserved_1}'
+		ps.reserved('reserved_1', ps.bytes(8))
 		ps.field('channelcount', ps.int(2), default=2)
 		ps.field('samplesize', ps.int(2), default=16)
-		pre_defined_1 = ps.int(2)
-		assert not pre_defined_1, f'invalid pre_defined_1: {pre_defined_1}'
-		reserved_2 = ps.int(2)
-		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
+		ps.reserved('pre_defined_1', ps.int(2))
+		ps.reserved('reserved_2', ps.int(2))
 		ps.field('samplerate', ps.int(4) / (1 << 16))
 	else:
-		entry_version = ps.int(2)
-		assert entry_version == 1, f'invalid entry_version: {entry_version}'
-		reserved_1 = ps.bytes(6)
-		assert not any(reserved_1), f'invalid reserved_1: {reserved_1}'
+		ps.reserved('entry_version', ps.int(2), 1)
+		ps.reserved('reserved_1', ps.bytes(6))
 		ps.field('channelcount', ps.int(2))
 		ps.field('samplesize', ps.int(2), default=16)
-		pre_defined_1 = ps.int(2)
-		assert not pre_defined_1, f'invalid pre_defined_1: {pre_defined_1}'
-		reserved_2 = ps.int(2)
-		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
+		ps.reserved('pre_defined_1', ps.int(2))
+		ps.reserved('reserved_2', ps.int(2))
 		ps.field('samplerate', ps.int(4) / (1 << 16), default=1)
 
 	parse_boxes(ps)
@@ -542,17 +528,13 @@ def parse_mvhd_box(ps: Parser):
 	ps.field('duration', ps.int(wsize))
 	ps.field('rate', ps.sint(4) / (1 << 16), default=1)
 	ps.field('volume', ps.sint(2) / (1 << 8), default=1)
-	reserved_1 = ps.int(2)
-	assert not reserved_1, f'invalid reserved_1: {reserved_1}'
-	reserved_2 = ps.int(4)
-	assert not reserved_2, f'invalid reserved_2: {reserved_2}'
-	reserved_3 = ps.int(4)
-	assert not reserved_3, f'invalid reserved_3: {reserved_3}'
+	ps.reserved('reserved_1', ps.int(2))
+	ps.reserved('reserved_2', ps.int(4))
+	ps.reserved('reserved_3', ps.int(4))
 
 	parse_matrix(ps)
 
-	pre_defined = ps.bytes(6 * 4)
-	assert not any(pre_defined), f'invalid pre_defined: {pre_defined}'
+	ps.reserved('pre_defined', ps.bytes(6 * 4))
 	next_track_ID = ps.int(4)
 	ps.field('next_track_ID', next_track_ID)
 
@@ -565,18 +547,14 @@ def parse_tkhd_box(ps: Parser):
 	ps.field('creation_time', ps.int(wsize))
 	ps.field('modification_time', ps.int(wsize))
 	ps.field('track_ID', ps.int(4))
-	reserved_1 = ps.int(4)
-	assert not reserved_1, f'invalid reserved_1: {reserved_1}'
+	ps.reserved('reserved_1', ps.int(4))
 	ps.field('duration', ps.int(wsize))
-	reserved_2 = ps.int(4)
-	assert not reserved_2, f'invalid reserved_1: {reserved_2}'
-	reserved_3 = ps.int(4)
-	assert not reserved_3, f'invalid reserved_1: {reserved_3}'
+	ps.reserved('reserved_2', ps.int(4))
+	ps.reserved('reserved_3', ps.int(4))
 	ps.field('layer', ps.sint(2), default=0)
 	ps.field('alternate_group', ps.sint(2), default=0)
 	ps.field('volume', ps.sint(2) / (1 << 8))
-	reserved_4 = ps.int(2)
-	assert not reserved_4, f'invalid reserved_1: {reserved_4}'
+	ps.reserved('reserved_4', ps.int(2))
 	parse_matrix(ps)
 	ps.field('size', (ps.int(4) / (1 << 16), ps.int(4) / (1 << 16)), format_size)
 
@@ -592,8 +570,7 @@ def parse_mdhd_box(ps: Parser):
 	ps.field('timescale', ps.int(4))
 	ps.field('duration', ps.int(wsize))
 	parse_language(ps)
-	pre_defined_1 = ps.int(2)
-	assert not pre_defined_1, f'invalid reserved_1: {pre_defined_1}'
+	ps.reserved('pre_defined_1', ps.int(2))
 
 def parse_mehd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -611,8 +588,7 @@ def parse_smhd_box(ps: Parser):
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
 	ps.field('balance', ps.sint(2), default=0)
-	reserved = ps.int(2)
-	assert not reserved, f'invalid reserved: {reserved}'
+	ps.reserved('reserved', ps.int(2))
 
 def parse_vmhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -694,8 +670,7 @@ def parse_colr_box(ps: Parser):
 		ps.field('matrix_coefficients', ps.int(2))
 		with ps.bits(1) as br:
 			ps.field('full_range_flag', br.bit())
-			reserved = br.read()
-			assert not reserved, f'invalid reserved: {reserved}'
+			ps.reserved('reserved', br.read())
 	else:
 		name = 'ICC_profile' if colour_type in { 'rICC', 'prof' } else 'data'
 		ps.print(f'{name} =')
@@ -749,13 +724,11 @@ def parse_avcC_box(ps: Parser):
 		raise AssertionError(f'invalid configuration version: {configurationVersion}')
 	ps.field('profile / compat / level', ps.bytes(3).hex())
 	with ps.bits(1) as br:
-		reserved_1 = br.read(6)
-		assert reserved_1 == mask(6), f'invalid reserved_1: {reserved_1}'
+		ps.reserved('reserved_1', br.read(6), mask(6))
 		ps.field('lengthSizeMinusOne', br.read(2))
 
 	with ps.bits(1) as br:
-		reserved_2 = br.read(3)
-		assert reserved_2 == mask(3), f'invalid reserved_2: {reserved_2}'
+		ps.reserved('reserved_2', br.read(3), mask(3))
 		numOfSequenceParameterSets = br.read(5)
 	for i in range(numOfSequenceParameterSets):
 		ps.print(f'- SPS: {ps.bytes(ps.int(2)).hex()}')
@@ -771,13 +744,11 @@ def parse_svcC_box(ps: Parser):
 	ps.field('profile / compat / level', ps.bytes(3).hex())
 	with ps.bits(1) as br:
 		ps.field('complete_represenation', br.bit())
-		reserved_1 = br.read(5)
-		assert reserved_1 == mask(5), f'invalid reserved_1: {reserved_1}'
+		ps.reserved('reserved_1', br.read(5), mask(5))
 		ps.field('lengthSizeMinusOne', br.read(2))
 
 	with ps.bits(1) as br:
-		reserved_2 = br.read(1)
-		assert reserved_2 == 0, f'invalid reserved_2: {reserved_2}'
+		ps.reserved('reserved_2', br.read(1), 0)
 		numOfSequenceParameterSets = br.read(7)
 	for i in range(numOfSequenceParameterSets):
 		ps.print(f'- SPS: {ps.bytes(ps.int(2)).hex()}')
@@ -798,24 +769,19 @@ def parse_hvcC_box(ps: Parser):
 	ps.field('general_level_idc', ps.bytes(1).hex())
 
 	with ps.bits(2) as br:
-		reserved = br.read(4)
-		assert reserved == mask(4), f'invalid reserved: {reserved}'
+		ps.reserved('reserved', br.read(4), mask(4))
 		ps.field('min_spatial_segmentation_idc', br.read())
 	with ps.bits(1) as br:
-		reserved = br.read(6)
-		assert reserved == mask(6), f'invalid reserved: {reserved}'
+		ps.reserved('reserved', br.read(6), mask(6))
 		ps.field('parallelismType', br.read())
 	with ps.bits(1) as br:
-		reserved = br.read(6)
-		assert reserved == mask(6), f'invalid reserved: {reserved}'
+		ps.reserved('reserved', br.read(6), mask(6))
 		ps.field('chromaFormat', br.read())
 	with ps.bits(1) as br:
-		reserved = br.read(5)
-		assert reserved == mask(5), f'invalid reserved: {reserved}'
+		ps.reserved('reserved', br.read(5), mask(5))
 		ps.field('bitDepthLumaMinus8', br.read())
 	with ps.bits(1) as br:
-		reserved = br.read(5)
-		assert reserved == mask(5), f'invalid reserved: {reserved}'
+		ps.reserved('reserved', br.read(5), mask(5))
 		ps.field('bitDepthChromaMinus8', br.read())
 
 	avgFrameRate = ps.int(2)
@@ -834,8 +800,7 @@ def parse_hvcC_box(ps: Parser):
 		with ps.bits(1) as br:
 			array_completeness = br.bit()
 			ps.print(f'    array_completeness = {bool(array_completeness)}')
-			reserved = br.read(1)
-			assert reserved == 0, f'invalid reserved: {reserved}'
+			ps.reserved('reserved', br.read(1), 0)
 			NAL_unit_type = br.read(6)
 			ps.print(f'    NAL_unit_type = {NAL_unit_type}')
 
@@ -904,8 +869,7 @@ def parse_sidx_box(ps: Parser):
 	ps.field('timescale', ps.int(4))
 	ps.field('earliest_presentation_time', ps.int(wsize))
 	ps.field('first_offset', ps.int(wsize))
-	reserved_1 = ps.int(2)
-	assert not reserved_1, f'invalid reserved_1 = {reserved_1}'
+	ps.reserved('reserved_1', ps.int(2))
 	ps.field('reference_count', reference_count := ps.int(2))
 	for i in range(reference_count):
 		with ps.bits(4) as br:
@@ -1190,16 +1154,14 @@ def parse_tenc_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
-	reserved_1 = ps.int(1)
-	assert reserved_1 == 0, f'invalid reserved 1: {reserved_1}'
+	ps.reserved('reserved_1', ps.int(1), 0)
 
 	if version > 0:
 		with ps.bits(1) as br:
 			ps.field('default_crypt_byte_block', br.read(4))
 			ps.field('default_skip_byte_block', br.read(4))
 	else:
-		reserved_2 = ps.int(1)
-		assert reserved_2 == 0, f'invalid reserved 2: {reserved_2}'
+		ps.reserved('reserved_2', ps.int(1), 0)
 
 	ps.field('default_isProtected', default_isProtected := ps.int(1))
 	ps.field('default_Per_Sample_IV_Size', default_Per_Sample_IV_Size := ps.int(1))
