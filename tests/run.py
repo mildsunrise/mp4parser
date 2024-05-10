@@ -3,6 +3,13 @@
 from subprocess import run
 import os
 import sys
+from collections import Counter
+
+def delete_if_present(fname: str):
+	try:
+		os.remove(fname)
+	except FileNotFoundError:
+		pass
 
 os.chdir(os.path.dirname(__file__))
 
@@ -11,10 +18,7 @@ is_case = lambda f: any(f.endswith(ext) for ext in case_exts)
 cases = sorted(filter(is_case, os.listdir()))
 
 # we'll be using --append, so make sure to start with an empty dataset
-try:
-	os.remove('.coverage')
-except FileNotFoundError:
-	pass
+delete_if_present('.coverage')
 
 failures = set()
 
@@ -37,6 +41,8 @@ for i, case in enumerate(cases):
 		continue
 
 	if res.stdout == refout:
+		delete_if_present(out_file)
+		delete_if_present(diff_file)
 		continue
 
 	with open(out_file, 'w') as f:
@@ -46,7 +52,8 @@ for i, case in enumerate(cases):
 	with open(diff_file, 'w') as f:
 		f.write(diff.stdout)
 
-	print('output differs: ')
+	diffstats = Counter(line[0] for line in diff.stdout.splitlines()[4:] if line[0] in {'+', '-'})
+	print(f'output differs: \x1b[31m-{diffstats["-"]} \x1b[32m+{diffstats["+"]}\x1b[m')
 	failures.add(case)
 
 print('\r\x1b[J' + (
