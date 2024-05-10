@@ -397,7 +397,7 @@ def parse_hdlr_box(ps: Parser):
 
 def parse_stsd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.print(f'version = {version}, entry_count = {entry_count}')
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
 
@@ -430,19 +430,19 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	reserved = ps.bytes(16)
 	assert not any(reserved), f'invalid reserved / pre-defined data: {reserved}'
 
-	ps.field('size', (ps.unpack('H')[0], ps.unpack('H')[0]), format_size)
-	ps.field('resolution', (ps.unpack('I')[0], ps.unpack('I')[0]), format_size, default=(0x00480000,)*2)
-	reserved_2 = ps.unpack('I')[0]
+	ps.field('size', (ps.int(2), ps.int(2)), format_size)
+	ps.field('resolution', (ps.int(4), ps.int(4)), format_size, default=(0x00480000,)*2)
+	reserved_2 = ps.int(4)
 	assert not reserved_2, f'invalid reserved: {reserved_2}'
-	ps.field('frame_count', ps.unpack('H')[0], default=1)
+	ps.field('frame_count', ps.int(2), default=1)
 
 	with ps.subparser(32) as ps2:
 		ps.field('compressorname', ps2.bytes(ps2.int(1)).decode('utf-8'))
 		compressorname_pad = ps2.bytes()
 		assert not any(compressorname_pad), f'invalid compressorname_pad: {compressorname_pad}'
 
-	ps.field('depth', ps.unpack('H')[0], default=0x18)
-	pre_defined_3 = ps.unpack('h')[0]
+	ps.field('depth', ps.int(2), default=0x18)
+	pre_defined_3 = ps.sint(2)
 	assert pre_defined_3 == -1, f'invalid reserved: {pre_defined_3}'
 
 	parse_boxes(ps)
@@ -451,27 +451,27 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version <= 1, 'invalid version'
 
 	if version == 0:
-		reserved_1 = ps.unpack('8s')[0]
+		reserved_1 = ps.bytes(8)
 		assert not any(reserved_1), f'invalid reserved_1: {reserved_1}'
-		ps.field('channelcount', ps.unpack('H')[0], default=2)
-		ps.field('samplesize', ps.unpack('H')[0], default=16)
-		pre_defined_1 = ps.unpack('H')[0]
+		ps.field('channelcount', ps.int(2), default=2)
+		ps.field('samplesize', ps.int(2), default=16)
+		pre_defined_1 = ps.int(2)
 		assert not pre_defined_1, f'invalid pre_defined_1: {pre_defined_1}'
-		reserved_2 = ps.unpack('H')[0]
+		reserved_2 = ps.int(2)
 		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
-		ps.field('samplerate', ps.unpack('I')[0] / (1 << 16))
+		ps.field('samplerate', ps.int(4) / (1 << 16))
 	else:
-		entry_version = ps.unpack('H')[0]
+		entry_version = ps.int(2)
 		assert entry_version == 1, f'invalid entry_version: {entry_version}'
-		reserved_1 = ps.unpack('6s')[0]
+		reserved_1 = ps.bytes(6)
 		assert not any(reserved_1), f'invalid reserved_1: {reserved_1}'
-		ps.field('channelcount', ps.unpack('H')[0])
-		ps.field('samplesize', ps.unpack('H')[0], default=16)
-		pre_defined_1 = ps.unpack('H')[0]
+		ps.field('channelcount', ps.int(2))
+		ps.field('samplesize', ps.int(2), default=16)
+		pre_defined_1 = ps.int(2)
 		assert not pre_defined_1, f'invalid pre_defined_1: {pre_defined_1}'
-		reserved_2 = ps.unpack('H')[0]
+		reserved_2 = ps.int(2)
 		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
-		ps.field('samplerate', ps.unpack('I')[0] / (1 << 16), default=1)
+		ps.field('samplerate', ps.int(4) / (1 << 16), default=1)
 
 	parse_boxes(ps)
 
@@ -511,7 +511,7 @@ def parse_matrix(ps: Parser):
 	ps.field('matrix', matrix, default=[1,0,0, 0,1,0, 0,0,0x4000])
 
 def parse_language(ps: Parser):
-	language, = ps.unpack('H')
+	language = ps.int(2)
 	if not language:
 		ps.print('language = (null)') # FIXME: log a warning or something
 		return
@@ -526,7 +526,7 @@ def parse_mfhd_box(ps: Parser):
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
-	sequence_number, = ps.unpack('I')
+	sequence_number = ps.int(4)
 	ps.field('sequence_number', sequence_number)
 
 def parse_mvhd_box(ps: Parser):
@@ -553,7 +553,7 @@ def parse_mvhd_box(ps: Parser):
 
 	pre_defined = ps.bytes(6 * 4)
 	assert not any(pre_defined), f'invalid pre_defined: {pre_defined}'
-	next_track_ID, = ps.unpack('I')
+	next_track_ID = ps.int(4)
 	ps.field('next_track_ID', next_track_ID)
 
 def parse_tkhd_box(ps: Parser):
@@ -564,18 +564,18 @@ def parse_tkhd_box(ps: Parser):
 
 	ps.field('creation_time', ps.int(wsize))
 	ps.field('modification_time', ps.int(wsize))
-	ps.field('track_ID', ps.unpack('I')[0])
-	reserved_1 = ps.unpack('I')[0]
+	ps.field('track_ID', ps.int(4))
+	reserved_1 = ps.int(4)
 	assert not reserved_1, f'invalid reserved_1: {reserved_1}'
 	ps.field('duration', ps.int(wsize))
-	reserved_2 = ps.unpack('I')[0]
+	reserved_2 = ps.int(4)
 	assert not reserved_2, f'invalid reserved_1: {reserved_2}'
-	reserved_3 = ps.unpack('I')[0]
+	reserved_3 = ps.int(4)
 	assert not reserved_3, f'invalid reserved_1: {reserved_3}'
-	ps.field('layer', ps.unpack('h')[0], default=0)
-	ps.field('alternate_group', ps.unpack('h')[0], default=0)
-	ps.field('volume', ps.unpack('h')[0] / (1 << 8))
-	reserved_4 = ps.unpack('H')[0]
+	ps.field('layer', ps.sint(2), default=0)
+	ps.field('alternate_group', ps.sint(2), default=0)
+	ps.field('volume', ps.sint(2) / (1 << 8))
+	reserved_4 = ps.int(2)
 	assert not reserved_4, f'invalid reserved_1: {reserved_4}'
 	parse_matrix(ps)
 	ps.field('size', (ps.int(4) / (1 << 16), ps.int(4) / (1 << 16)), format_size)
@@ -592,7 +592,7 @@ def parse_mdhd_box(ps: Parser):
 	ps.field('timescale', ps.int(4))
 	ps.field('duration', ps.int(wsize))
 	parse_language(ps)
-	pre_defined_1, = ps.unpack('H')
+	pre_defined_1 = ps.int(2)
 	assert not pre_defined_1, f'invalid reserved_1: {pre_defined_1}'
 
 def parse_mehd_box(ps: Parser):
@@ -600,8 +600,9 @@ def parse_mehd_box(ps: Parser):
 	assert version <= 1, f'invalid version: {version}'
 	assert not box_flags, f'invalid flags: {box_flags}'
 	ps.field('version', version)
+	wsize = [4, 8][version]
 
-	fragment_duration, = ps.unpack(('Q' if version == 1 else 'I'))
+	fragment_duration = ps.int(wsize)
 	ps.field('fragment_duration', fragment_duration)
 
 def parse_smhd_box(ps: Parser):
@@ -610,7 +611,7 @@ def parse_smhd_box(ps: Parser):
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
 	ps.field('balance', ps.sint(2), default=0)
-	reserved, = ps.unpack('H')
+	reserved = ps.int(2)
 	assert not reserved, f'invalid reserved: {reserved}'
 
 def parse_vmhd_box(ps: Parser):
@@ -649,7 +650,7 @@ def parse_ID32_box(ps: Parser):
 
 def parse_dref_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
 	ps.print(f'version = {version}, entry_count = {entry_count}')
@@ -722,18 +723,18 @@ def parse_sgpd_box(ps: Parser):
 	ps.field('grouping_type', ps.fourcc())
 
 	if version == 1:
-		default_length, = ps.unpack('I')
+		default_length = ps.int(4)
 		ps.field('default_length', default_length)
 	elif version >= 2:
-		default_sample_description_index, = ps.unpack('I')
+		default_sample_description_index = ps.int(4)
 		ps.field('default_sample_description_index', default_sample_description_index)
 
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	for i in range(entry_count):
 		ps.print(f'- entry {i+1}:')
 		if version == 1:
 			if (description_length := default_length) == 0:
-				description_length, = ps.unpack('I')
+				description_length = ps.int(4)
 				ps.print(f'  description_length = {description_length}')
 			description = ps.read(description_length)
 			print_hex_dump(description, ps.prefix + '  ')
@@ -858,14 +859,14 @@ def parse_m4ds_box(ps: Parser):
 	parse_descriptors(io.BytesIO(ps.read()), ps.indent)
 
 def parse_dOps_box(ps: Parser):
-	if (Version := ps.unpack('B')[0]) != 0:
+	if (Version := ps.int(1)) != 0:
 		raise AssertionError(f'invalid Version: {Version}')
 
-	ps.field('OutputChannelCount', OutputChannelCount := ps.unpack('B')[0])
-	ps.field('PreSkip', ps.unpack('H')[0])
-	ps.field('InputSampleRate', ps.unpack('I')[0])
-	ps.field('OutputGain', ps.unpack('h')[0] / (1 << 8))
-	ps.field('ChannelMappingFamily', ChannelMappingFamily := ps.unpack('B')[0])
+	ps.field('OutputChannelCount', OutputChannelCount := ps.int(1))
+	ps.field('PreSkip', ps.int(2))
+	ps.field('InputSampleRate', ps.int(4))
+	ps.field('OutputGain', ps.sint(2) / (1 << 8))
+	ps.field('ChannelMappingFamily', ChannelMappingFamily := ps.int(1))
 	if ChannelMappingFamily != 0:
 		ps.field('StreamCount', ps.int(1))
 		ps.field('CoupledCount', ps.int(1))
@@ -881,12 +882,12 @@ def parse_elst_box(ps: Parser):
 	ps.field('version', version)
 	wsize = [4, 8][version]
 
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		segment_duration = ps.int(wsize)
 		media_time = ps.sint(wsize)
-		media_rate = ps.unpack('i')[0] / (1 << 16)
+		media_rate = ps.sint(4) / (1 << 16)
 		if i < max_rows:
 			ps.print(f'[edit segment {i:3}] duration = {segment_duration:6}, media_time = {media_time:6}, media_rate = {media_rate}')
 	if entry_count > max_rows:
@@ -899,18 +900,18 @@ def parse_sidx_box(ps: Parser):
 	ps.field('version', version)
 	wsize = [4, 8][version]
 
-	ps.field('reference_ID', ps.unpack('I')[0])
-	ps.field('timescale', ps.unpack('I')[0])
+	ps.field('reference_ID', ps.int(4))
+	ps.field('timescale', ps.int(4))
 	ps.field('earliest_presentation_time', ps.int(wsize))
 	ps.field('first_offset', ps.int(wsize))
-	reserved_1 = ps.unpack('H')[0]
+	reserved_1 = ps.int(2)
 	assert not reserved_1, f'invalid reserved_1 = {reserved_1}'
-	ps.field('reference_count', reference_count := ps.unpack('H')[0])
+	ps.field('reference_count', reference_count := ps.int(2))
 	for i in range(reference_count):
 		with ps.bits(4) as br:
 			reference_type = br.read(1)
 			referenced_size = br.read(31)
-		subsegment_duration, = ps.unpack('I')
+		subsegment_duration = ps.int(4)
 		with ps.bits(4) as br:
 			starts_with_SAP = br.read(1)
 			SAP_type = br.read(3)
@@ -926,11 +927,11 @@ def parse_stts_box(ps: Parser):
 	assert version == 0, f'invalid version: {version}'
 
 	sample, time = 1, 0
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
-		sample_count, = ps.unpack('I')
-		sample_delta, = ps.unpack('I')
+		sample_count = ps.int(4)
+		sample_delta = ps.int(4)
 		if i < max_rows:
 			ps.print(f'[entry {i:3}] [sample = {sample:6}, time = {time:6}] sample_count = {sample_count:5}, sample_delta = {sample_delta:5}')
 		sample += sample_count
@@ -946,10 +947,10 @@ def parse_ctts_box(ps: Parser):
 	ps.field('version', version)
 
 	sample = 1
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
-		sample_count, = ps.unpack('I')
+		sample_count = ps.int(4)
 		sample_offset = [ps.sint, ps.int][version](4)
 		if i < max_rows:
 			ps.print(f'[entry {i:3}] [sample = {sample:6}] sample_count = {sample_count:5}, sample_offset = {sample_offset:5}')
@@ -964,12 +965,12 @@ def parse_stsc_box(ps: Parser):
 	assert version == 0, f'invalid version: {version}'
 
 	sample, last = 1, None
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
-		first_chunk, = ps.unpack('I')
-		samples_per_chunk, = ps.unpack('I')
-		sample_description_index, = ps.unpack('I')
+		first_chunk = ps.int(4)
+		samples_per_chunk = ps.int(4)
+		sample_description_index = ps.int(4)
 		if last != None:
 			last_chunk, last_spc = last
 			assert first_chunk > last_chunk
@@ -989,7 +990,7 @@ def parse_stsz_box(ps: Parser):
 	ps.field('sample_count', sample_count := ps.int(4))
 	if sample_size == 0:
 		for i in range(sample_count):
-			sample_size, = ps.unpack('I')
+			sample_size = ps.int(4)
 			if i < max_rows:
 				ps.print(f'[sample {i+1:6}] sample_size = {sample_size:5}')
 		if sample_count > max_rows:
@@ -1000,10 +1001,10 @@ def parse_stco_box(ps: Parser):
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
-		chunk_offset, = ps.unpack('I')
+		chunk_offset = ps.int(4)
 		if i < max_rows:
 			ps.print(f'[chunk {i+1:5}] offset = {chunk_offset:#08x}')
 	if entry_count > max_rows:
@@ -1014,10 +1015,10 @@ def parse_co64_box(ps: Parser):
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
-		chunk_offset, = ps.unpack('Q')
+		chunk_offset = ps.int(8)
 		if i < max_rows:
 			ps.print(f'[chunk {i+1:5}] offset = {chunk_offset:#016x}')
 	if entry_count > max_rows:
@@ -1028,10 +1029,10 @@ def parse_stss_box(ps: Parser):
 	assert not box_flags, f'invalid box_flags: {box_flags}'
 	assert version == 0, f'invalid version: {version}'
 
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
-		sample_number, = ps.unpack('I')
+		sample_number = ps.int(4)
 		if i < max_rows:
 			ps.print(f'[sync sample {i:5}] sample_number = {sample_number:6}')
 	if entry_count > max_rows:
@@ -1045,15 +1046,15 @@ def parse_sbgp_box(ps: Parser):
 
 	ps.field('grouping_type', ps.fourcc())
 	if version == 1:
-		grouping_type_parameter, = ps.unpack('I')
+		grouping_type_parameter = ps.int(4)
 		ps.field('grouping_type_parameter', grouping_type_parameter)
 
 	sample = 1
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
-		sample_count, = ps.unpack('I')
-		group_description_index, = ps.unpack('I')
+		sample_count = ps.int(4)
+		group_description_index = ps.int(4)
 		if i < max_rows:
 			ps.print(f'[entry {i+1:5}] [sample = {sample:6}] sample_count = {sample_count:5}, group_description_index = {group_description_index:5}')
 		sample += sample_count
@@ -1074,7 +1075,7 @@ def parse_saiz_box(ps: Parser):
 	ps.field('sample_count', sample_count := ps.int(4))
 	if default_sample_info_size == 0:
 		for i in range(sample_count):
-			sample_info_size, = ps.unpack('B')
+			sample_info_size = ps.int(1)
 			if i < max_rows:
 				ps.print(f'[sample {i+1:6}] sample_info_size = {sample_info_size:5}')
 		if sample_count > max_rows:
@@ -1086,10 +1087,10 @@ def parse_saio_box(ps: Parser):
 	wsize = [4, 8][version]
 
 	if box_flags & 1:
-		grouping_type_parameter, = ps.unpack('I')
+		grouping_type_parameter = ps.int(4)
 		ps.field('grouping_type_parameter', grouping_type_parameter)
 
-	entry_count, = ps.unpack('I')
+	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):
 		offset = ps.int(wsize)
@@ -1111,7 +1112,7 @@ def parse_tfhd_box(ps: Parser):
 	assert version == 0, f'invalid version: {version}'
 
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
-	track_ID, = ps.unpack('I')
+	track_ID = ps.int(4)
 	ps.field('track_ID', track_ID)
 	if box_flags & 0x10000:  # duration‐is‐empty
 		ps.print('duration-is-empty flag set')
@@ -1119,29 +1120,29 @@ def parse_tfhd_box(ps: Parser):
 		ps.print('default-base-is-moof flag set')
 
 	if box_flags & 0x1:  # base‐data‐offset‐present
-		base_data_offset, = ps.unpack('Q')
+		base_data_offset = ps.int(8)
 		ps.field('base_data_offset', base_data_offset)
 	if box_flags & 0x2:  # sample-description-index-present
-		sample_description_index, = ps.unpack('I')
+		sample_description_index = ps.int(4)
 		ps.field('sample_description_index', sample_description_index)
 	if box_flags & 0x8:  # default‐sample‐duration‐present
-		default_sample_duration, = ps.unpack('I')
+		default_sample_duration = ps.int(4)
 		ps.field('default_sample_duration', default_sample_duration)
 	if box_flags & 0x10:  # default‐sample‐size‐present
-		default_sample_size, = ps.unpack('I')
+		default_sample_size = ps.int(4)
 		ps.field('default_sample_size', default_sample_size)
 
 
 def parse_trun_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 
-	sample_count, = ps.unpack('I')
+	sample_count = ps.int(4)
 	ps.print(f'version = {version}, flags = {box_flags:06x}, sample_count = {sample_count}')
 	if box_flags & (1 << 0):
-		data_offset, = ps.unpack('i')
+		data_offset = ps.sint(4)
 		ps.field('data_offset', data_offset, '#x')
 	if box_flags & (1 << 2):
-		first_sample_flags, = ps.unpack('I')
+		first_sample_flags = ps.int(4)
 		ps.field('first_sample_flags', first_sample_flags, '08x')
 
 	s_offset = 0
@@ -1149,15 +1150,15 @@ def parse_trun_box(ps: Parser):
 	for s_idx in range(sample_count):
 		s_text = []
 		if box_flags & (1 << 8):
-			sample_duration, = ps.unpack('I')
+			sample_duration = ps.int(4)
 			s_text.append(f'time={s_time:7} + {sample_duration:5}')
 			s_time += sample_duration
 		if box_flags & (1 << 9):
-			sample_size, = ps.unpack('I')
+			sample_size = ps.int(4)
 			s_text.append(f'offset={s_offset:#9x} + {sample_size:5}')
 			s_offset += sample_size
 		if box_flags & (1 << 10):
-			sample_flags, = ps.unpack('I')
+			sample_flags = ps.int(4)
 			s_text.append(f'flags={sample_flags:08x}')
 		if box_flags & (1 << 11):
 			sample_composition_time_offset = [ps.int, ps.sint][version](4)
@@ -1217,7 +1218,7 @@ def parse_pssh_box(ps: Parser):
 	ps.field('SystemID', ps.uuid(), format_system_id)
 
 	if version > 0:
-		KID_count, = ps.unpack('I')
+		KID_count = ps.int(4)
 		for i in range(KID_count):
 			ps.print(f'- KID: {ps.bytes(16).hex()}')
 
