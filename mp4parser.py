@@ -501,7 +501,7 @@ def decode_language(syms: list[int]):
 def parse_language(ps: Parser):
 	with ps.bits(2) as br:
 		ps.reserved('language_pad', br.read(1))
-		ps.field('language', decode_language([br.read(5) for _ in range(3)]))
+		ps.field('language', decode_language([br.read(5) for _ in range(3)]), str)
 
 def parse_mfhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -713,7 +713,7 @@ def parse_sgpd_box(ps: Parser):
 def parse_avcC_box(ps: Parser):
 	if (configurationVersion := ps.int(1)) != 1:
 		raise AssertionError(f'invalid configuration version: {configurationVersion}')
-	ps.field('profile / compat / level', ps.bytes(3).hex())
+	ps.field('profile / compat / level', ps.bytes(3).hex(), str)
 	with ps.bits(1) as br:
 		ps.reserved('reserved_1', br.read(6), mask(6))
 		ps.field('lengthSizeMinusOne', br.read(2))
@@ -732,7 +732,7 @@ def parse_avcC_box(ps: Parser):
 def parse_svcC_box(ps: Parser):
 	if (configurationVersion := ps.int(1)) != 1:
 		raise AssertionError(f'invalid configuration version: {configurationVersion}')
-	ps.field('profile / compat / level', ps.bytes(3).hex())
+	ps.field('profile / compat / level', ps.bytes(3).hex(), str)
 	with ps.bits(1) as br:
 		ps.field('complete_represenation', br.bit())
 		ps.reserved('reserved_1', br.read(5), mask(5))
@@ -755,9 +755,9 @@ def parse_hvcC_box(ps: Parser):
 		ps.field('general_profile_space', br.read(2))
 		ps.field('general_tier_flag', br.read(1))
 		ps.field('general_profile_idc', br.read(5), '02x')
-	ps.field('general_profile_compatibility_flags', ps.bytes(4).hex())
-	ps.field('general_constraint_indicator_flags', ps.bytes(6).hex())
-	ps.field('general_level_idc', ps.bytes(1).hex())
+	ps.field('general_profile_compatibility_flags', ps.bytes(4).hex(), str)
+	ps.field('general_constraint_indicator_flags', ps.bytes(6).hex(), str)
+	ps.field('general_level_idc', ps.bytes(1).hex(), str)
 
 	with ps.bits(2) as br:
 		ps.reserved('reserved', br.read(4), mask(4))
@@ -1146,9 +1146,9 @@ def parse_tenc_box(ps: Parser):
 
 	ps.field('default_isProtected', default_isProtected := ps.int(1))
 	ps.field('default_Per_Sample_IV_Size', default_Per_Sample_IV_Size := ps.int(1))
-	ps.field('default_KID', ps.bytes(16).hex())
+	ps.field('default_KID', ps.bytes(16).hex(), str)
 	if default_isProtected == 1 and default_Per_Sample_IV_Size == 0:
-		ps.field('default_constant_IV', ps.bytes(ps.int(1)).hex())
+		ps.field('default_constant_IV', ps.bytes(ps.int(1)).hex(), str)
 
 def format_system_id(SystemID: str) -> str:
 	system_name, system_comment = protection_systems.get(SystemID, (None, None))
