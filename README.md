@@ -2,7 +2,20 @@
 
 Portable* <abbr title="ISO Base Media File Format">ISOBMFF</abbr> dissector / parser for your terminal.
 
+Used to be hosted in [a gist](https://gist.github.com/mildsunrise/ffd74730504e4dc44f47fc7528e7bf59).
+
 (*) Needs Python 3.8+
+
+
+## Install
+
+Clone the repo and run `./mp4parser.py <input file>`. <br>
+No dependencies needed.
+
+
+## Screenshots
+
+![Screenshot 1](assets/screenshot-1.png)
 
 
 ## Goals / development guidelines
@@ -38,4 +51,4 @@ Portable* <abbr title="ISO Base Media File Format">ISOBMFF</abbr> dissector / pa
   - Parsed fields should be named exactly like in the spec's syntax.
     Both in code, and in the output.
 
-  - **Performance isn't the main concern.** Correctness is more important, but it's also nice for the code to be 'hacker-friendly' for people who may want to tweak it.
+  - **Performance isn't the main concern.** Correctness is more important, but it's also nice for the code to be 'hacker-friendly' for people who may want to tweak it. However the parser must be streaming and not collect fields or boxes in memory, so that it works with giant files.
