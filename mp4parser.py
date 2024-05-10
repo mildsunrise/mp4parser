@@ -266,6 +266,16 @@ def print_error(exc, prefix: str):
 
 format_uuid = lambda x: '-'.join(x.hex()[s:e] for s, e in itertools.pairwise([0, 8, 12, 16, 20, 32]) )
 
+def format_fraction(x: tuple[int, int]):
+	assert type(x) is tuple and len(x) == 2 and all(type(i) is int for i in x)
+	num, denom = x
+	return f'{num}/{denom}'
+
+def format_size(x: Union[tuple[int, int], tuple[float, float]]):
+	assert type(x) is tuple and len(x) == 2
+	width, height = x
+	return f'{width} x {height}'
+
 
 # CORE PARSING
 
@@ -424,17 +434,17 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	reserved = data.read(16)
 	assert not any(reserved), f'invalid reserved / pre-defined data: {reserved}'
 	width, height, horizresolution, vertresolution, reserved_2, frame_count, compressorname, depth, pre_defined_3 = unpack(data, 'HHIIIH 32s Hh')
-	ps.print(f'size = {width} x {height}')
+	ps.field('size', (width, height), format_size)
 	if show_defaults or horizresolution != 0x00480000 or vertresolution != 0x00480000:
-		ps.print(f'resolution = {horizresolution} x {vertresolution}')
+		ps.field('resolution', (horizresolution, vertresolution), format_size)
 	if show_defaults or frame_count != 1:
-		ps.print(f'frame count = {frame_count}')
+		ps.field('frame_count', frame_count)
 
 	compressorname_len, compressorname = compressorname[0], compressorname[1:]
 	assert compressorname_len <= len(compressorname)
 	assert not any(compressorname[compressorname_len:]), 'invalid compressorname padding'
 	compressorname = compressorname[:compressorname_len].decode('utf-8')
-	ps.print(f'compressorname = {repr(compressorname)}')
+	ps.field('compressorname', compressorname)
 
 	if show_defaults or depth != 0x0018:
 		ps.field('depth', depth)
@@ -455,7 +465,7 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 			ps.field('channelcount', channelcount)
 		if show_defaults or samplesize != 16:
 			ps.field('samplesize', samplesize)
-		ps.print(f'samplerate = {samplerate / (1 << 16)}')
+		ps.field('samplerate', samplerate / (1 << 16))
 	else:
 		entry_version, reserved_1, channelcount, samplesize, pre_defined_1, reserved_2, samplerate = unpack(data, 'H6sHHHHI')
 		assert entry_version == 1, f'invalid entry_version: {entry_version}'
@@ -466,7 +476,7 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 		if show_defaults or samplesize != 16:
 			ps.field('samplesize', samplesize)
 		if show_defaults or samplerate != (1 << 16):
-			ps.print(f'samplerate = {samplerate / (1 << 16)}')
+			ps.field('samplerate', samplerate / (1 << 16))
 
 	parse_boxes(ps)
 
@@ -495,8 +505,8 @@ def parse_text_sample_entry_contents(btype: str, ps: Parser, version: int):
 def parse_ftyp_box(ps: Parser):
 	major_brand, minor_version = unpack(data, '4sI')
 	major_brand = major_brand.decode('latin1')
-	ps.print(f'major_brand = {repr(major_brand)}')
-	ps.print(f'minor_version = {minor_version:08x}')
+	ps.field('major_brand', major_brand)
+	ps.field('minor_version', minor_version, '08x')
 	while (compatible_brand := data.read(4)):
 		assert len(compatible_brand), 'invalid brand length'
 		ps.print(f'- compatible: {repr(compatible_brand.decode("latin1"))}')
@@ -587,7 +597,7 @@ def parse_tkhd_box(ps: Parser):
 	width, height = unpack(data, 'II')
 	width /= 1 << 16
 	height /= 1 << 16
-	ps.print(f'size = {width} x {height}')
+	ps.field('size', (width, height), format_size)
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
@@ -661,7 +671,7 @@ def parse_trex_box(ps: Parser):
 	ps.field('default_sample_description_index', default_sample_description_index)
 	ps.field('default_sample_duration', default_sample_duration)
 	ps.field('default_sample_size', default_sample_size)
-	ps.print(f'default_sample_flags = {default_sample_flags:08x}')
+	ps.field('default_sample_flags', default_sample_flags, '08x')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
@@ -714,16 +724,17 @@ def parse_urn_box(ps: Parser):
 globals()['parse_url _box'] = parse_url_box
 globals()['parse_urn _box'] = parse_urn_box
 
-def parse_colr_box(ps: Parser):
-	colour_type, = unpack(data, '4s')
-	colour_type = colour_type.decode('latin1')
-	descriptions = {
+def format_colour_type(colour_type: str) -> str:
+	description = {
 		'nclx': 'on-screen colours',
 		'rICC': 'restricted ICC profile',
 		'prof': 'unrestricted ICC profile',
-	}
-	description = f' ({descriptions[colour_type]})' if show_descriptions and colour_type in descriptions else ''
-	ps.print(f'colour_type = {repr(colour_type)}' + description)
+	}.get(colour_type)
+	description = f' ({description})' if show_descriptions and description != None else ''
+	return repr(colour_type) + description
+
+def parse_colr_box(ps: Parser):
+	ps.field('colour_type', colour_type := ps.fourcc(), format_colour_type)
 	if colour_type == 'nclx':
 		colour_primaries, transfer_characteristics, matrix_coefficients, flags = unpack(data, 'HHHB')
 		ps.field('colour_primaries', colour_primaries)
@@ -731,7 +742,7 @@ def parse_colr_box(ps: Parser):
 		ps.field('matrix_coefficients', matrix_coefficients)
 		full_range_flag, reserved = split_bits(flags, 8, 7, 0)
 		assert not reserved, f'invalid reserved: {reserved}'
-		ps.print(f'full_range_flag = {bool(full_range_flag)}')
+		ps.field('full_range_flag', bool(full_range_flag))
 	else:
 		name = 'ICC_profile' if colour_type in { 'rICC', 'prof' } else 'data'
 		ps.print(f'{name} =')
@@ -749,16 +760,16 @@ def parse_btrt_box(ps: Parser):
 
 def parse_pasp_box(ps: Parser):
 	hSpacing, vSpacing = unpack(data, 'II')
-	ps.print(f'pixel aspect ratio = {hSpacing}/{vSpacing}')
+	ps.field('pixel aspect ratio', (hSpacing, vSpacing), format_fraction)
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_clap_box(ps: Parser):
 	cleanApertureWidthN, cleanApertureWidthD, cleanApertureHeightN, cleanApertureHeightD, horizOffN, horizOffD, vertOffN, vertOffD = unpack(data, 'II II II II')
-	ps.print(f'cleanApertureWidth = {cleanApertureWidthN}/{cleanApertureWidthD}')
-	ps.print(f'cleanApertureHeight = {cleanApertureHeightN}/{cleanApertureHeightD}')
-	ps.print(f'horizOff = {horizOffN}/{horizOffD}')
-	ps.print(f'vertOff = {vertOffN}/{vertOffD}')
+	ps.field('cleanApertureWidth', (cleanApertureWidthN, cleanApertureWidthD), format_fraction)
+	ps.field('cleanApertureHeight', (cleanApertureHeightN, cleanApertureHeightD), format_fraction)
+	ps.field('horizOff', (horizOffN, horizOffD), format_fraction)
+	ps.field('vertOff', (vertOffN, vertOffD), format_fraction)
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
 
@@ -769,7 +780,7 @@ def parse_sgpd_box(ps: Parser):
 
 	grouping_type, = unpack(data, '4s')
 	grouping_type = grouping_type.decode('latin1')
-	ps.print(f'grouping_type = {repr(grouping_type)}')
+	ps.field('grouping_type', grouping_type)
 
 	if version == 1:
 		default_length, = unpack(data, 'I')
@@ -799,10 +810,9 @@ def parse_sgpd_box(ps: Parser):
 # CODEC-SPECIFIC BOXES
 
 def parse_avcC_box(ps: Parser):
-	configurationVersion, = data.read(1)
-	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
-	avcProfileCompFlags = data.read(3)
-	ps.print(f'profile / compat / level = {avcProfileCompFlags.hex()}')
+	if (configurationVersion := ps.int(1)) != 1:
+		raise AssertionError(f'invalid configuration version: {configurationVersion}')
+	ps.field('profile / compat / level', ps.read(3).tobytes().hex())
 	composite_1, composite_2 = data.read(2)
 	reserved_1, lengthSizeMinusOne = split_bits(composite_1, 8, 2, 0)
 	reserved_2, numOfSequenceParameterSets = split_bits(composite_2, 8, 5, 0)
@@ -837,7 +847,7 @@ def parse_svcC_box(ps: Parser):
 	reserved_2, numOfSequenceParameterSets = split_bits(composite_2, 8, 7, 0)
 	assert reserved_1 == mask(5), f'invalid reserved_1: {reserved_1}'
 	assert reserved_2 == 0, f'invalid reserved_2: {reserved_2}'
-	ps.print(f'complete_represenation = {bool(complete_represenation)}')
+	ps.field('complete_represenation', bool(complete_represenation))
 	ps.field('lengthSizeMinusOne', lengthSizeMinusOne)
 
 	for i in range(numOfSequenceParameterSets):
@@ -869,11 +879,11 @@ def parse_hvcC_box(ps: Parser):
 
 	ps.field('general_profile_space', general_profile_space)
 	ps.field('general_tier_flag', general_tier_flag)
-	ps.print(f'general_profile_idc = {general_profile_idc:02x}')
+	ps.field('general_profile_idc', general_profile_idc, '02x')
 
-	ps.print(f'general_profile_compatibility_flags = {general_profile_compatibility_flags:08x}')
-	ps.print(f'general_constraint_indicator_flags = {general_constraint_indicator_flags:012x}')
-	ps.print(f'general_level_idc = {general_level_idc:02x}')
+	ps.field('general_profile_compatibility_flags', general_profile_compatibility_flags, '08x')
+	ps.field('general_constraint_indicator_flags', general_constraint_indicator_flags, '012x')
+	ps.field('general_level_idc', general_level_idc, '02x')
 
 	reserved, min_spatial_segmentation_idc = split_bits(min_spatial_segmentation_idc, 16, 12, 0)
 	assert reserved == mask(4), f'invalid reserved: {reserved}'
@@ -894,7 +904,7 @@ def parse_hvcC_box(ps: Parser):
 	ps.field('avgFrameRate', avgFrameRate)
 	ps.field('constantFrameRate', constantFrameRate)
 	ps.field('numTemporalLayers', numTemporalLayers)
-	ps.print(f'temporalIdNested = {bool(temporalIdNested)}')
+	ps.field('temporalIdNested', bool(temporalIdNested))
 	ps.field('lengthSizeMinusOne', lengthSizeMinusOne)
 
 	numOfArrays, = unpack(data, 'B')
@@ -942,7 +952,6 @@ def parse_m4ds_box(ps: Parser):
 	assert not left, f'{len(left)} bytes of trailing data'
 
 def parse_dOps_box(ps: Parser):
-
 	Version, OutputChannelCount, PreSkip, InputSampleRate, OutputGain, ChannelMappingFamily = unpack(data, 'BBHIhB')
 	assert Version == 0, f'invalid Version: {Version}'
 	OutputGain /= 1 << 8
@@ -1155,7 +1164,7 @@ def parse_sbgp_box(ps: Parser):
 
 	grouping_type, = unpack(data, '4s')
 	grouping_type = grouping_type.decode('latin1')
-	ps.print(f'grouping_type = {repr(grouping_type)}')
+	ps.field('grouping_type', grouping_type)
 	if version == 1:
 		grouping_type_parameter, = unpack(data, 'I')
 		ps.field('grouping_type_parameter', grouping_type_parameter)
@@ -1183,8 +1192,8 @@ def parse_saiz_box(ps: Parser):
 	if box_flags & 1:
 		aux_info_type, aux_info_type_parameter = unpack(data, '4sI')
 		aux_info_type = aux_info_type.decode('latin1')
-		ps.print(f'aux_info_type = {repr(aux_info_type)}')
-		ps.print(f'aux_info_type_parameter = {aux_info_type_parameter:#x}')
+		ps.field('aux_info_type', aux_info_type)
+		ps.field('aux_info_type_parameter', aux_info_type_parameter, '#x')
 
 	default_sample_info_size, sample_count = unpack(data, 'BI')
 	ps.field('default_sample_info_size', default_sample_info_size)
@@ -1207,8 +1216,8 @@ def parse_saio_box(ps: Parser):
 	if box_flags & 1:
 		aux_info_type, aux_info_type_parameter = unpack(data, '4sI')
 		aux_info_type = aux_info_type.decode('latin1')
-		ps.print(f'aux_info_type = {repr(aux_info_type)}')
-		ps.print(f'aux_info_type_parameter = {aux_info_type_parameter:#x}')
+		ps.field('aux_info_type', aux_info_type)
+		ps.field('aux_info_type_parameter', aux_info_type_parameter, '#x')
 
 	entry_count, = unpack(data, 'I')
 	ps.field('entry_count', entry_count)
@@ -1226,9 +1235,9 @@ def parse_tfdt_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
 
-	base_media_decode_time, = unpack(data, 'I' if version == 0 else 'Q')
+	baseMediaDecodeTime, = unpack(data, 'I' if version == 0 else 'Q')
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
-	ps.print(f'baseMediaDecodeTime = {base_media_decode_time}')
+	ps.field('baseMediaDecodeTime', baseMediaDecodeTime)
 
 def parse_tfhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -1263,10 +1272,10 @@ def parse_trun_box(ps: Parser):
 	ps.print(f'version = {version}, flags = {box_flags:06x}, sample_count = {sample_count}')
 	if box_flags & (1 << 0):
 		data_offset, = unpack(data, 'i')
-		ps.print(f'data_offset = {data_offset:#x}')
+		ps.field('data_offset', data_offset, '#x')
 	if box_flags & (1 << 2):
 		first_sample_flags, = unpack(data, 'I')
-		ps.print(f'first_sample_flags = {first_sample_flags:08x}')
+		ps.field('first_sample_flags', first_sample_flags, '08x')
 
 	s_offset = 0
 	s_time = 0
@@ -1300,10 +1309,9 @@ def parse_trun_box(ps: Parser):
 # DRM boxes
 
 def parse_frma_box(ps: Parser):
-
 	data_format, = unpack(data, '4s')
 	data_format = data_format.decode('latin1')
-	ps.print(f'data_format = {repr(data_format)}')
+	ps.field('data_format', data_format)
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
@@ -1315,11 +1323,11 @@ def parse_schm_box(ps: Parser):
 
 	scheme_type, scheme_version = unpack(data, '4sI')
 	scheme_type = scheme_type.decode('latin1')
-	ps.print(f'scheme_type = {repr(scheme_type)}')
-	ps.print(f'scheme_version = {scheme_version:#x}')
+	ps.field('scheme_type', scheme_type)
+	ps.field('scheme_version', scheme_version, '#x')
 	if box_flags & 1:
 		scheme_uri = read_string(data)
-		ps.print(f'scheme_uri = {repr(scheme_uri)}')
+		ps.field('scheme_uri', scheme_uri)
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
@@ -1340,13 +1348,17 @@ def parse_tenc_box(ps: Parser):
 	default_isProtected, default_Per_Sample_IV_Size, default_KID = unpack(data, 'BB16s')
 	ps.field('default_isProtected', default_isProtected)
 	ps.field('default_Per_Sample_IV_Size', default_Per_Sample_IV_Size)
-	ps.print(f'default_KID = {default_KID.hex()}')
+	ps.field('default_KID', default_KID.hex())
 	if default_isProtected == 1 and default_Per_Sample_IV_Size == 0:
 		default_constant_IV_size, = unpack(data, 'B')
 		default_constant_IV = data.read(default_constant_IV_size)
 		assert len(default_constant_IV) == default_constant_IV_size, \
 			f'unexpected EOF within default_constant_IV: expected {default_constant_IV_size}, got {len(default_constant_IV)}'
-		ps.print(f'default_constant_IV = {default_constant_IV.hex()}')
+		ps.field('default_constant_IV', default_constant_IV.hex())
+
+def format_system_id(SystemID: str) -> str:
+	system_name, system_comment = protection_systems.get(SystemID, (None, None))
+	return SystemID + (f' ({system_name})' if system_name else '')
 
 	left = data.read()
 	assert not left, f'{len(left)} bytes of trailing data'
@@ -1355,10 +1367,7 @@ def parse_pssh_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
-	SystemID, = unpack(data, '16s')
-	system_name, system_comment = protection_systems.get(format_uuid(SystemID), (None, None))
-	system_desc = f' ({system_name})' if system_name else ''
-	ps.print(f'SystemID = {format_uuid(SystemID)}{system_desc}')
+	ps.field('SystemID', ps.uuid(), format_system_id)
 
 	if version > 0:
 		KID_count, = unpack(data, 'I')
