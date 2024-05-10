@@ -187,6 +187,11 @@ class Parser(MVIO):
 		self.raw_field(name,
 			value.__format__(format) if isinstance(format, str) else format(value))
 
+	def reserved(self, name: str, value: T, expected: Optional[T] = None):
+		ok = (value == expected) if expected != None else \
+			(not any(value)) if isinstance(value, bytes) else (not value)
+		assert ok, f'invalid {name}: {value}'
+
 # FIXME: to ease migration, remove afterwards
 def unpack(stream, struct_fmt: str) -> tuple:
 		struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
