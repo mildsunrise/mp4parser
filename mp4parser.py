@@ -59,8 +59,8 @@ class BitReader:
 	def ended(self) -> bool:
 		return self.remaining == 0
 
-	def read(self, n: int) -> int:
-		assert 0 <= n <= self.remaining
+	def read(self, n = -1) -> int:
+		n = n if n >= 0 else self.remaining
 		res = 0
 		for _ in range(n):
 			res <<= 1
@@ -126,6 +126,12 @@ class MVIO:
 
 	# common primitives
 
+	def bytes(self, n = -1) -> bytes:
+		return self.read(n).tobytes()
+
+	def sint(self, n: int) -> int:
+		return int.from_bytes(self.read(n), signed=True)
+
 	def int(self, n: int) -> int:
 		return int.from_bytes(self.read(n))
 
@@ -152,7 +158,7 @@ class MVIO:
 		return self.read(4).tobytes().decode('latin-1')
 
 	def uuid(self) -> str:
-		return format_uuid(self.read(16).tobytes())
+		return format_uuid(self.bytes(16))
 
 	# support for 'with' (checks all data is consumed)
 
