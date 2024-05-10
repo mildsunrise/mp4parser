@@ -387,11 +387,11 @@ def parse_hdlr_box(ps: Parser):
 	assert version == 0 and box_flags == 0, 'invalid version / flags'
 	pre_defined, handler_type = ps.unpack('I4s')
 	handler_type = handler_type.decode('latin1')
-	reserved = data.read(4 * 3)
+	reserved = ps.bytes(4 * 3)
 	# FIXME: a lot of videos seem to break the second assertion (apple metadata?), some break the first
 	assert not pre_defined, f'invalid pre-defined: {pre_defined}'
 	assert not any(reserved), f'invalid reserved: {reserved}'
-	name = data.read().decode('utf-8')
+	name = ps.bytes().decode('utf-8')
 	ps.print(f'handler_type = {repr(handler_type)}, name = {repr(name)}')
 
 	global last_handler_seen
@@ -408,11 +408,9 @@ def parse_stsd_box(ps: Parser):
 	assert len(boxes) == entry_count, f'entry_count not matching boxes present'
 
 def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
-	assert len(data) >= 6 + 2, 'entry too short'
-	assert data[:6] == b'\x00\x00\x00\x00\x00\x00', f'invalid reserved field: {data[:6]}'
-	data_reference_index, = struct.unpack('>H', data[6:8])
-	data = data[8:]; offset += 8
-	ps.field('data_reference_index', data_reference_index)
+	reserved = ps.bytes(6)
+	assert not any(reserved), f'invalid reserved field: {reserved}'
+	ps.field('data_reference_index', ps.int(2))
 
 	try:
 		if last_handler_seen == 'vide':
@@ -431,7 +429,7 @@ def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
 def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
 
-	reserved = data.read(16)
+	reserved = ps.bytes(16)
 	assert not any(reserved), f'invalid reserved / pre-defined data: {reserved}'
 	width, height, horizresolution, vertresolution, reserved_2, frame_count, compressorname, depth, pre_defined_3 = ps.unpack('HHIIIH 32s Hh')
 	ps.field('size', (width, height), format_size)
@@ -507,9 +505,9 @@ def parse_ftyp_box(ps: Parser):
 	major_brand = major_brand.decode('latin1')
 	ps.field('major_brand', major_brand)
 	ps.field('minor_version', minor_version, '08x')
-	while (compatible_brand := data.read(4)):
-		assert len(compatible_brand), 'invalid brand length'
-		ps.print(f'- compatible: {repr(compatible_brand.decode("latin1"))}')
+	while not ps.ended:
+		compatible_brand = ps.fourcc()
+		ps.print(f'- compatible: {repr(compatible_brand)}')
 
 parse_styp_box = parse_ftyp_box
 
@@ -559,7 +557,7 @@ def parse_mvhd_box(ps: Parser):
 
 	parse_matrix(ps)
 
-	pre_defined = data.read(6 * 4)
+	pre_defined = ps.bytes(6 * 4)
 	assert not any(pre_defined), f'invalid pre_defined: {pre_defined}'
 	next_track_ID, = ps.unpack('I')
 	ps.field('next_track_ID', next_track_ID)
@@ -665,7 +663,7 @@ def parse_ID32_box(ps: Parser):
 	ps.print(f'flags = {box_flags:06x}')
 	parse_language(ps)
 	ps.print(f'ID3v2 data =')
-	print_hex_dump(data.read(), ps.prefix + '  ')
+	print_hex_dump(ps.read(), ps.prefix + '  ')
 
 def parse_dref_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -718,7 +716,7 @@ def parse_colr_box(ps: Parser):
 	else:
 		name = 'ICC_profile' if colour_type in { 'rICC', 'prof' } else 'data'
 		ps.print(f'{name} =')
-		print_hex_dump(data.read(), ps.prefix + '  ')
+		print_hex_dump(ps.read(), ps.prefix + '  ')
 
 def parse_btrt_box(ps: Parser):
 	bufferSizeDB, maxBitrate, avgBitrate = ps.unpack('III')
@@ -760,9 +758,7 @@ def parse_sgpd_box(ps: Parser):
 			if (description_length := default_length) == 0:
 				description_length, = ps.unpack('I')
 				ps.print(f'  description_length = {description_length}')
-			description = data.read(description_length)
-			assert len(description) == description_length, \
-				f'unexpected EOF within description: expected {description_length}, got {len(description)}'
+			description = ps.read(description_length)
 			print_hex_dump(description, ps.prefix + '  ')
 		else:
 			raise NotImplementedError('TODO: parse box')
@@ -773,96 +769,86 @@ def parse_sgpd_box(ps: Parser):
 def parse_avcC_box(ps: Parser):
 	if (configurationVersion := ps.int(1)) != 1:
 		raise AssertionError(f'invalid configuration version: {configurationVersion}')
-	ps.field('profile / compat / level', ps.read(3).tobytes().hex())
-	composite_1, composite_2 = data.read(2)
-	reserved_1, lengthSizeMinusOne = split_bits(composite_1, 8, 2, 0)
-	reserved_2, numOfSequenceParameterSets = split_bits(composite_2, 8, 5, 0)
-	assert reserved_1 == mask(6), f'invalid reserved_1: {reserved_1}'
-	assert reserved_2 == mask(3), f'invalid reserved_2: {reserved_2}'
-	ps.field('lengthSizeMinusOne', lengthSizeMinusOne)
+	ps.field('profile / compat / level', ps.bytes(3).hex())
+	with ps.bits(1) as br:
+		reserved_1 = br.read(6)
+		assert reserved_1 == mask(6), f'invalid reserved_1: {reserved_1}'
+		ps.field('lengthSizeMinusOne', br.read(2))
 
+	with ps.bits(1) as br:
+		reserved_2 = br.read(3)
+		assert reserved_2 == mask(3), f'invalid reserved_2: {reserved_2}'
+		numOfSequenceParameterSets = br.read(5)
 	for i in range(numOfSequenceParameterSets):
-		size, = ps.unpack('H')
-		sps = data.read(size)
-		assert len(sps) == size, f'not enough SPS data: expected {size}, found {len(sps)}'
-		ps.print(f'- SPS: {sps.hex()}')
-	numOfPictureParameterSets, = data.read(1)
+		ps.print(f'- SPS: {ps.bytes(ps.int(2)).hex()}')
+	numOfPictureParameterSets = ps.int(1)
 	for i in range(numOfPictureParameterSets):
-		size, = ps.unpack('H')
-		pps = data.read(size)
-		assert len(pps) == size, f'not enough PPS data: expected {size}, found {len(pps)}'
-		ps.print(f'- PPS: {pps.hex()}')
+		ps.print(f'- PPS: {ps.bytes(ps.int(2)).hex()}')
 
 	# FIXME: parse extensions
 
 def parse_svcC_box(ps: Parser):
-	configurationVersion, = data.read(1)
-	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
-	avcProfileCompFlags = data.read(3)
-	ps.print(f'profile / compat / level = {avcProfileCompFlags.hex()}')
-	composite_1, composite_2 = data.read(2)
-	complete_represenation, reserved_1, lengthSizeMinusOne = split_bits(composite_1, 8, 7, 2, 0)
-	reserved_2, numOfSequenceParameterSets = split_bits(composite_2, 8, 7, 0)
-	assert reserved_1 == mask(5), f'invalid reserved_1: {reserved_1}'
-	assert reserved_2 == 0, f'invalid reserved_2: {reserved_2}'
-	ps.field('complete_represenation', bool(complete_represenation))
-	ps.field('lengthSizeMinusOne', lengthSizeMinusOne)
+	if (configurationVersion := ps.int(1)) != 1:
+		raise AssertionError(f'invalid configuration version: {configurationVersion}')
+	ps.field('profile / compat / level', ps.bytes(3).hex())
+	with ps.bits(1) as br:
+		ps.field('complete_represenation', br.bit())
+		reserved_1 = br.read(5)
+		assert reserved_1 == mask(5), f'invalid reserved_1: {reserved_1}'
+		ps.field('lengthSizeMinusOne', br.read(2))
 
+	with ps.bits(1) as br:
+		reserved_2 = br.read(1)
+		assert reserved_2 == 0, f'invalid reserved_2: {reserved_2}'
+		numOfSequenceParameterSets = br.read(7)
 	for i in range(numOfSequenceParameterSets):
-		size, = ps.unpack('H')
-		sps = data.read(size)
-		assert len(sps) == size, f'not enough SPS data: expected {size}, found {len(sps)}'
-		ps.print(f'- SPS: {sps.hex()}')
-	numOfPictureParameterSets, = data.read(1)
+		ps.print(f'- SPS: {ps.bytes(ps.int(2)).hex()}')
+	numOfPictureParameterSets = ps.int(1)
 	for i in range(numOfPictureParameterSets):
-		size, = ps.unpack('H')
-		pps = data.read(size)
-		assert len(sps) == size, f'not enough PPS data: expected {size}, found {len(pps)}'
-		ps.print(f'- PPS: {pps.hex()}')
+		ps.print(f'- PPS: {ps.bytes(ps.int(2)).hex()}')
 
 def parse_hvcC_box(ps: Parser):
-	configurationVersion, = data.read(1)
-	assert configurationVersion == 1, f'invalid configuration version: {configurationVersion}'
+	if (configurationVersion := ps.int(1)) != 1:
+		raise AssertionError(f'invalid configuration version: {configurationVersion}')
 
-	composite_1, general_profile_compatibility_flags, general_constraint_indicator_flags, general_level_idc, min_spatial_segmentation_idc, \
-	parallelismType, chromaFormat, bitDepthLumaMinus8, bitDepthChromaMinus8, \
-	avgFrameRate, composite_2 = \
-		ps.unpack('B I 6s B H  B B B B  H B')
-	general_constraint_indicator_flags = int.from_bytes(general_constraint_indicator_flags, 'big')
-	general_profile_space, general_tier_flag, general_profile_idc = split_bits(composite_1, 8, 6, 5, 0)
-	constantFrameRate, numTemporalLayers, temporalIdNested, lengthSizeMinusOne = split_bits(composite_2, 8, 6, 3, 2, 0)
+	with ps.bits(1) as br:
+		ps.field('general_profile_space', br.read(2))
+		ps.field('general_tier_flag', br.read(1))
+		ps.field('general_profile_idc', br.read(5), '02x')
+	ps.field('general_profile_compatibility_flags', ps.bytes(4).hex())
+	ps.field('general_constraint_indicator_flags', ps.bytes(6).hex())
+	ps.field('general_level_idc', ps.bytes(1).hex())
 
-	ps.field('general_profile_space', general_profile_space)
-	ps.field('general_tier_flag', general_tier_flag)
-	ps.field('general_profile_idc', general_profile_idc, '02x')
+	with ps.bits(2) as br:
+		reserved = br.read(4)
+		assert reserved == mask(4), f'invalid reserved: {reserved}'
+		ps.field('min_spatial_segmentation_idc', br.read())
+	with ps.bits(1) as br:
+		reserved = br.read(6)
+		assert reserved == mask(6), f'invalid reserved: {reserved}'
+		ps.field('parallelismType', br.read())
+	with ps.bits(1) as br:
+		reserved = br.read(6)
+		assert reserved == mask(6), f'invalid reserved: {reserved}'
+		ps.field('chromaFormat', br.read())
+	with ps.bits(1) as br:
+		reserved = br.read(5)
+		assert reserved == mask(5), f'invalid reserved: {reserved}'
+		ps.field('bitDepthLumaMinus8', br.read())
+	with ps.bits(1) as br:
+		reserved = br.read(5)
+		assert reserved == mask(5), f'invalid reserved: {reserved}'
+		ps.field('bitDepthChromaMinus8', br.read())
 
-	ps.field('general_profile_compatibility_flags', general_profile_compatibility_flags, '08x')
-	ps.field('general_constraint_indicator_flags', general_constraint_indicator_flags, '012x')
-	ps.field('general_level_idc', general_level_idc, '02x')
+	avgFrameRate = ps.int(2)
+	with ps.bits(1) as br:
+		ps.field('avgFrameRate', avgFrameRate)
+		ps.field('constantFrameRate', br.read(2))
+		ps.field('numTemporalLayers', br.read(3))
+		ps.field('temporalIdNested', br.bit())
+		ps.field('lengthSizeMinusOne', br.read(2))
 
-	reserved, min_spatial_segmentation_idc = split_bits(min_spatial_segmentation_idc, 16, 12, 0)
-	assert reserved == mask(4), f'invalid reserved: {reserved}'
-	ps.field('min_spatial_segmentation_idc', min_spatial_segmentation_idc)
-	reserved, parallelismType = split_bits(parallelismType, 8, 2, 0)
-	assert reserved == mask(6), f'invalid reserved: {reserved}'
-	ps.field('parallelismType', parallelismType)
-	reserved, chromaFormat = split_bits(chromaFormat, 8, 2, 0)
-	assert reserved == mask(6), f'invalid reserved: {reserved}'
-	ps.field('chromaFormat', chromaFormat)
-	reserved, bitDepthLumaMinus8 = split_bits(bitDepthLumaMinus8, 8, 3, 0)
-	assert reserved == mask(5), f'invalid reserved: {reserved}'
-	ps.field('bitDepthLumaMinus8', bitDepthLumaMinus8)
-	reserved, bitDepthChromaMinus8 = split_bits(bitDepthChromaMinus8, 8, 3, 0)
-	assert reserved == mask(5), f'invalid reserved: {reserved}'
-	ps.field('bitDepthChromaMinus8', bitDepthChromaMinus8)
-
-	ps.field('avgFrameRate', avgFrameRate)
-	ps.field('constantFrameRate', constantFrameRate)
-	ps.field('numTemporalLayers', numTemporalLayers)
-	ps.field('temporalIdNested', bool(temporalIdNested))
-	ps.field('lengthSizeMinusOne', lengthSizeMinusOne)
-
-	numOfArrays, = ps.unpack('B')
+	numOfArrays = ps.int(1)
 	#ps.field('numOfArrays', numOfArrays)
 	for i in range(numOfArrays):
 		ps.print(f'- array {i}:')
@@ -875,16 +861,8 @@ def parse_hvcC_box(ps: Parser):
 		#ps.print(f'    numNalus = {numNalus}')
 
 		for n in range(numNalus):
-			entry_start = offset + data.tell()
-			nalUnitLength, = ps.unpack('H')
-			data_start = offset + data.tell()
-			nalData = data.read(nalUnitLength)
-			assert len(nalData) == nalUnitLength, f'EOF when reading NALU: expected {nalUnitLength}, got {len(nalData)}'
-
-			offset_text = ansi_fg4(f' @ {entry_start:#x}, {data_start:#x} - {data_start + nalUnitLength:#x}') if show_offsets else ''
-			length_text = ansi_fg4(f' ({nalUnitLength})') if show_lengths else ''
-			ps.print(f'    - NALU {n}' + offset_text + length_text)
-			print_hex_dump(nalData, ps.prefix + '        ')
+			ps.print(f'    - NALU {n}')
+			print_hex_dump(ps.read(ps.int(2)), ps.prefix + '        ')
 
 # FIXME: implement av1C
 
@@ -900,21 +878,18 @@ def parse_m4ds_box(ps: Parser):
 	parse_descriptors(io.BytesIO(ps.read()), ps.indent)
 
 def parse_dOps_box(ps: Parser):
-	Version, OutputChannelCount, PreSkip, InputSampleRate, OutputGain, ChannelMappingFamily = ps.unpack('BBHIhB')
-	assert Version == 0, f'invalid Version: {Version}'
-	OutputGain /= 1 << 8
-	ps.field('OutputChannelCount', OutputChannelCount)
-	ps.field('PreSkip', PreSkip)
-	ps.field('InputSampleRate', InputSampleRate)
-	ps.field('OutputGain', OutputGain)
-	ps.field('ChannelMappingFamily', ChannelMappingFamily)
+	if (Version := ps.unpack('B')[0]) != 0:
+		raise AssertionError(f'invalid Version: {Version}')
+
+	ps.field('OutputChannelCount', OutputChannelCount := ps.unpack('B')[0])
+	ps.field('PreSkip', ps.unpack('H')[0])
+	ps.field('InputSampleRate', ps.unpack('I')[0])
+	ps.field('OutputGain', ps.unpack('h')[0] / (1 << 8))
+	ps.field('ChannelMappingFamily', ChannelMappingFamily := ps.unpack('B')[0])
 	if ChannelMappingFamily != 0:
-		StreamCount, CoupledCount = data.read(2)
-		ps.field('StreamCount', StreamCount)
-		ps.field('CoupledCount', CoupledCount)
-		ChannelMapping = data.read(OutputChannelCount)
-		assert len(ChannelMapping) == OutputChannelCount, 'invalid ChannelMapping length'
-		ps.field('ChannelMapping', ChannelMapping)
+		ps.field('StreamCount', ps.int(1))
+		ps.field('CoupledCount', ps.int(1))
+		ps.field('ChannelMapping', list(ps.bytes(OutputChannelCount)))
 
 
 # TABLES
@@ -1224,37 +1199,31 @@ def parse_schm_box(ps: Parser):
 	assert version == 0, f'invalid version: {version}'
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
-	scheme_type, scheme_version = ps.unpack('4sI')
-	scheme_type = scheme_type.decode('latin1')
-	ps.field('scheme_type', scheme_type)
-	ps.field('scheme_version', scheme_version, '#x')
+	ps.field('scheme_type', ps.fourcc())
+	ps.field('scheme_version', ps.int(4), '#x')
 	if box_flags & 1:
-		scheme_uri = read_string(data)
-		ps.field('scheme_uri', scheme_uri)
+		ps.field('scheme_uri', ps.string())
 
 def parse_tenc_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
-	reserved_1, reserved_2 = ps.unpack('BB')
+	reserved_1 = ps.int(1)
 	assert reserved_1 == 0, f'invalid reserved 1: {reserved_1}'
+
 	if version > 0:
-		default_crypt_byte_block, default_skip_byte_block = split_bits(reserved_2, 8, 4, 0)
-		ps.field('default_crypt_byte_block', default_crypt_byte_block)
-		ps.field('default_skip_byte_block', default_skip_byte_block)
+		with ps.bits(1) as br:
+			ps.field('default_crypt_byte_block', br.read(4))
+			ps.field('default_skip_byte_block', br.read(4))
 	else:
+		reserved_2 = ps.int(1)
 		assert reserved_2 == 0, f'invalid reserved 2: {reserved_2}'
 
-	default_isProtected, default_Per_Sample_IV_Size, default_KID = ps.unpack('BB16s')
-	ps.field('default_isProtected', default_isProtected)
-	ps.field('default_Per_Sample_IV_Size', default_Per_Sample_IV_Size)
-	ps.field('default_KID', default_KID.hex())
+	ps.field('default_isProtected', default_isProtected := ps.int(1))
+	ps.field('default_Per_Sample_IV_Size', default_Per_Sample_IV_Size := ps.int(1))
+	ps.field('default_KID', ps.bytes(16).hex())
 	if default_isProtected == 1 and default_Per_Sample_IV_Size == 0:
-		default_constant_IV_size, = ps.unpack('B')
-		default_constant_IV = data.read(default_constant_IV_size)
-		assert len(default_constant_IV) == default_constant_IV_size, \
-			f'unexpected EOF within default_constant_IV: expected {default_constant_IV_size}, got {len(default_constant_IV)}'
-		ps.field('default_constant_IV', default_constant_IV.hex())
+		ps.field('default_constant_IV', ps.bytes(ps.int(1)).hex())
 
 def format_system_id(SystemID: str) -> str:
 	system_name, system_comment = protection_systems.get(SystemID, (None, None))
@@ -1272,12 +1241,8 @@ def parse_pssh_box(ps: Parser):
 			KID, = ps.unpack('16s')
 			ps.print(f'- KID: {KID.hex()}')
 
-	DataSize, = ps.unpack('I')
-	ps.field('DataSize', DataSize)
-	Data = data.read(DataSize)
-	assert len(Data) == DataSize, f'unexpected EOF within Data: expected {DataSize}, got {len(Data)}'
 	ps.print(f'Data =')
-	print_hex_dump(Data, ps.prefix + '  ')
+	print_hex_dump(ps.read(ps.int(4)), ps.prefix + '  ')
 
 
 # MPEG-4 part 1 DESCRIPTORS (based on 2010 edition)
