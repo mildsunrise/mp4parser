@@ -200,6 +200,10 @@ class Parser(MVIO):
 			(not any(value)) if isinstance(value, bytes) else (not value)
 		assert ok, f'invalid {name}: {value}'
 
+	def subparser(self, n: int):
+		offset = self.offset
+		return Parser(self.read(n), offset, self.indent + 1)
+
 # FIXME: to ease migration, remove afterwards
 def unpack(stream, struct_fmt: str) -> tuple:
 		struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
@@ -286,39 +290,33 @@ for std_desc, boxes in box_registry:
 			raise Exception(f'duplicate boxes {k} coming from {std_desc} and {info_by_box[k][0]}')
 		info_by_box[k] = (std_desc, *v)
 
-def slice_box(mem: memoryview):
-	assert len(mem) >= 8, f'box too short ({bytes(mem)})'
-	length, btype = struct.unpack('>I4s', mem[0:8])
-	btype = btype.decode('latin1')
+def slice_box(ps: Parser):
+	start = ps.pos
+	length = ps.int(4)
+	btype = ps.fourcc()
 	assert btype.isprintable(), f'invalid type {repr(btype)}'
 
-	last_box = False
-	large_size = False
-	pos = 8
+	last_box, large_size = False, False
 	if length == 0:
-		length = len(mem)
+		length = ps.remaining
 		last_box = True
 	elif length == 1:
 		large_size = True
-		assert len(mem) >= pos + 8, f'EOF while reading largesize'
-		length, = struct.unpack('>Q', mem[pos:pos + 8])
-		pos += 8
-
+		length = ps.int(8)
 	if btype == 'uuid':
-		assert len(mem) >= pos + 16, f'EOF while reading UUID'
-		btype = mem[pos:pos + 16]
-		pos += 16
+		btype = ps.uuid()
 
-	assert length >= pos, f'invalid {btype} length: {length}'
-	assert len(mem) >= length, f'expected {length} {btype}, got {len(mem)}'
-	return (btype, mem[pos:length], last_box, large_size), length
+	length -= ps.pos - start
+	assert length >= 0, f'invalid box length'
+	return btype, ps.subparser(length), last_box, large_size
 
 def parse_boxes(ps: Parser, contents_fn=None):
 	result = []
-	while mem:
-		(btype, data, last_box, large_size), length = slice_box(mem)
-		offset_text = ansi_fg4(f' @ {offset:#x}, {offset + length - len(data):#x} - {offset + length:#x}') if show_offsets else ''
-		length_text = ansi_fg4(f' ({len(data)})') if show_lengths else ''
+	while not ps.ended:
+		offset = ps.offset
+		btype, data, last_box, large_size = slice_box(ps)
+		offset_text = ansi_fg4(f' @ {offset:#x}, {data.offset:#x} - {data.offset + data.remaining:#x}') if show_offsets else ''
+		length_text = ansi_fg4(f' ({data.remaining})') if show_lengths else ''
 		name_text = ''
 		if show_descriptions and (box_desc := info_by_box.get(btype)):
 			desc = box_desc[1]
@@ -330,10 +328,9 @@ def parse_boxes(ps: Parser, contents_fn=None):
 			offset_text = ' (large size)' + offset_text
 		type_label = btype
 		if len(btype) != 4: # it's a UUID
-			type_label = f'UUID {format_uuid(btype)}'
+			type_label = f'UUID {btype}'
 		ps.print(ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text)
-		result.append( (contents_fn or parse_contents)(btype, offset + length - len(data), data, indent + 1) )
-		mem, offset = mem[length:], offset + length
+		result.append( (contents_fn or parse_contents)(btype, data) )
 	return result
 
 nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'sinf', 'schi' }
@@ -342,6 +339,7 @@ nesting_boxes |= { 'ilst', '\u00a9too', '\u00a9nam', '\u00a9day', '\u00a9ART', '
 
 def parse_contents(btype: str, ps: Parser):
 	try:
+		# FIXME: do `with ps as ps` here
 
 		if (handler := globals().get(f'parse_{btype}_box')):
 			return handler(ps)
