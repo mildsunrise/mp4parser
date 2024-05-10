@@ -431,10 +431,8 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert not any(reserved), f'invalid reserved / pre-defined data: {reserved}'
 	width, height, horizresolution, vertresolution, reserved_2, frame_count, compressorname, depth, pre_defined_3 = ps.unpack('HHIIIH 32s Hh')
 	ps.field('size', (width, height), format_size)
-	if show_defaults or horizresolution != 0x00480000 or vertresolution != 0x00480000:
-		ps.field('resolution', (horizresolution, vertresolution), format_size)
-	if show_defaults or frame_count != 1:
-		ps.field('frame_count', frame_count)
+	ps.field('resolution', (horizresolution, vertresolution), format_size, default=(0x00480000,)*2)
+	ps.field('frame_count', frame_count, default=1)
 
 	compressorname_len, compressorname = compressorname[0], compressorname[1:]
 	assert compressorname_len <= len(compressorname)
@@ -442,8 +440,7 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	compressorname = compressorname[:compressorname_len].decode('utf-8')
 	ps.field('compressorname', compressorname)
 
-	if show_defaults or depth != 0x0018:
-		ps.field('depth', depth)
+	ps.field('depth', depth, default=0x18)
 	assert not reserved_2, f'invalid reserved: {reserved_2}'
 	assert pre_defined_3 == -1, f'invalid reserved: {pre_defined_3}'
 
@@ -457,10 +454,8 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 		assert not any(reserved_1), f'invalid reserved_1: {reserved_1}'
 		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
 		assert not pre_defined_1, f'invalid pre_defined_1: {pre_defined_1}'
-		if show_defaults or channelcount != 2:
-			ps.field('channelcount', channelcount)
-		if show_defaults or samplesize != 16:
-			ps.field('samplesize', samplesize)
+		ps.field('channelcount', channelcount, default=2)
+		ps.field('samplesize', samplesize, default=16)
 		ps.field('samplerate', samplerate / (1 << 16))
 	else:
 		entry_version, reserved_1, channelcount, samplesize, pre_defined_1, reserved_2, samplerate = ps.unpack('H6sHHHHI')
@@ -469,10 +464,8 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 		assert not reserved_2, f'invalid reserved_2: {reserved_2}'
 		assert not pre_defined_1, f'invalid pre_defined_1: {pre_defined_1}'
 		ps.field('channelcount', channelcount)
-		if show_defaults or samplesize != 16:
-			ps.field('samplesize', samplesize)
-		if show_defaults or samplerate != (1 << 16):
-			ps.field('samplerate', samplerate / (1 << 16))
+		ps.field('samplesize', samplesize, default=16)
+		ps.field('samplerate', samplerate / (1 << 16), default=1)
 
 	parse_boxes(ps)
 
@@ -510,9 +503,8 @@ def parse_ftyp_box(ps: Parser):
 parse_styp_box = parse_ftyp_box
 
 def parse_matrix(ps: Parser):
-	matrix = [ x / (1 << 16) for x in ps.unpack('9i') ]
-	if show_defaults or matrix != [1,0,0, 0,1,0, 0,0,0x4000]:
-		ps.field('matrix', matrix)
+	matrix = [ ps.sint(4) / (1 << 16) for _ in range(9) ]
+	ps.field('matrix', matrix, default=[1,0,0, 0,1,0, 0,0,0x4000])
 
 def parse_language(ps: Parser):
 	language, = ps.unpack('H')
@@ -545,10 +537,8 @@ def parse_mvhd_box(ps: Parser):
 	ps.field('modification_time', modification_time)
 	ps.field('timescale', timescale)
 	ps.field('duration', duration)
-	rate /= 1 << 16
-	if show_defaults or rate != 1: ps.field('rate', rate)
-	volume /= 1 << 8
-	if show_defaults or volume != 1: ps.field('volume', volume)
+	ps.field('rate', rate / (1 << 16), default=1)
+	ps.field('volume', volume / (1 << 8), default=1)
 	assert not reserved_1, f'invalid reserved_1: {reserved_1}'
 	assert not reserved_2, f'invalid reserved_2: {reserved_2}'
 	assert not reserved_3, f'invalid reserved_3: {reserved_3}'
@@ -571,10 +561,8 @@ def parse_tkhd_box(ps: Parser):
 	ps.field('modification_time', modification_time)
 	ps.field('track_ID', track_ID)
 	ps.field('duration', duration)
-	if show_defaults or layer != 0:
-		ps.field('layer', layer)
-	if show_defaults or alternate_group != 0:
-		ps.field('alternate_group', alternate_group)
+	ps.field('layer', layer, default=0)
+	ps.field('alternate_group', alternate_group, default=0)
 	volume /= 1 << 8
 	ps.field('volume', volume)
 	assert not reserved_1, f'invalid reserved_1: {reserved_1}'
@@ -620,8 +608,7 @@ def parse_smhd_box(ps: Parser):
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
 	balance, reserved = ps.unpack('hH')
-	if show_defaults or balance != 0:
-		ps.field('balance', balance)
+	ps.field('balance', balance, default=0)
 	assert not reserved, f'invalid reserved: {reserved}'
 
 def parse_vmhd_box(ps: Parser):
@@ -629,11 +616,8 @@ def parse_vmhd_box(ps: Parser):
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 1, f'invalid flags: {box_flags}'
 
-	graphicsmode, *opcolor = ps.unpack('HHHH')
-	if show_defaults or graphicsmode != 0:
-		ps.field('graphicsmode', graphicsmode)
-	if show_defaults or opcolor != [0, 0, 0]:
-		ps.field('opcolor', opcolor)
+	ps.field('graphicsmode', ps.int(2), default=0)
+	ps.field('opcolor', [ps.int(2) for _ in range(3)], default=[0,]*3)
 
 def parse_trex_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -994,8 +978,7 @@ def parse_stsz_box(ps: Parser):
 	assert version == 0, f'invalid version: {version}'
 
 	sample_size, sample_count = ps.unpack('II')
-	if show_defaults or sample_size != 0:
-		ps.field('sample_size', sample_size)
+	ps.field('sample_size', sample_size, default=0)
 	ps.field('sample_count', sample_count)
 	if sample_size == 0:
 		for i in range(sample_count):
