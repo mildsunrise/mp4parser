@@ -1,0 +1,230 @@
+[ftyp] FileType @ 0x0, 0x8 - 0x1c (20)
+    major_brand = 'isom'
+    minor_version = 00000200
+    - compatible: 'isom'
+    - compatible: 'iso2'
+    - compatible: 'mp41'
+[free] FreeSpace @ 0x1c, 0x24 - 0x24 (0)
+    (0 empty bytes)
+[mdat] MediaData @ 0x24, 0x2c - 0x417e8 (268220)
+    00 00 01 b3  14 00 f0 23  ff ff e0 18  00 00 01 b5   .......#........
+    14 8a 00 01  00 00 00 00  01 b8 00 08  00 40 00 00   .............@..
+    01 00 00 0f  ff f8 00 00  01 b5 8f ff  f3 41 80 00   .............A..
+    00 01 01 2b  f8 7d 29 48  8b 94 a5 22  2e 5f 41 be   ...+.})H..."._A.
+    7d 7d 06 f3  00 30 01 28  08 88 b7 dc  00 10 82 20   }}...0.(....... 
+    05 02 47 fd  02 60 02 5c  a5 29 79 97  dc 5c ac 0d   ..G..`.\.)y..\..
+    0d 28 84 52  4b 2d 39 08  46 7f f8 07  18 db 50 06   .(.RK-9.F.....P.
+    ...
+[moov] Movie @ 0x417e8, 0x417f0 - 0x42b94 (5028)
+    [mvhd] MovieHeader @ 0x417f0, 0x417f8 - 0x4185c (100)
+        version = 0
+        creation_time = 0
+        modification_time = 0
+        timescale = 1000
+        duration = 5000
+        next_track_ID = 3
+    [trak] Track @ 0x4185c, 0x41864 - 0x41ed5 (1649)
+        [tkhd] TrackHeader @ 0x41864, 0x4186c - 0x418c0 (84)
+            version = 0, flags = 000003
+            creation_time = 0
+            modification_time = 0
+            track_ID = 1
+            duration = 5000
+            volume = 0.0
+            size = 320.0 x 240.0
+        [edts] Edit @ 0x418c0, 0x418c8 - 0x418e4 (28)
+            [elst] EditList @ 0x418c8, 0x418d0 - 0x418e4 (20)
+                version = 0
+                entry_count = 1
+                [edit segment   0] duration =   5000, media_time =    512, media_rate = 1.0
+        [mdia] Media @ 0x418e4, 0x418ec - 0x41ed5 (1513)
+            [mdhd] MediaHeader @ 0x418ec, 0x418f4 - 0x4190c (24)
+                version = 0
+                creation_time = 0
+                modification_time = 0
+                timescale = 12800
+                duration = 64000
+                language = und
+            [hdlr] Handler @ 0x4190c, 0x41914 - 0x41939 (37)
+                handler_type = 'vide', name = 'VideoHandler\x00'
+            [minf] MediaInformation @ 0x41939, 0x41941 - 0x41ed5 (1428)
+                [vmhd] VideoMediaHeader @ 0x41941, 0x41949 - 0x41955 (12)
+                [dinf] DataInformation @ 0x41955, 0x4195d - 0x41979 (28)
+                    [dref] DataReference @ 0x4195d, 0x41965 - 0x41979 (20)
+                        version = 0, entry_count = 1
+                        [url ] DataEntryUrl @ 0x4196d, 0x41975 - 0x41979 (4)
+                            flags = 000001
+                [stbl] SampleTable @ 0x41979, 0x41981 - 0x41ed5 (1364)
+                    [stsd] SampleDescription @ 0x41981, 0x41989 - 0x41a41 (184)
+                        version = 0, entry_count = 1
+                        [mp4v] MP4VisualSampleEntry @ 0x41991, 0x41999 - 0x41a41 (168)
+                            data_reference_index = 1
+                            size = 320 x 240
+                            compressorname = 'Lavc60.31.102 mpeg2video'
+                            [esds] ESD @ 0x419e7, 0x419ef - 0x41a13 (36)
+                                [3] ES_Descriptor -> BaseDescriptor (4 length bytes)
+                                    ES_ID = 1
+                                    streamPriority = 0
+                                    [4] DecoderConfigDescriptor -> BaseDescriptor (4 length bytes)
+                                        objectTypeIndication = 97 (MPEG-2 Video (Main Profile))
+                                        streamType = 4 (VisualStream)
+                                        upStream = False
+                                        bufferSizeDB = 0
+                                        maxBitrate = 364619
+                                        avgBitrate = 364619
+                                    [6] SLConfigDescriptor -> BaseDescriptor (4 length bytes)
+                                        predefined = 2 (Reserved for use in MP4 files)
+                            [fiel] @ 0x41a13, 0x41a1b - 0x41a1d (2)
+                                01 00                                                ..
+                            [pasp] PixelAspectRatio @ 0x41a1d, 0x41a25 - 0x41a2d (8)
+                                pixel aspect ratio = 1/1
+                            [btrt] BitRate @ 0x41a2d, 0x41a35 - 0x41a41 (12)
+                                bufferSizeDB = 0
+                                maxBitrate = 364619
+                                avgBitrate = 364619
+                    [stts] TimeToSample @ 0x41a41, 0x41a49 - 0x41a59 (16)
+                        entry_count = 1
+                        [entry   0] [sample =      1, time =      0] sample_count =   125, sample_delta =   512
+                        [samples =    125, time =  64000]
+                    [stss] SyncSample @ 0x41a59, 0x41a61 - 0x41a95 (52)
+                        entry_count = 11
+                        [sync sample     0] sample_number =      1
+                        [sync sample     1] sample_number =     13
+                        [sync sample     2] sample_number =     25
+                        [sync sample     3] sample_number =     37
+                        [sync sample     4] sample_number =     49
+                        [sync sample     5] sample_number =     61
+                        [sync sample     6] sample_number =     73
+                        ...
+                    [ctts] CompositionOffset @ 0x41a95, 0x41a9d - 0x41aad (16)
+                        version = 0
+                        entry_count = 1
+                        [entry   0] [sample =      1] sample_count =   125, sample_offset =   512
+                        [samples =    125]
+                    [stsc] SampleToChunk @ 0x41aad, 0x41ab5 - 0x41ac9 (20)
+                        entry_count = 1
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =    1, sample_description_index = 1
+                    [stsz] SampleSize @ 0x41ac9, 0x41ad1 - 0x41cd1 (512)
+                        sample_count = 125
+                        [sample      1] sample_size =  8058
+                        [sample      2] sample_size =  4636
+                        [sample      3] sample_size =  1103
+                        [sample      4] sample_size =  1015
+                        [sample      5] sample_size =   987
+                        [sample      6] sample_size =   930
+                        [sample      7] sample_size =   860
+                        ...
+                    [stco] ChunkOffset @ 0x41cd1, 0x41cd9 - 0x41ed5 (508)
+                        entry_count = 125
+                        [chunk     1] offset = 0x00002c
+                        [chunk     2] offset = 0x002076
+                        [chunk     3] offset = 0x003434
+                        [chunk     4] offset = 0x003a25
+                        [chunk     5] offset = 0x003eed
+                        [chunk     6] offset = 0x00446a
+                        [chunk     7] offset = 0x0048dd
+                        ...
+    [trak] Track @ 0x41ed5, 0x41edd - 0x42b32 (3157)
+        [tkhd] TrackHeader @ 0x41edd, 0x41ee5 - 0x41f39 (84)
+            version = 0, flags = 000003
+            creation_time = 0
+            modification_time = 0
+            track_ID = 2
+            duration = 5000
+            alternate_group = 1
+            volume = 1.0
+            size = 0.0 x 0.0
+        [edts] Edit @ 0x41f39, 0x41f41 - 0x41f5d (28)
+            [elst] EditList @ 0x41f41, 0x41f49 - 0x41f5d (20)
+                version = 0
+                entry_count = 1
+                [edit segment   0] duration =   5000, media_time =   1105, media_rate = 1.0
+        [mdia] Media @ 0x41f5d, 0x41f65 - 0x42b32 (3021)
+            [mdhd] MediaHeader @ 0x41f65, 0x41f6d - 0x41f85 (24)
+                version = 0
+                creation_time = 0
+                modification_time = 0
+                timescale = 44100
+                duration = 221605
+                language = und
+            [hdlr] Handler @ 0x41f85, 0x41f8d - 0x41fb2 (37)
+                handler_type = 'soun', name = 'SoundHandler\x00'
+            [minf] MediaInformation @ 0x41fb2, 0x41fba - 0x42b32 (2936)
+                [smhd] SoundMediaHeader @ 0x41fba, 0x41fc2 - 0x41fca (8)
+                [dinf] DataInformation @ 0x41fca, 0x41fd2 - 0x41fee (28)
+                    [dref] DataReference @ 0x41fd2, 0x41fda - 0x41fee (20)
+                        version = 0, entry_count = 1
+                        [url ] DataEntryUrl @ 0x41fe2, 0x41fea - 0x41fee (4)
+                            flags = 000001
+                [stbl] SampleTable @ 0x41fee, 0x41ff6 - 0x42b32 (2876)
+                    [stsd] SampleDescription @ 0x41ff6, 0x41ffe - 0x4206a (108)
+                        version = 0, entry_count = 1
+                        [mp4a] MP4AudioSampleEntry @ 0x42006, 0x4200e - 0x4206a (92)
+                            data_reference_index = 1
+                            channelcount = 1
+                            samplerate = 44100.0
+                            [esds] ESD @ 0x4202a, 0x42032 - 0x42056 (36)
+                                [3] ES_Descriptor -> BaseDescriptor (4 length bytes)
+                                    ES_ID = 2
+                                    streamPriority = 0
+                                    [4] DecoderConfigDescriptor -> BaseDescriptor (4 length bytes)
+                                        objectTypeIndication = 107 (MPEG-1 Audio (usually MP3))
+                                        streamType = 5 (AudioStream)
+                                        upStream = False
+                                        bufferSizeDB = 0
+                                        maxBitrate = 64211
+                                        avgBitrate = 64211
+                                    [6] SLConfigDescriptor -> BaseDescriptor (4 length bytes)
+                                        predefined = 2 (Reserved for use in MP4 files)
+                            [btrt] BitRate @ 0x42056, 0x4205e - 0x4206a (12)
+                                bufferSizeDB = 0
+                                maxBitrate = 64211
+                                avgBitrate = 64211
+                    [stts] TimeToSample @ 0x4206a, 0x42072 - 0x4208a (24)
+                        entry_count = 2
+                        [entry   0] [sample =      1, time =      0] sample_count =   192, sample_delta =  1152
+                        [entry   1] [sample =    193, time = 221184] sample_count =     1, sample_delta =   421
+                        [samples =    193, time = 221605]
+                    [stsc] SampleToChunk @ 0x4208a, 0x42092 - 0x42616 (1412)
+                        entry_count = 117
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =    1, sample_description_index = 1
+                        [entry   1] [sample =      2] first_chunk =     2, samples_per_chunk =    2, sample_description_index = 1
+                        [entry   2] [sample =      6] first_chunk =     4, samples_per_chunk =    1, sample_description_index = 1
+                        [entry   3] [sample =      7] first_chunk =     5, samples_per_chunk =    2, sample_description_index = 1
+                        [entry   4] [sample =      9] first_chunk =     6, samples_per_chunk =    1, sample_description_index = 1
+                        [entry   5] [sample =     10] first_chunk =     7, samples_per_chunk =    2, sample_description_index = 1
+                        [entry   6] [sample =     12] first_chunk =     8, samples_per_chunk =    1, sample_description_index = 1
+                        ...
+                    [stsz] SampleSize @ 0x42616, 0x4261e - 0x4292e (784)
+                        sample_count = 193
+                        [sample      1] sample_size =   208
+                        [sample      2] sample_size =   209
+                        [sample      3] sample_size =   209
+                        [sample      4] sample_size =   209
+                        [sample      5] sample_size =   209
+                        [sample      6] sample_size =   209
+                        [sample      7] sample_size =   209
+                        ...
+                    [stco] ChunkOffset @ 0x4292e, 0x42936 - 0x42b32 (508)
+                        entry_count = 125
+                        [chunk     1] offset = 0x001fa6
+                        [chunk     2] offset = 0x003292
+                        [chunk     3] offset = 0x003883
+                        [chunk     4] offset = 0x003e1c
+                        [chunk     5] offset = 0x0042c8
+                        [chunk     6] offset = 0x00480c
+                        [chunk     7] offset = 0x004c39
+                        ...
+    [udta] UserData @ 0x42b32, 0x42b3a - 0x42b94 (90)
+        [meta] Meta @ 0x42b3a, 0x42b42 - 0x42b94 (82)
+            version = 0, flags = 000000
+            [hdlr] Handler @ 0x42b46, 0x42b4e - 0x42b67 (25)
+                ERROR: invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+
+                00 00 00 00  00 00 00 00  6d 64 69 72  61 70 70 6c   ........mdirappl
+                00 00 00 00  00 00 00 00  00                         .........
+            [ilst] @ 0x42b67, 0x42b6f - 0x42b94 (37)
+                [©too] @ 0x42b6f, 0x42b77 - 0x42b94 (29)
+                    [data] @ 0x42b77, 0x42b7f - 0x42b94 (21)
+                        00 00 00 01  00 00 00 00  4c 61 76 66  36 30 2e 31   ........Lavf60.1
+                        36 2e 31 30  30                                      6.100

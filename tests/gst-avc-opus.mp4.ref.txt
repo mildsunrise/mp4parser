@@ -1,0 +1,226 @@
+[ftyp] FileType @ 0x0, 0x8 - 0x20 (24)
+    major_brand = 'mp42'
+    minor_version = 00000000
+    - compatible: 'mp42'
+    - compatible: 'mp41'
+    - compatible: 'isom'
+    - compatible: 'iso2'
+[free] FreeSpace @ 0x20, 0x28 - 0x28 (0)
+    (0 empty bytes)
+[mdat] MediaData @ 0x28, 0x30 - 0xd2f1b (863979)
+    00 00 00 02  09 10 00 00  00 1d 67 42  c0 1f d9 00   ..........gB....
+    c8 13 7e 5c  05 a8 08 08  0a 00 00 03  00 02 00 00   ..~\............
+    03 00 79 1e  30 64 90 00  00 00 04 68  cb 8c b2 00   ..y.0d.....h....
+    00 02 b7 06  05 ff ff b3  dc 45 e9 bd  e6 d9 48 b7   .........E....H.
+    96 2c d8 20  d9 23 ee ef  78 32 36 34  20 2d 20 63   .,. .#..x264 - c
+    6f 72 65 20  31 36 34 20  72 33 31 30  38 20 33 31   ore 164 r3108 31
+    65 31 39 66  39 20 2d 20  48 2e 32 36  34 2f 4d 50   e19f9 - H.264/MP
+    ...
+[moov] Movie @ 0xd2f1b, 0xd2f23 - 0xd5ffa (12503)
+    [mvhd] MovieHeader @ 0xd2f23, 0xd2f2b - 0xd2f8f (100)
+        version = 0
+        creation_time = 3796658196
+        modification_time = 3796658201
+        timescale = 3000
+        duration = 96600
+        next_track_ID = 3
+    [trak] Track @ 0xd2f8f, 0xd2f97 - 0xd43d2 (5179)
+        [tkhd] TrackHeader @ 0xd2f97, 0xd2f9f - 0xd2ff3 (84)
+            version = 0, flags = 000007
+            creation_time = 3796658196
+            modification_time = 3796658201
+            track_ID = 1
+            duration = 96600
+            volume = 0.0
+            size = 800.0 x 600.0
+        [edts] Edit @ 0xd2ff3, 0xd2ffb - 0xd3017 (28)
+            [elst] EditList @ 0xd2ffb, 0xd3003 - 0xd3017 (20)
+                version = 0
+                entry_count = 1
+                [edit segment   0] duration =  96600, media_time =      0, media_rate = 1.0
+        [mdia] Media @ 0xd3017, 0xd301f - 0xd4379 (4954)
+            [mdhd] MediaHeader @ 0xd301f, 0xd3027 - 0xd303f (24)
+                version = 0
+                creation_time = 3796658196
+                modification_time = 3796658201
+                timescale = 3000
+                duration = 96600
+                language = und
+            [hdlr] Handler @ 0xd303f, 0xd3047 - 0xd306c (37)
+                handler_type = 'vide', name = 'VideoHandler\x00'
+            [minf] MediaInformation @ 0xd306c, 0xd3074 - 0xd4379 (4869)
+                [vmhd] VideoMediaHeader @ 0xd3074, 0xd307c - 0xd3088 (12)
+                [dinf] DataInformation @ 0xd3088, 0xd3090 - 0xd30ac (28)
+                    [dref] DataReference @ 0xd3090, 0xd3098 - 0xd30ac (20)
+                        version = 0, entry_count = 1
+                        [url ] DataEntryUrl @ 0xd30a0, 0xd30a8 - 0xd30ac (4)
+                            flags = 000001
+                [stbl] SampleTable @ 0xd30ac, 0xd30b4 - 0xd4379 (4805)
+                    [stsd] SampleDescription @ 0xd30b4, 0xd30bc - 0xd3185 (201)
+                        version = 0, entry_count = 1
+                        [avc1] AVCSampleEntry @ 0xd30c4, 0xd30cc - 0xd3185 (185)
+                            data_reference_index = 1
+                            size = 800 x 600
+                            compressorname = ''
+                            [avcC] AVCConfiguration @ 0xd311a, 0xd3122 - 0xd314e (44)
+                                profile / compat / level = 42c01f
+                                lengthSizeMinusOne = 3
+                                - SPS: 6742c01fd900c8137e5c05a808080a000003000200000300791e306490
+                                - PPS: 68cb8cb2
+                            [btrt] BitRate @ 0xd314e, 0xd3156 - 0xd3162 (12)
+                                bufferSizeDB = 0
+                                maxBitrate = 1024000
+                                avgBitrate = 197564
+                            [colr] ColourInformation @ 0xd3162, 0xd316a - 0xd3175 (11)
+                                colour_type = 'nclx' (on-screen colours)
+                                colour_primaries = 1
+                                transfer_characteristics = 1
+                                matrix_coefficients = 1
+                                full_range_flag = False
+                            [pasp] PixelAspectRatio @ 0xd3175, 0xd317d - 0xd3185 (8)
+                                pixel aspect ratio = 1/1
+                    [stts] TimeToSample @ 0xd3185, 0xd318d - 0xd319d (16)
+                        entry_count = 1
+                        [entry   0] [sample =      1, time =      0] sample_count =   966, sample_delta =   100
+                        [samples =    966, time =  96600]
+                    [stss] SyncSample @ 0xd319d, 0xd31a5 - 0xd3231 (140)
+                        entry_count = 33
+                        [sync sample     0] sample_number =      1
+                        [sync sample     1] sample_number =     31
+                        [sync sample     2] sample_number =     61
+                        [sync sample     3] sample_number =     91
+                        [sync sample     4] sample_number =    121
+                        [sync sample     5] sample_number =    151
+                        [sync sample     6] sample_number =    181
+                        ...
+                    [stsc] SampleToChunk @ 0xd3231, 0xd3239 - 0xd3259 (32)
+                        entry_count = 2
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =    8, sample_description_index = 1
+                        [entry   1] [sample =    961] first_chunk =   121, samples_per_chunk =    6, sample_description_index = 1
+                    [stsz] SampleSize @ 0xd3259, 0xd3261 - 0xd4185 (3876)
+                        sample_count = 966
+                        [sample      1] sample_size =  6593
+                        [sample      2] sample_size =   706
+                        [sample      3] sample_size =   541
+                        [sample      4] sample_size =   457
+                        [sample      5] sample_size =   257
+                        [sample      6] sample_size =   159
+                        [sample      7] sample_size =   439
+                        ...
+                    [stco] ChunkOffset @ 0xd4185, 0xd418d - 0xd4379 (492)
+                        entry_count = 121
+                        [chunk     1] offset = 0x000030
+                        [chunk     2] offset = 0x002ef2
+                        [chunk     3] offset = 0x003bce
+                        [chunk     4] offset = 0x004fa9
+                        [chunk     5] offset = 0x007fe0
+                        [chunk     6] offset = 0x00923d
+                        [chunk     7] offset = 0x00a18e
+                        ...
+        [udta] UserData @ 0xd4379, 0xd4381 - 0xd43d2 (81)
+            [meta] Meta @ 0xd4381, 0xd4389 - 0xd43d2 (73)
+                version = 0, flags = 000000
+                [hdlr] Handler @ 0xd438d, 0xd4395 - 0xd43ae (25)
+                    ERROR: invalid pre-defined: 1835560050
+
+                    00 00 00 00  6d 68 6c 72  6d 64 69 72  00 00 00 00   ....mhlrmdir....
+                    00 00 00 00  00 00 00 00  00                         .........
+                [ilst] @ 0xd43ae, 0xd43b6 - 0xd43d2 (28)
+                    [©too] @ 0xd43b6, 0xd43be - 0xd43d2 (20)
+                        [data] @ 0xd43be, 0xd43c6 - 0xd43d2 (12)
+                            00 00 00 01  00 00 00 00  78 32 36 34                ........x264
+    [trak] Track @ 0xd43d2, 0xd43da - 0xd5fbd (7139)
+        [tkhd] TrackHeader @ 0xd43da, 0xd43e2 - 0xd4436 (84)
+            version = 0, flags = 000007
+            creation_time = 3796658196
+            modification_time = 3796658201
+            track_ID = 2
+            duration = 91456
+            volume = 1.0
+            size = 0.0 x 0.0
+        [edts] Edit @ 0xd4436, 0xd443e - 0xd445a (28)
+            [elst] EditList @ 0xd443e, 0xd4446 - 0xd445a (20)
+                version = 0
+                entry_count = 1
+                [edit segment   0] duration =  91456, media_time =      0, media_rate = 1.0
+        [mdia] Media @ 0xd445a, 0xd4462 - 0xd5f5a (6904)
+            [mdhd] MediaHeader @ 0xd4462, 0xd446a - 0xd4482 (24)
+                version = 0
+                creation_time = 3796658196
+                modification_time = 3796658201
+                timescale = 48000
+                duration = 1463296
+                language = und
+            [hdlr] Handler @ 0xd4482, 0xd448a - 0xd44af (37)
+                handler_type = 'soun', name = 'SoundHandler\x00'
+            [minf] MediaInformation @ 0xd44af, 0xd44b7 - 0xd5f5a (6819)
+                [smhd] SoundMediaHeader @ 0xd44b7, 0xd44bf - 0xd44c7 (8)
+                [dinf] DataInformation @ 0xd44c7, 0xd44cf - 0xd44eb (28)
+                    [dref] DataReference @ 0xd44cf, 0xd44d7 - 0xd44eb (20)
+                        version = 0, entry_count = 1
+                        [url ] DataEntryUrl @ 0xd44df, 0xd44e7 - 0xd44eb (4)
+                            flags = 000001
+                [stbl] SampleTable @ 0xd44eb, 0xd44f3 - 0xd5f5a (6759)
+                    [stsd] SampleDescription @ 0xd44f3, 0xd44fb - 0xd453a (63)
+                        version = 0, entry_count = 1
+                        [Opus] OpusSampleEntry @ 0xd4503, 0xd450b - 0xd453a (47)
+                            data_reference_index = 1
+                            channelcount = 1
+                            samplerate = 48000.0
+                            [dOps] OpusSpecific @ 0xd4527, 0xd452f - 0xd453a (11)
+                                OutputChannelCount = 1
+                                PreSkip = 312
+                                InputSampleRate = 48000
+                                OutputGain = 0.0
+                                ChannelMappingFamily = 0
+                    [stts] TimeToSample @ 0xd453a, 0xd4542 - 0xd4562 (32)
+                        entry_count = 3
+                        [entry   0] [sample =      1, time =      0] sample_count =     1, sample_delta =   648
+                        [entry   1] [sample =      2, time =    648] sample_count =  1523, sample_delta =   960
+                        [entry   2] [sample =   1525, time = 1462728] sample_count =     1, sample_delta =   568
+                        [samples =   1525, time = 1463296]
+                    [stsc] SampleToChunk @ 0xd4562, 0xd456a - 0xd458a (32)
+                        entry_count = 2
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =   13, sample_description_index = 1
+                        [entry   1] [sample =   1522] first_chunk =   118, samples_per_chunk =    4, sample_description_index = 1
+                    [stsz] SampleSize @ 0xd458a, 0xd4592 - 0xd5d72 (6112)
+                        sample_count = 1525
+                        [sample      1] sample_size =   245
+                        [sample      2] sample_size =   237
+                        [sample      3] sample_size =   161
+                        [sample      4] sample_size =   161
+                        [sample      5] sample_size =   161
+                        [sample      6] sample_size =   161
+                        [sample      7] sample_size =   161
+                        ...
+                    [stco] ChunkOffset @ 0xd5d72, 0xd5d7a - 0xd5f5a (480)
+                        entry_count = 118
+                        [chunk     1] offset = 0x0024c2
+                        [chunk     2] offset = 0x002d8f
+                        [chunk     3] offset = 0x003ba7
+                        [chunk     4] offset = 0x004d39
+                        [chunk     5] offset = 0x0079fa
+                        [chunk     6] offset = 0x009216
+                        [chunk     7] offset = 0x00a167
+                        ...
+        [udta] UserData @ 0xd5f5a, 0xd5f62 - 0xd5fbd (91)
+            [meta] Meta @ 0xd5f62, 0xd5f6a - 0xd5fbd (83)
+                version = 0, flags = 000000
+                [hdlr] Handler @ 0xd5f6e, 0xd5f76 - 0xd5f8f (25)
+                    ERROR: invalid pre-defined: 1835560050
+
+                    00 00 00 00  6d 68 6c 72  6d 64 69 72  00 00 00 00   ....mhlrmdir....
+                    00 00 00 00  00 00 00 00  00                         .........
+                [ilst] @ 0xd5f8f, 0xd5f97 - 0xd5fbd (38)
+                    [©des] @ 0xd5f97, 0xd5f9f - 0xd5fbd (30)
+                        00 00 00 1e  64 61 74 61  00 00 00 01  00 00 00 00   ....data........
+                        61 75 64 69  6f 74 65 73  74 20 77 61  76 65         audiotest wave
+    [udta] UserData @ 0xd5fbd, 0xd5fc5 - 0xd5ffa (53)
+        [meta] Meta @ 0xd5fc5, 0xd5fcd - 0xd5ffa (45)
+            version = 0, flags = 000000
+            [hdlr] Handler @ 0xd5fd1, 0xd5fd9 - 0xd5ff2 (25)
+                ERROR: invalid pre-defined: 1835560050
+
+                00 00 00 00  6d 68 6c 72  6d 64 69 72  00 00 00 00   ....mhlrmdir....
+                00 00 00 00  00 00 00 00  00                         .........
+            [ilst] @ 0xd5ff2, 0xd5ffa - 0xd5ffa (0)
