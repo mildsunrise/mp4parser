@@ -11,6 +11,7 @@ import itertools
 import re
 import options
 from parser_tables import *
+from contextlib import contextmanager
 from typing import Optional, Union, Callable, TypeVar
 T = TypeVar('T')
 
@@ -43,6 +44,43 @@ def main():
 
 # UTILITIES
 
+class BitReader:
+	''' MSB-first bit reader '''
+
+	def __init__(self, buffer: memoryview) -> None:
+		self.buffer = memoryview(buffer).cast('B')
+		self.pos = 0
+
+	@property
+	def remaining(self) -> int:
+		return len(self.buffer) * 8 - self.pos
+
+	@property
+	def ended(self) -> bool:
+		return self.remaining == 0
+
+	def read(self, n: int) -> int:
+		assert 0 <= n <= self.remaining
+		res = 0
+		for _ in range(n):
+			res <<= 1
+			p, b = divmod(self.pos, 8)
+			res |= (self.buffer[p] >> (7 - b)) & 1
+			self.pos += 1
+		return res
+
+	def bit(self) -> bool:
+		return bool(self.read(1))
+
+	# support for 'with' (checks all data is consumed)
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, exc_type, exc_value, traceback):
+		if exc_type == None and (remaining := self.remaining):
+			raise AssertionError(f'{remaining} unparsed trailing bits')
+
 class MVIO:
 	''' like BytesIO, but returns memoryviews instead of bytes. it also contains higher-level methods '''
 
@@ -51,16 +89,20 @@ class MVIO:
 	def __init__(self, buffer: memoryview, pos=0):
 		self.buffer = memoryview(buffer)
 		self.pos = pos
+		self.locked = False
 
 	@property
 	def remaining(self) -> int:
+		assert not self.locked
 		return len(self.buffer) - self.pos
 
 	@property
 	def ended(self) -> bool:
+		assert not self.locked
 		return self.remaining == 0
 
 	def peek(self, n = -1) -> memoryview:
+		assert not self.locked
 		n = n if n >= 0 else self.remaining
 		res = self.buffer[self.pos:][:n]
 		if len(res) != n:
@@ -71,6 +113,16 @@ class MVIO:
 		res = self.peek(n)
 		self.pos += len(res)
 		return res
+
+	@contextmanager
+	def capture(self, n = -1):
+		res = self.peek(n)
+		self.locked = True
+		try:
+			yield res
+			self.pos += len(res)
+		finally:
+			self.locked = False
 
 	# common primitives
 
@@ -89,6 +141,11 @@ class MVIO:
 		struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
 		return struct_obj.unpack(self.read(struct_obj.size))
 
+	@contextmanager
+	def bits(self, n = -1):
+		with self.capture(n) as res, BitReader(res) as br:
+			yield br
+
 	# less common primitives
 
 	def fourcc(self) -> str:
@@ -103,6 +160,7 @@ class MVIO:
 		return self
 
 	def __exit__(self, exc_type, exc_value, traceback):
+		assert not self.locked, 'stream was left locked(?)'
 		if exc_type == None and (remaining := self.remaining):
 			raise AssertionError(f'{remaining} unparsed trailing bytes')
 
