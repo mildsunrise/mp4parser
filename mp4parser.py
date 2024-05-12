@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 '''
-Usage: ./mp4parser.py <file name>
+Main parser code
 '''
 
 import sys
@@ -9,27 +9,27 @@ import mmap
 import io
 import itertools
 import re
+import options
 from parser_tables import *
 
-args = sys.argv[1:]
-if len(args) != 1:
-	print(__doc__.strip(), file=sys.stderr)
-	exit(10)
-fname, = args
+args = options.parser.parse_args()
+fname = args.filename
 
 mp4file = open(fname, 'rb')
 mp4map = mmap.mmap(mp4file.fileno(), 0, prot=mmap.PROT_READ)
 mp4mem = memoryview(mp4map)
 
-indent_n = 4
-bytes_per_line = 16
-max_rows = 7
+# FIXME: move this to dataclass, put in options.py
+indent_n = args.indent
+bytes_per_line = args.bytes_per_line
+max_rows = args.rows
 max_dump = bytes_per_line * max_rows
-show_lengths = True
-show_offsets = True
-show_defaults = False
-show_descriptions = True
-colorize = sys.stdout.isatty()
+show_lengths = args.lengths
+show_offsets = args.offsets
+show_defaults = args.defaults
+show_descriptions = args.descriptions
+colorize = sys.stdout.buffer.isatty() \
+	if args.color == None else args.color
 
 mask = lambda n: ~((~0) << n)
 get_bits = lambda x, end, start: (x & mask(end)) >> start

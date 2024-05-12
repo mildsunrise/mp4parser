@@ -18,6 +18,43 @@ No dependencies needed.
 ![Screenshot 1](assets/screenshot-1.png)
 
 
+## Usage
+
+<!-- BEGIN USAGE -->
+```
+usage: mp4parser [-h] [-C | --color | --no-color] [-r N]
+                 [--offsets | --no-offsets] [--lengths | --no-lengths]
+                 [--descriptions | --no-descriptions]
+                 [--defaults | --no-defaults] [--indent N]
+                 [--bytes-per-line N]
+                 filename
+
+Portable ISOBMFF dissector / parser for your terminal.
+
+positional arguments:
+  filename
+
+options:
+  -h, --help            show this help message and exit
+  -C, --color, --no-color
+                        Colorize the output [default: only if stdout is a
+                        terminal]
+  -r N, --rows N        Maximum amount of lines to show in tables / lists /
+                        hexdumps
+  --offsets, --no-offsets
+                        Show file offsets of boxes / blobs
+  --lengths, --no-lengths
+                        Show byte sizes of boxes / blobs
+  --descriptions, --no-descriptions
+                        Show meanings of numerical field values
+  --defaults, --no-defaults
+                        Show all fields, even those with default values
+  --indent N            Amount of spaces to indent each level by
+  --bytes-per-line N    Bytes per line in hexdumps
+```
+<!-- END USAGE -->
+
+
 ## Goals / development guidelines
 
   - **Low level.** Meant as a dissector, i.e. to obtain info about the structure of the file rather than high level info.
