@@ -1367,6 +1367,7 @@ def parse_descriptor(data, indent: int, expected=None, namespace='default', cont
 		return r
 	nsdata = descriptor_namespaces[namespace]
 	labels = []
+	klasses = []
 	if tag in nsdata['tag_registry']:
 		klasses = get_class_chain(nsdata['tag_registry'][tag])
 	else:
