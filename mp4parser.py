@@ -39,7 +39,9 @@ get_bits = lambda x, end, start: (x & mask(end)) >> start
 split_bits = lambda x, *bits: (get_bits(x, a, b) for a, b in itertools.pairwise(bits))
 
 def main():
-	parse_boxes(Parser(mp4mem, 0, 0))
+	ps = Parser(mp4mem, 0, 0)
+	with ps.handle_errors():
+		parse_boxes(ps)
 
 
 # UTILITIES
@@ -200,9 +202,42 @@ class Parser(MVIO):
 			(not any(value)) if isinstance(value, bytes) else (not value)
 		assert ok, f'invalid {name}: {value}'
 
+	@contextmanager
 	def subparser(self, n: int):
-		offset = self.offset
-		return Parser(self.read(n), offset, self.indent + 1)
+		with self.capture(n) as data:
+			with Parser(data, self.offset, self.indent) as ps:
+				yield ps
+
+	@contextmanager
+	def handle_errors(self):
+		try:
+			with self: yield self
+		except Exception as e:
+			print_error(e, self.prefix)
+			if max_dump and self.buffer:
+				print_hex_dump(self.buffer, self.prefix)
+			self.read() # we've consumed all data
+
+	# JSON primitives (they don't do much right now)
+
+	@contextmanager
+	def in_object(self):
+		self.indent += 1
+		self.prefix = ' ' * (self.indent * indent_n)
+		try:
+			yield self
+		finally:
+			self.indent -= 1
+			self.prefix = ' ' * (self.indent * indent_n)
+
+	@contextmanager
+	def in_list(self):
+		yield self
+
+	@contextmanager
+	def in_list_item(self):
+		with self.in_object():
+			yield self
 
 # FIXME: to ease migration, remove afterwards
 def unpack(stream, struct_fmt: str) -> tuple:
@@ -290,7 +325,7 @@ for std_desc, boxes in box_registry:
 			raise Exception(f'duplicate boxes {k} coming from {std_desc} and {info_by_box[k][0]}')
 		info_by_box[k] = (std_desc, *v)
 
-def slice_box(ps: Parser):
+def parse_box_header(ps: Parser):
 	start = ps.pos
 	length = ps.int(4)
 	btype = ps.fourcc()
@@ -308,15 +343,21 @@ def slice_box(ps: Parser):
 
 	length -= ps.pos - start
 	assert length >= 0, f'invalid box length'
-	return btype, ps.subparser(length), last_box, large_size
+	return btype, length, last_box, large_size
 
 def parse_boxes(ps: Parser, contents_fn=None):
 	result = []
+	with ps.in_list():
 	while not ps.ended:
+			with ps.in_list_item():
+				result.append(parse_box(ps, contents_fn))
+	return result
+
+def parse_box(ps: Parser, contents_fn=None):
 		offset = ps.offset
-		btype, data, last_box, large_size = slice_box(ps)
-		offset_text = ansi_fg4(f' @ {offset:#x}, {data.offset:#x} - {data.offset + data.remaining:#x}') if show_offsets else ''
-		length_text = ansi_fg4(f' ({data.remaining})') if show_lengths else ''
+		btype, length, last_box, large_size = parse_box_header(ps)
+		offset_text = ansi_fg4(f' @ {offset:#x}, {ps.offset:#x} - {ps.offset + length:#x}') if show_offsets else ''
+		length_text = ansi_fg4(f' ({length})') if show_lengths else ''
 		name_text = ''
 		if show_descriptions and (box_desc := info_by_box.get(btype)):
 			desc = box_desc[1]
@@ -330,29 +371,20 @@ def parse_boxes(ps: Parser, contents_fn=None):
 		if len(btype) != 4: # it's a UUID
 			type_label = f'UUID {btype}'
 		ps.print(ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text)
-		result.append( (contents_fn or parse_contents)(btype, data) )
-	return result
+		with ps.subparser(length) as data, data.handle_errors():
+			return (contents_fn or parse_contents)(btype, data)
 
 nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'sinf', 'schi' }
 # apple(?) / quicktime metadata
 nesting_boxes |= { 'ilst', '\u00a9too', '\u00a9nam', '\u00a9day', '\u00a9ART', 'aART', '\u00a9alb', '\u00a9cmt', '\u00a9day', 'trkn', 'covr', '----' }
 
 def parse_contents(btype: str, ps: Parser):
-	try:
-		# FIXME: do `with ps as ps` here
-
 		if (handler := globals().get(f'parse_{btype}_box')):
 			return handler(ps)
-
 		if btype in nesting_boxes:
 			return parse_boxes(ps)
-
-	except Exception as e:
-		print_error(e, ps.prefix)
-
-	# as fall back (or if error), print hex dump
-	if not max_dump or not ps.buffer: return
-	print_hex_dump(ps.buffer, ps.prefix)
+	if (data := ps.read()) and max_dump:
+		print_hex_dump(data, ps.prefix)
 
 def parse_fullbox(ps: Parser):
 	version = ps.int(1)
@@ -407,19 +439,14 @@ def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
 	ps.reserved('reserved', ps.bytes(6))
 	ps.field('data_reference_index', ps.int(2))
 
-	try:
-		if last_handler_seen == 'vide':
-			return parse_video_sample_entry_contents(btype, ps, version)
-		if last_handler_seen == 'soun':
-			return parse_audio_sample_entry_contents(btype, ps, version)
-		if last_handler_seen in {'meta', 'text', 'subt'}:
-			return parse_text_sample_entry_contents(btype, ps, version)
-	except Exception as e:
-		print_error(e, ps.prefix)
-
-	# as fall back (or if error), print hex dump
-	if not max_dump or not ps.buffer: return
-	print_hex_dump(ps.buffer, ps.prefix)
+	if last_handler_seen == 'vide':
+		return parse_video_sample_entry_contents(btype, ps, version)
+	if last_handler_seen == 'soun':
+		return parse_audio_sample_entry_contents(btype, ps, version)
+	if last_handler_seen in {'meta', 'text', 'subt'}:
+		return parse_text_sample_entry_contents(btype, ps, version)
+	if (data := ps.read()) and max_dump:
+		print_hex_dump(data, ps.prefix)
 
 def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
