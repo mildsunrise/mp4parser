@@ -838,12 +838,13 @@ def parse_esds_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
-	parse_descriptor(io.BytesIO(ps.read()), ps.indent, expected=3)
+	with ps.in_object():
+		parse_descriptor(ps, expected=3)
 
 parse_iods_box = parse_esds_box
 
 def parse_m4ds_box(ps: Parser):
-	parse_descriptors(io.BytesIO(ps.read()), ps.indent)
+	parse_descriptors(ps)
 
 def parse_dOps_box(ps: Parser):
 	if (Version := ps.int(1)) != 0:
@@ -1204,27 +1205,25 @@ def parse_pssh_box(ps: Parser):
 # (these aren't specific to ISOBMFF and so we shouldn't parse them buuuut
 # they're still part of MPEG-4 and not widely known so we'll make an exception)
 
-def parse_descriptor(data, indent: int, expected=None, namespace='default', contents_fn=None, optional=False):
-	tag = data.read(1)
-	if optional and not tag: return None
-	tag, = tag
+def parse_descriptors(ps: Parser, **kwargs):
+	with ps.in_list():
+		while not ps.ended:
+			with ps.in_list_item():
+				parse_descriptor(ps, **kwargs)
+
+def parse_descriptor(ps: Parser, expected=None, namespace='default', contents_fn=None):
+	tag = ps.int(1)
 	assert tag != 0x00 and tag != 0xFF, f'forbidden tag number: {tag}'
 
+	size_start = ps.offset
 	size = 0
-	n_size_bytes = 0
 	while True:
-		b = data.read(1)
-		assert b, f'unexpected EOF when reading descriptor size'
-		next_byte, size_byte = split_bits(b[0], 8, 7, 0)
-		size = (size << 7) | size_byte
-		n_size_bytes += 1
+		with ps.bits(1) as br:
+			next_byte = br.bit()
+			size = (size << 7) | br.read(7)
 		if not next_byte: break
 
-	payload = data.read(size)
-	assert len(payload) == size, f'unexpected EOF within descriptor data: expected {size}, got {len(payload)}'
-	data = io.BytesIO(payload)
-
-	prefix = ' ' * (indent * indent_n)
+	n_size_bytes = ps.offset - size_start
 	size_text = ''
 	if size.bit_length() <= (n_size_bytes - 1) * 7:
 		size_text = ansi_fg4(f' ({n_size_bytes} length bytes)')
@@ -1246,31 +1245,16 @@ def parse_descriptor(data, indent: int, expected=None, namespace='default', cont
 			klasses = get_class_chain(class_registry[k][1])
 	labels += [ ansi_bold(k['name']) for k in klasses ]
 
-	print(prefix + ansi_bold(f'[{tag}]') + (' ' + ' -> '.join(labels) if show_descriptions else '') + size_text)
-	(contents_fn or parse_descriptor_contents)(tag, klasses, data, indent + 1)
+	ps.print(ansi_bold(f'[{tag}]') + (' ' + ' -> '.join(labels) if show_descriptions else '') + size_text)
+	with ps.subparser(size) as data, data.handle_errors():
+		(contents_fn or parse_descriptor_contents)(tag, klasses, data)
 
-	left = data.read()
-	assert not left, f'{len(left)} bytes of trailing descriptor data'
-	return tag,
-
-def parse_descriptors(data, indent: int, **kwargs):
-	while parse_descriptor(data, indent, **kwargs, optional=True) != None:
-		pass
-
-def parse_descriptor_contents(tag: int, klasses, data, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	try:
+def parse_descriptor_contents(tag: int, klasses, ps: Parser):
 		for k in klasses[::-1]:
 			if 'handler' not in k: break
-			k['handler'](data, indent)
-	except Exception as e:
-		print_error(e, prefix)
-
-	# FIXME: should we backtrack here a bit? or too much? when a non-indented hexdump is printed, make it clear what it represents
-	# as fall back (or if error), print hex dump
-	data = data.read()
-	if not max_dump or not data: return
-	print_hex_dump(data, prefix)
+		k['handler'](ps)
+	if (data := ps.read()) and max_dump:
+		print_hex_dump(data, ps.prefix)
 
 def parse_BaseDescriptor_descriptor(data, indent: int):
 	pass
