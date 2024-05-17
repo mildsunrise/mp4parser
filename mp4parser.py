@@ -1276,101 +1276,92 @@ def parse_IP_IdentificationDataSet_descriptor(ps: Parser):
 	pass
 
 def parse_ES_Descriptor_descriptor(ps: Parser):
-	ES_ID, composite_1 = ps.unpack('HB')
-	streamDependenceFlag, URL_Flag, OCRstreamFlag, streamPriority = split_bits(composite_1, 8, 7, 6, 5, 0)
-	ps.field('ES_ID', ES_ID)
-	ps.field('streamPriority', streamPriority)
+	ps.field('ES_ID', ps.int(2))
+	with ps.bits(1) as br:
+		streamDependenceFlag = br.bit()
+		URL_Flag = br.bit()
+		OCRstreamFlag = br.bit()
+		ps.field('streamPriority', br.read(5))
 	if streamDependenceFlag:
-		dependsOn_ES_ID, = ps.unpack('H')
-		ps.field('dependsOn_ES_ID', dependsOn_ES_ID)
+		ps.field('dependsOn_ES_ID', ps.int(2))
 	if URL_Flag:
-		URLlength, = ps.unpack('B')
-		URLstring = data.read(URLlength)
-		assert len(URLstring) == URLlength, f'unexpected EOF while reading URL, expected {URLlength}, found {len(URLstring)}'
-		URLstring = URLstring.decode('utf-8')
-		ps.field('URL', URLstring)
+		ps.field('URL', ps.bytes(ps.int(1)).decode('utf-8'))
 	if OCRstreamFlag:
-		OCR_ES_ID, = ps.unpack('H')
-		ps.field('OCR_ES_ID', OCR_ES_ID)
+		ps.field('OCR_ES_ID', ps.int(2))
 	parse_descriptors(ps)
 
 def parse_DecoderConfigDescriptor_descriptor(ps: Parser):
-	objectTypeIndication, composite, maxBitrate, avgBitrate = ps.unpack('BIII')
-	streamType, upStream, reserved, bufferSizeDB = split_bits(composite, 32, 26, 25, 24, 0)
-	ps.print(f'objectTypeIndication = {objectTypeIndication}' + (f' ({format_object_type(objectTypeIndication)})' if show_descriptions else ''))
-	ps.print(f'streamType = {streamType}' + (f' ({format_stream_type(streamType)})' if show_descriptions else ''))
-	ps.field('upStream', bool(upStream))
-	ps.field('bufferSizeDB', bufferSizeDB)
-	ps.field('maxBitrate', maxBitrate)
-	ps.field('avgBitrate', avgBitrate)
-	assert reserved == 1, f'invalid reserved: {reserved}'
+	ps.field('objectTypeIndication', ps.int(1), describe=format_object_type)
+	with ps.bits(4) as br:
+		ps.field('streamType', br.read(6), describe=format_stream_type)
+		ps.field('upStream', br.bit())
+		ps.reserved('reserved', br.read(1), 1)
+		ps.field('bufferSizeDB', br.read(24))
+	ps.field('maxBitrate', ps.int(4))
+	ps.field('avgBitrate', ps.int(4))
 	parse_descriptors(ps)
 
-def parse_SLConfigDescriptor_descriptor(ps: Parser):
-	predefined, = ps.unpack('B')
-	predefined_description = {
+def format_sl_predefined(predefined: int) -> str:
+	return {
 		0x00: 'Custom',
 		0x01: 'null SL packet header',
 		0x02: 'Reserved for use in MP4 files',
 	}.get(predefined, 'Reserved for ISO use')
-	ps.print(f'predefined = {predefined}' + (f' ({predefined_description})' if show_descriptions else ''))
+
+def parse_SLConfigDescriptor_descriptor(ps: Parser):
+	ps.field('predefined', predefined := ps.int(1), describe=format_sl_predefined)
 	if predefined != 0: return
 
-	flags, timeStampResolution, OCRResolution, timeStampLength, OCRLength, AU_Length, instantBitrateLength, composite = \
-		ps.unpack('BIIBBBBH')
-	useAccessUnitStartFlag, useAccessUnitEndFlag, useRandomAccessPointFlag, hasRandomAccessUnitsOnlyFlag, usePaddingFlag, useTimeStampsFlag, useIdleFlag, durationFlag = \
-		split_bits(flags, 8, 7, 6, 5, 4, 3, 2, 1, 0)
-	ps.field('useAccessUnitStartFlag', bool(useAccessUnitStartFlag))
-	ps.field('useAccessUnitEndFlag', bool(useAccessUnitEndFlag))
-	ps.field('useRandomAccessPointFlag', bool(useRandomAccessPointFlag))
-	ps.field('hasRandomAccessUnitsOnlyFlag', bool(hasRandomAccessUnitsOnlyFlag))
-	ps.field('usePaddingFlag', bool(usePaddingFlag))
-	ps.field('useTimeStampsFlag', bool(useTimeStampsFlag))
-	ps.field('useIdleFlag', bool(useIdleFlag))
-	ps.field('durationFlag', bool(durationFlag))
-	ps.field('timeStampResolution', timeStampResolution)
-	ps.field('OCRResolution', OCRResolution)
-	ps.field('timeStampLength', timeStampLength)
+	with ps.bits(1) as br:
+		ps.field('useAccessUnitStartFlag', br.bit())
+		ps.field('useAccessUnitEndFlag', br.bit())
+		ps.field('useRandomAccessPointFlag', br.bit())
+		ps.field('hasRandomAccessUnitsOnlyFlag', br.bit())
+		ps.field('usePaddingFlag', br.bit())
+		ps.field('useTimeStampsFlag', useTimeStampsFlag := br.bit())
+		ps.field('useIdleFlag', br.bit())
+		ps.field('durationFlag', durationFlag := br.bit())
+	ps.field('timeStampResolution', ps.int(4))
+	ps.field('OCRResolution', ps.int(4))
+	ps.field('timeStampLength', timeStampLength := ps.int(1))
 	assert timeStampLength <= 64, f'invalid timeStampLength: {timeStampLength}'
-	ps.field('OCRLength', OCRLength)
+	ps.field('OCRLength', OCRLength := ps.int(1))
 	assert OCRLength <= 64, f'invalid OCRLength: {OCRLength}'
-	ps.field('AU_Length', AU_Length)
+	ps.field('AU_Length', AU_Length := ps.int(1))
 	assert AU_Length <= 32, f'invalid AU_Length: {AU_Length}'
-	ps.field('instantBitrateLength', instantBitrateLength)
-	degradationPriorityLength, AU_seqNumLength, packetSeqNumLength, reserved = split_bits(composite, 16, 12, 7, 2, 0)
-	ps.field('degradationPriorityLength', degradationPriorityLength)
-	ps.field('AU_seqNumLength', AU_seqNumLength)
-	assert AU_seqNumLength <= 16, f'invalid AU_seqNumLength: {AU_seqNumLength}'
-	ps.field('packetSeqNumLength', packetSeqNumLength)
-	assert packetSeqNumLength <= 16, f'invalid packetSeqNumLength: {packetSeqNumLength}'
-	assert reserved == 0b11, f'invalid reserved: {reserved}'
+	ps.field('instantBitrateLength', ps.int(1))
+	with ps.bits(2) as br:
+		ps.field('degradationPriorityLength', br.read(4))
+		ps.field('AU_seqNumLength', AU_seqNumLength := br.read(5))
+		assert AU_seqNumLength <= 16, f'invalid AU_seqNumLength: {AU_seqNumLength}'
+		ps.field('packetSeqNumLength', packetSeqNumLength := br.read(5))
+		assert packetSeqNumLength <= 16, f'invalid packetSeqNumLength: {packetSeqNumLength}'
+		ps.reserved('reserved', br.read(2), 0b11)
 	if durationFlag:
-		timeScale, accessUnitDuration, compositionUnitDuration = ps.unpack('IHH')
-		ps.field('timeScale', timeScale)
-		ps.field('accessUnitDuration', accessUnitDuration)
-		ps.field('compositionUnitDuration', compositionUnitDuration)
+		ps.field('timeScale', ps.int(4))
+		ps.field('accessUnitDuration', ps.int(2))
+		ps.field('compositionUnitDuration', ps.int(2))
 	if not useTimeStampsFlag:
 		assert False, 'FIXME: not implemented yet'
 		# bit(timeStampLength) startDecodingTimeStamp;
 		# bit(timeStampLength) startCompositionTimeStamp;
 
 def parse_ES_ID_Inc_descriptor(ps: Parser):
-	Track_ID, = ps.unpack('I')
-	ps.field('Track_ID', Track_ID)
+	ps.field('Track_ID', ps.int(4))
 
 def parse_ES_ID_Ref_descriptor(ps: Parser):
-	ref_index, = ps.unpack('H')
-	ps.field('ref_index', ref_index)
+	ps.field('ref_index', ps.int(2))
 
 def parse_ExtendedSLConfigDescriptor_descriptor(ps: Parser):
 	parse_descriptors(ps)
 
-def parse_QoS_Descriptor_descriptor(ps: Parser):
-	predefined, = ps.unpack('B')
-	predefined_description = {
+def format_qos_predefined(predefined: int) -> str:
+	return {
 		0x00: 'Custom',
 	}.get(predefined, 'Reserved')
-	ps.print(f'predefined = {predefined}' + (f' ({predefined_description})' if show_descriptions else ''))
+
+def parse_QoS_Descriptor_descriptor(ps: Parser):
+	ps.field('predefined', predefined := ps.int(1), describe=format_qos_predefined)
 	if predefined != 0: return
 	parse_descriptors(ps, namespace='QoS')
 
