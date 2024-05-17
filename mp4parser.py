@@ -1554,7 +1554,7 @@ def init_descriptors():
 			class_registry[k][1]['handler'] = v
 
 	# check base classes of defined handlers also have a defined handler
-	for k in class_registry.items():
+	for (_, k) in class_registry.values():
 		if 'handler' in k:
 			while k['base_class'] != None:
 				k = class_registry[k['base_class']][1]
