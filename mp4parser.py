@@ -359,7 +359,7 @@ def parse_box_header(ps: Parser):
 def parse_boxes(ps: Parser, contents_fn=None):
 	result = []
 	with ps.in_list():
-	while not ps.ended:
+		while not ps.ended:
 			with ps.in_list_item():
 				result.append(parse_box(ps, contents_fn))
 	return result
@@ -390,10 +390,10 @@ nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof'
 nesting_boxes |= { 'ilst', '\u00a9too', '\u00a9nam', '\u00a9day', '\u00a9ART', 'aART', '\u00a9alb', '\u00a9cmt', '\u00a9day', 'trkn', 'covr', '----' }
 
 def parse_contents(btype: str, ps: Parser):
-		if (handler := globals().get(f'parse_{btype}_box')):
-			return handler(ps)
-		if btype in nesting_boxes:
-			return parse_boxes(ps)
+	if (handler := globals().get(f'parse_{btype}_box')):
+		return handler(ps)
+	if btype in nesting_boxes:
+		return parse_boxes(ps)
 	if (data := ps.read()) and max_dump:
 		print_hex_dump(data, ps.prefix)
 
@@ -1254,136 +1254,130 @@ def parse_descriptor(ps: Parser, expected=None, namespace='default', contents_fn
 		(contents_fn or parse_descriptor_contents)(tag, klasses, data)
 
 def parse_descriptor_contents(tag: int, klasses, ps: Parser):
-		for k in klasses[::-1]:
-			if 'handler' not in k: break
+	for k in klasses[::-1]:
+		if 'handler' not in k: break
 		k['handler'](ps)
 	if (data := ps.read()) and max_dump:
 		print_hex_dump(data, ps.prefix)
 
-def parse_BaseDescriptor_descriptor(data, indent: int):
+def parse_BaseDescriptor_descriptor(ps: Parser):
 	pass
 
-def parse_ObjectDescriptorBase_descriptor(data, indent: int):
+def parse_ObjectDescriptorBase_descriptor(ps: Parser):
 	pass
 
-def parse_ExtensionDescriptor_descriptor(data, indent: int):
+def parse_ExtensionDescriptor_descriptor(ps: Parser):
 	pass
 
-def parse_OCI_Descriptor_descriptor(data, indent: int):
+def parse_OCI_Descriptor_descriptor(ps: Parser):
 	pass
 
-def parse_IP_IdentificationDataSet_descriptor(data, indent: int):
+def parse_IP_IdentificationDataSet_descriptor(ps: Parser):
 	pass
 
-def parse_ES_Descriptor_descriptor(data, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	ES_ID, composite_1 = unpack(data, 'HB')
+def parse_ES_Descriptor_descriptor(ps: Parser):
+	ES_ID, composite_1 = ps.unpack('HB')
 	streamDependenceFlag, URL_Flag, OCRstreamFlag, streamPriority = split_bits(composite_1, 8, 7, 6, 5, 0)
-	print(prefix + f'ES_ID = {ES_ID}')
-	print(prefix + f'streamPriority = {streamPriority}')
+	ps.field('ES_ID', ES_ID)
+	ps.field('streamPriority', streamPriority)
 	if streamDependenceFlag:
-		dependsOn_ES_ID, = unpack(data, 'H')
-		print(prefix + f'dependsOn_ES_ID = {dependsOn_ES_ID}')
+		dependsOn_ES_ID, = ps.unpack('H')
+		ps.field('dependsOn_ES_ID', dependsOn_ES_ID)
 	if URL_Flag:
-		URLlength, = unpack(data, 'B')
+		URLlength, = ps.unpack('B')
 		URLstring = data.read(URLlength)
 		assert len(URLstring) == URLlength, f'unexpected EOF while reading URL, expected {URLlength}, found {len(URLstring)}'
 		URLstring = URLstring.decode('utf-8')
-		print(prefix + f'URL = {repr(URLstring)}')
+		ps.field('URL', URLstring)
 	if OCRstreamFlag:
-		OCR_ES_ID, = unpack(data, 'H')
-		print(prefix + f'OCR_ES_ID = {OCR_ES_ID}')
-	parse_descriptors(data, indent)
+		OCR_ES_ID, = ps.unpack('H')
+		ps.field('OCR_ES_ID', OCR_ES_ID)
+	parse_descriptors(ps)
 
-def parse_DecoderConfigDescriptor_descriptor(data, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	objectTypeIndication, composite, maxBitrate, avgBitrate = unpack(data, 'BIII')
+def parse_DecoderConfigDescriptor_descriptor(ps: Parser):
+	objectTypeIndication, composite, maxBitrate, avgBitrate = ps.unpack('BIII')
 	streamType, upStream, reserved, bufferSizeDB = split_bits(composite, 32, 26, 25, 24, 0)
-	print(prefix + f'objectTypeIndication = {objectTypeIndication}' + (f' ({format_object_type(objectTypeIndication)})' if show_descriptions else ''))
-	print(prefix + f'streamType = {streamType}' + (f' ({format_stream_type(streamType)})' if show_descriptions else ''))
-	print(prefix + f'upStream = {bool(upStream)}')
-	print(prefix + f'bufferSizeDB = {bufferSizeDB}')
-	print(prefix + f'maxBitrate = {maxBitrate}')
-	print(prefix + f'avgBitrate = {avgBitrate}')
+	ps.print(f'objectTypeIndication = {objectTypeIndication}' + (f' ({format_object_type(objectTypeIndication)})' if show_descriptions else ''))
+	ps.print(f'streamType = {streamType}' + (f' ({format_stream_type(streamType)})' if show_descriptions else ''))
+	ps.field('upStream', bool(upStream))
+	ps.field('bufferSizeDB', bufferSizeDB)
+	ps.field('maxBitrate', maxBitrate)
+	ps.field('avgBitrate', avgBitrate)
 	assert reserved == 1, f'invalid reserved: {reserved}'
-	parse_descriptors(data, indent)
+	parse_descriptors(ps)
 
-def parse_SLConfigDescriptor_descriptor(data, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	predefined, = unpack(data, 'B')
+def parse_SLConfigDescriptor_descriptor(ps: Parser):
+	predefined, = ps.unpack('B')
 	predefined_description = {
 		0x00: 'Custom',
 		0x01: 'null SL packet header',
 		0x02: 'Reserved for use in MP4 files',
 	}.get(predefined, 'Reserved for ISO use')
-	print(prefix + f'predefined = {predefined}' + (f' ({predefined_description})' if show_descriptions else ''))
+	ps.print(f'predefined = {predefined}' + (f' ({predefined_description})' if show_descriptions else ''))
 	if predefined != 0: return
 
 	flags, timeStampResolution, OCRResolution, timeStampLength, OCRLength, AU_Length, instantBitrateLength, composite = \
-		unpack(data, 'BIIBBBBH')
+		ps.unpack('BIIBBBBH')
 	useAccessUnitStartFlag, useAccessUnitEndFlag, useRandomAccessPointFlag, hasRandomAccessUnitsOnlyFlag, usePaddingFlag, useTimeStampsFlag, useIdleFlag, durationFlag = \
 		split_bits(flags, 8, 7, 6, 5, 4, 3, 2, 1, 0)
-	print(prefix + f'useAccessUnitStartFlag = {bool(useAccessUnitStartFlag)}')
-	print(prefix + f'useAccessUnitEndFlag = {bool(useAccessUnitEndFlag)}')
-	print(prefix + f'useRandomAccessPointFlag = {bool(useRandomAccessPointFlag)}')
-	print(prefix + f'hasRandomAccessUnitsOnlyFlag = {bool(hasRandomAccessUnitsOnlyFlag)}')
-	print(prefix + f'usePaddingFlag = {bool(usePaddingFlag)}')
-	print(prefix + f'useTimeStampsFlag = {bool(useTimeStampsFlag)}')
-	print(prefix + f'useIdleFlag = {bool(useIdleFlag)}')
-	print(prefix + f'durationFlag = {bool(durationFlag)}')
-	print(prefix + f'timeStampResolution = {timeStampResolution}')
-	print(prefix + f'OCRResolution = {OCRResolution}')
-	print(prefix + f'timeStampLength = {timeStampLength}')
+	ps.field('useAccessUnitStartFlag', bool(useAccessUnitStartFlag))
+	ps.field('useAccessUnitEndFlag', bool(useAccessUnitEndFlag))
+	ps.field('useRandomAccessPointFlag', bool(useRandomAccessPointFlag))
+	ps.field('hasRandomAccessUnitsOnlyFlag', bool(hasRandomAccessUnitsOnlyFlag))
+	ps.field('usePaddingFlag', bool(usePaddingFlag))
+	ps.field('useTimeStampsFlag', bool(useTimeStampsFlag))
+	ps.field('useIdleFlag', bool(useIdleFlag))
+	ps.field('durationFlag', bool(durationFlag))
+	ps.field('timeStampResolution', timeStampResolution)
+	ps.field('OCRResolution', OCRResolution)
+	ps.field('timeStampLength', timeStampLength)
 	assert timeStampLength <= 64, f'invalid timeStampLength: {timeStampLength}'
-	print(prefix + f'OCRLength = {OCRLength}')
+	ps.field('OCRLength', OCRLength)
 	assert OCRLength <= 64, f'invalid OCRLength: {OCRLength}'
-	print(prefix + f'AU_Length = {AU_Length}')
+	ps.field('AU_Length', AU_Length)
 	assert AU_Length <= 32, f'invalid AU_Length: {AU_Length}'
-	print(prefix + f'instantBitrateLength = {instantBitrateLength}')
+	ps.field('instantBitrateLength', instantBitrateLength)
 	degradationPriorityLength, AU_seqNumLength, packetSeqNumLength, reserved = split_bits(composite, 16, 12, 7, 2, 0)
-	print(prefix + f'degradationPriorityLength = {degradationPriorityLength}')
-	print(prefix + f'AU_seqNumLength = {AU_seqNumLength}')
+	ps.field('degradationPriorityLength', degradationPriorityLength)
+	ps.field('AU_seqNumLength', AU_seqNumLength)
 	assert AU_seqNumLength <= 16, f'invalid AU_seqNumLength: {AU_seqNumLength}'
-	print(prefix + f'packetSeqNumLength = {packetSeqNumLength}')
+	ps.field('packetSeqNumLength', packetSeqNumLength)
 	assert packetSeqNumLength <= 16, f'invalid packetSeqNumLength: {packetSeqNumLength}'
 	assert reserved == 0b11, f'invalid reserved: {reserved}'
 	if durationFlag:
-		timeScale, accessUnitDuration, compositionUnitDuration = unpack(data, 'IHH')
-		print(prefix + f'timeScale = {timeScale}')
-		print(prefix + f'accessUnitDuration = {accessUnitDuration}')
-		print(prefix + f'compositionUnitDuration = {compositionUnitDuration}')
+		timeScale, accessUnitDuration, compositionUnitDuration = ps.unpack('IHH')
+		ps.field('timeScale', timeScale)
+		ps.field('accessUnitDuration', accessUnitDuration)
+		ps.field('compositionUnitDuration', compositionUnitDuration)
 	if not useTimeStampsFlag:
 		assert False, 'FIXME: not implemented yet'
 		# bit(timeStampLength) startDecodingTimeStamp;
 		# bit(timeStampLength) startCompositionTimeStamp;
 
-def parse_ES_ID_Inc_descriptor(data, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	Track_ID, = unpack(data, 'I')
-	print(prefix + f'Track_ID = {Track_ID}')
+def parse_ES_ID_Inc_descriptor(ps: Parser):
+	Track_ID, = ps.unpack('I')
+	ps.field('Track_ID', Track_ID)
 
-def parse_ES_ID_Ref_descriptor(data, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	ref_index, = unpack(data, 'H')
-	print(prefix + f'ref_index = {ref_index}')
+def parse_ES_ID_Ref_descriptor(ps: Parser):
+	ref_index, = ps.unpack('H')
+	ps.field('ref_index', ref_index)
 
-def parse_ExtendedSLConfigDescriptor_descriptor(data, indent: int):
-	parse_descriptors(data, indent)
+def parse_ExtendedSLConfigDescriptor_descriptor(ps: Parser):
+	parse_descriptors(ps)
 
-def parse_QoS_Descriptor_descriptor(data, indent: int):
-	prefix = ' ' * (indent * indent_n)
-	predefined, = unpack(data, 'B')
+def parse_QoS_Descriptor_descriptor(ps: Parser):
+	predefined, = ps.unpack('B')
 	predefined_description = {
 		0x00: 'Custom',
 	}.get(predefined, 'Reserved')
-	print(prefix + f'predefined = {predefined}' + (f' ({predefined_description})' if show_descriptions else ''))
+	ps.print(f'predefined = {predefined}' + (f' ({predefined_description})' if show_descriptions else ''))
 	if predefined != 0: return
-	parse_descriptors(data, indent, namespace='QoS')
+	parse_descriptors(ps, namespace='QoS')
 
-def parse_QoS_Qualifier_descriptor(data, indent: int):
+def parse_QoS_Qualifier_descriptor(ps: Parser):
 	pass
 
-def parse_BaseCommand_descriptor(data, indent: int):
+def parse_BaseCommand_descriptor(ps: Parser):
 	pass
 
 def init_descriptors():
