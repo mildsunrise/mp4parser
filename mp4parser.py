@@ -616,6 +616,24 @@ def parse_vmhd_box(ps: Parser):
 	ps.field('graphicsmode', ps.int(2), default=0)
 	ps.field('opcolor', [ps.int(2) for _ in range(3)], default=[0,]*3)
 
+def format_sdtp_value(x: int) -> str:
+	return ['unknown', 'yes', 'no', ansi_fg1('reserved')][x]
+
+def parse_sample_flags(ps: Parser, name: str):
+	ps.print(f'{name} =')
+	with ps.in_object(), ps.bits(4) as br:
+		ps.reserved('reserved', br.read(4))
+
+		# equivalent meanings as for 'sdtp'
+		ps.field('is_leading', br.read(2), default=0, describe=format_sdtp_value)
+		ps.field('sample_depends_on', br.read(2), default=0, describe=format_sdtp_value)
+		ps.field('sample_is_depended_on', br.read(2), default=0, describe=format_sdtp_value)
+		ps.field('sample_has_redundancy', br.read(2), default=0, describe=format_sdtp_value)
+
+		ps.field('sample_padding_value', br.read(3), default=0)
+		ps.field('sample_is_non_sync_sample', br.bit(), default=0)
+		ps.field('sample_degradation_priority', br.read(16), default=0)
+
 def parse_trex_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
@@ -625,7 +643,7 @@ def parse_trex_box(ps: Parser):
 	ps.field('default_sample_description_index', ps.int(4))
 	ps.field('default_sample_duration', ps.int(4))
 	ps.field('default_sample_size', ps.int(4))
-	ps.field('default_sample_flags', ps.int(4), '08x')
+	parse_sample_flags(ps, 'default_sample_flags')
 
 # TODO: mvhd, trhd, mdhd
 # FIXME: vmhd, smhd, hmhd, sthd, nmhd
@@ -1101,17 +1119,19 @@ def parse_tfhd_box(ps: Parser):
 		ps.field('default_sample_duration', ps.int(4))
 	if box_flags & 0x10:  # default‐sample‐size‐present
 		ps.field('default_sample_size', ps.int(4))
-
+	if box_flags & 0x20:  # default‐sample‐flags‐present
+		parse_sample_flags(ps, 'default_sample_flags')
 
 def parse_trun_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
+	assert version <= 1, f'invalid version: {version}'
+	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
-	sample_count = ps.int(4)
-	ps.print(f'version = {version}, flags = {box_flags:06x}, sample_count = {sample_count}')
+	ps.field('sample_count', sample_count := ps.int(4))
 	if box_flags & (1 << 0):
 		ps.field('data_offset', ps.sint(4), '#x')
 	if box_flags & (1 << 2):
-		ps.field('first_sample_flags', ps.int(4), '08x')
+		parse_sample_flags(ps, 'first_sample_flags')
 
 	s_offset = 0
 	s_time = 0
@@ -1127,7 +1147,7 @@ def parse_trun_box(ps: Parser):
 			s_offset += sample_size
 		if box_flags & (1 << 10):
 			sample_flags = ps.int(4)
-			s_text.append(f'flags={sample_flags:08x}')
+			s_text.append(f'flags={sample_flags:08x}') # FIXME: use parse_sample_flags here when we expand this
 		if box_flags & (1 << 11):
 			sample_composition_time_offset = [ps.int, ps.sint][version](4)
 			s_text.append(f'{sample_composition_time_offset}')
