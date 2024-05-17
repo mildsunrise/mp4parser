@@ -191,11 +191,18 @@ class Parser(MVIO):
 	def raw_field(self, name: str, value: str):
 		self.print(name + ' = ' + value)
 
-	def field(self, name: str, value: T, format: Union[str, Callable[[T], str]]=repr, default: Optional[T]=None):
+	def field(self,
+		name: str, value: T,
+		format: Union[str, Callable[[T], str]]=repr,
+		default: Optional[T]=None,
+		describe: Optional[Callable[[T], Optional[str]]]=None,
+	):
 		if not show_defaults and value == default:
 			return
-		self.raw_field(name,
-			value.__format__(format) if isinstance(format, str) else format(value))
+		text = value.__format__(format) if isinstance(format, str) else format(value)
+		if show_descriptions and describe and (description := describe(value)) != None:
+			text += f' ({description})'
+		self.raw_field(name, text)
 
 	def reserved(self, name: str, value: T, expected: Optional[T] = None):
 		ok = (value == expected) if expected != None else \
@@ -674,17 +681,15 @@ def parse_urn_box(ps: Parser):
 globals()['parse_url _box'] = parse_url_box
 globals()['parse_urn _box'] = parse_urn_box
 
-def format_colour_type(colour_type: str) -> str:
-	description = {
+def format_colour_type(colour_type: str):
+	return {
 		'nclx': 'on-screen colours',
 		'rICC': 'restricted ICC profile',
 		'prof': 'unrestricted ICC profile',
 	}.get(colour_type)
-	description = f' ({description})' if show_descriptions and description != None else ''
-	return repr(colour_type) + description
 
 def parse_colr_box(ps: Parser):
-	ps.field('colour_type', colour_type := ps.fourcc(), format_colour_type)
+	ps.field('colour_type', colour_type := ps.fourcc(), describe=format_colour_type)
 	if colour_type == 'nclx':
 		ps.field('colour_primaries', ps.int(2))
 		ps.field('transfer_characteristics', ps.int(2))
@@ -1177,15 +1182,14 @@ def parse_tenc_box(ps: Parser):
 	if default_isProtected == 1 and default_Per_Sample_IV_Size == 0:
 		ps.field('default_constant_IV', ps.bytes(ps.int(1)).hex(), str)
 
-def format_system_id(SystemID: str) -> str:
-	system_name, system_comment = protection_systems.get(SystemID, (None, None))
-	return SystemID + (f' ({system_name})' if system_name else '')
+def format_system_id(SystemID: str):
+	return protection_systems.get(SystemID, (None, None))[0]
 
 def parse_pssh_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
 
-	ps.field('SystemID', ps.uuid(), format_system_id)
+	ps.field('SystemID', ps.uuid(), str, describe=format_system_id)
 
 	if version > 0:
 		KID_count = ps.int(4)
