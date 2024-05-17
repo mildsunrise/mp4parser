@@ -444,20 +444,16 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version <= 1, 'invalid version'
 
 	if version == 0:
-		ps.reserved('reserved_1', ps.bytes(8))
-		ps.field('channelcount', ps.int(2), default=2)
-		ps.field('samplesize', ps.int(2), default=16)
-		ps.reserved('pre_defined_1', ps.int(2))
-		ps.reserved('reserved_2', ps.int(2))
-		ps.field('samplerate', ps.int(4) / (1 << 16))
+		ps.reserved('reserved_1_2', ps.bytes(2))
 	else:
 		ps.reserved('entry_version', ps.int(2), 1)
-		ps.reserved('reserved_1', ps.bytes(6))
-		ps.field('channelcount', ps.int(2))
-		ps.field('samplesize', ps.int(2), default=16)
-		ps.reserved('pre_defined_1', ps.int(2))
-		ps.reserved('reserved_2', ps.int(2))
-		ps.field('samplerate', ps.int(4) / (1 << 16), default=1)
+	ps.reserved('reserved_1', ps.bytes(6))
+
+	ps.field('channelcount', ps.int(2), default=(2 if version == 0 else None))
+	ps.field('samplesize', ps.int(2), default=16)
+	ps.reserved('pre_defined_1', ps.int(2))
+	ps.reserved('reserved_2', ps.int(2))
+	ps.field('samplerate', ps.int(4) / (1 << 16), default=(None if version == 0 else 1))
 
 	parse_boxes(ps)
 
@@ -496,24 +492,23 @@ def parse_matrix(ps: Parser):
 	matrix = [ ps.sint(4) / (1 << 16) for _ in range(9) ]
 	ps.field('matrix', matrix, default=[1,0,0, 0,1,0, 0,0,0x4000])
 
+def decode_language(syms: list[int]):
+	if not any(syms):
+		return None
+	assert all(0 <= (x - 1) < 26 for x in syms), f'invalid language characters: {syms}'
+	return ''.join(chr((x - 1) + ord('a')) for x in syms)
+
 def parse_language(ps: Parser):
-	language = ps.int(2)
-	if not language:
-		ps.print('language = (null)') # FIXME: log a warning or something
-		return
-	pad, *language = split_bits(language, 16, 15, 10, 5, 0)
-	assert all(0 <= (x - 1) < 26 for x in language), f'invalid language characters: {language}'
-	language = ''.join(chr((x - 1) + ord('a')) for x in language)
-	ps.field('language', language)
-	assert not pad, f'invalid pad: {pad}'
+	with ps.bits(2) as br:
+		ps.reserved('language_pad', br.read(1))
+		ps.field('language', decode_language([br.read(5) for _ in range(3)]))
 
 def parse_mfhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0, f'invalid version: {version}'
 	assert box_flags == 0, f'invalid flags: {box_flags}'
 
-	sequence_number = ps.int(4)
-	ps.field('sequence_number', sequence_number)
+	ps.field('sequence_number', ps.int(4))
 
 def parse_mvhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -535,8 +530,7 @@ def parse_mvhd_box(ps: Parser):
 	parse_matrix(ps)
 
 	ps.reserved('pre_defined', ps.bytes(6 * 4))
-	next_track_ID = ps.int(4)
-	ps.field('next_track_ID', next_track_ID)
+	ps.field('next_track_ID', ps.int(4))
 
 def parse_tkhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -696,13 +690,10 @@ def parse_sgpd_box(ps: Parser):
 	ps.field('version', version)
 
 	ps.field('grouping_type', ps.fourcc())
-
 	if version == 1:
-		default_length = ps.int(4)
-		ps.field('default_length', default_length)
+		ps.field('default_length', default_length := ps.int(4))
 	elif version >= 2:
-		default_sample_description_index = ps.int(4)
-		ps.field('default_sample_description_index', default_sample_description_index)
+		ps.field('default_sample_description_index', ps.int(4))
 
 	entry_count = ps.int(4)
 	for i in range(entry_count):
@@ -784,9 +775,8 @@ def parse_hvcC_box(ps: Parser):
 		ps.reserved('reserved', br.read(5), mask(5))
 		ps.field('bitDepthChromaMinus8', br.read())
 
-	avgFrameRate = ps.int(2)
+	ps.field('avgFrameRate', ps.int(2))
 	with ps.bits(1) as br:
-		ps.field('avgFrameRate', avgFrameRate)
 		ps.field('constantFrameRate', br.read(2))
 		ps.field('numTemporalLayers', br.read(3))
 		ps.field('temporalIdNested', br.bit())
@@ -1010,8 +1000,7 @@ def parse_sbgp_box(ps: Parser):
 
 	ps.field('grouping_type', ps.fourcc())
 	if version == 1:
-		grouping_type_parameter = ps.int(4)
-		ps.field('grouping_type_parameter', grouping_type_parameter)
+		ps.field('grouping_type_parameter', ps.int(4))
 
 	sample = 1
 	entry_count = ps.int(4)
@@ -1051,8 +1040,7 @@ def parse_saio_box(ps: Parser):
 	wsize = [4, 8][version]
 
 	if box_flags & 1:
-		grouping_type_parameter = ps.int(4)
-		ps.field('grouping_type_parameter', grouping_type_parameter)
+		ps.field('grouping_type_parameter', ps.int(4))
 
 	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
@@ -1076,25 +1064,20 @@ def parse_tfhd_box(ps: Parser):
 	assert version == 0, f'invalid version: {version}'
 
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
-	track_ID = ps.int(4)
-	ps.field('track_ID', track_ID)
+	ps.field('track_ID', ps.int(4))
 	if box_flags & 0x10000:  # duration‐is‐empty
 		ps.print('duration-is-empty flag set')
 	if box_flags & 0x20000:  # default-base-is-moof
 		ps.print('default-base-is-moof flag set')
 
 	if box_flags & 0x1:  # base‐data‐offset‐present
-		base_data_offset = ps.int(8)
-		ps.field('base_data_offset', base_data_offset)
+		ps.field('base_data_offset', ps.int(8))
 	if box_flags & 0x2:  # sample-description-index-present
-		sample_description_index = ps.int(4)
-		ps.field('sample_description_index', sample_description_index)
+		ps.field('sample_description_index', ps.int(4))
 	if box_flags & 0x8:  # default‐sample‐duration‐present
-		default_sample_duration = ps.int(4)
-		ps.field('default_sample_duration', default_sample_duration)
+		ps.field('default_sample_duration', ps.int(4))
 	if box_flags & 0x10:  # default‐sample‐size‐present
-		default_sample_size = ps.int(4)
-		ps.field('default_sample_size', default_sample_size)
+		ps.field('default_sample_size', ps.int(4))
 
 
 def parse_trun_box(ps: Parser):
@@ -1103,11 +1086,9 @@ def parse_trun_box(ps: Parser):
 	sample_count = ps.int(4)
 	ps.print(f'version = {version}, flags = {box_flags:06x}, sample_count = {sample_count}')
 	if box_flags & (1 << 0):
-		data_offset = ps.sint(4)
-		ps.field('data_offset', data_offset, '#x')
+		ps.field('data_offset', ps.sint(4), '#x')
 	if box_flags & (1 << 2):
-		first_sample_flags = ps.int(4)
-		ps.field('first_sample_flags', first_sample_flags, '08x')
+		ps.field('first_sample_flags', ps.int(4), '08x')
 
 	s_offset = 0
 	s_time = 0
