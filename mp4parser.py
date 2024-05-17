@@ -4,9 +4,7 @@ Main parser code
 '''
 
 import sys
-import struct
 import mmap
-import io
 import itertools
 import re
 import options
@@ -35,8 +33,6 @@ colorize = sys.stdout.buffer.isatty() \
 	if args.color == None else args.color
 
 mask = lambda n: ~((~0) << n)
-get_bits = lambda x, end, start: (x & mask(end)) >> start
-split_bits = lambda x, *bits: (get_bits(x, a, b) for a, b in itertools.pairwise(bits))
 
 def main():
 	ps = Parser(mp4mem, 0, 0)
@@ -144,11 +140,6 @@ class MVIO:
 		self.pos += size + 1
 		return data[:size].tobytes().decode(encoding)
 
-	# FIXME: to ease migration, remove afterwards
-	def unpack(self, struct_fmt: str) -> tuple:
-		struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
-		return struct_obj.unpack(self.read(struct_obj.size))
-
 	@contextmanager
 	def bits(self, n = -1):
 		with self.capture(n) as res, BitReader(res) as br:
@@ -249,11 +240,6 @@ class Parser(MVIO):
 	def in_list_item(self):
 		with self.in_object():
 			yield self
-
-# FIXME: to ease migration, remove afterwards
-def unpack(stream, struct_fmt: str) -> tuple:
-		struct_obj = struct.Struct('>' + struct_fmt) # FIXME: caching
-		return struct_obj.unpack(stream.read(struct_obj.size))
 
 def unique_dict(x):
 	r = {}
