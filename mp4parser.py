@@ -185,8 +185,12 @@ class Parser(MVIO):
 	def offset(self) -> int:
 		return self.start + self.pos
 
-	def print(self, val: str):
-		print(self.prefix + val)
+	def print(self, val: str, header=False):
+		prefix = self.prefix
+		if header:
+			assert self.indent > 0
+			prefix = ' ' * ((self.indent - 1) * indent_n)
+		print(prefix + val)
 
 	def raw_field(self, name: str, value: str):
 		self.print(name + ' = ' + value)
@@ -377,7 +381,7 @@ def parse_box(ps: Parser, contents_fn=None):
 		type_label = btype
 		if len(btype) != 4: # it's a UUID
 			type_label = f'UUID {btype}'
-		ps.print(ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text)
+		ps.print(ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text, header=True)
 		with ps.subparser(length) as data, data.handle_errors():
 			return (contents_fn or parse_contents)(btype, data)
 
@@ -1245,7 +1249,7 @@ def parse_descriptor(ps: Parser, expected=None, namespace='default', contents_fn
 			klasses = get_class_chain(class_registry[k][1])
 	labels += [ ansi_bold(k['name']) for k in klasses ]
 
-	ps.print(ansi_bold(f'[{tag}]') + (' ' + ' -> '.join(labels) if show_descriptions else '') + size_text)
+	ps.print(ansi_bold(f'[{tag}]') + (' ' + ' -> '.join(labels) if show_descriptions else '') + size_text, header=True)
 	with ps.subparser(size) as data, data.handle_errors():
 		(contents_fn or parse_descriptor_contents)(tag, klasses, data)
 
