@@ -17,25 +17,22 @@
     ...
 [moov] Movie @ 0x37d8c, 0x37d94 - 0x39cbf (7979)
     [mvhd] MovieHeader @ 0x37d94, 0x37d9c - 0x37e00 (100)
-        version = 0
         timescale = 1000
         duration = 5000
         next_track_ID = 3
     [trak] Track @ 0x37e00, 0x37e08 - 0x391a4 (5020)
         [tkhd] TrackHeader @ 0x37e08, 0x37e10 - 0x37e64 (84)
-            version = 0, flags = 000003
+            flags = 000003
             track_ID = 1
             duration = 5000
             volume = 0.0
             size = 320.0 × 240.0
         [edts] Edit @ 0x37e64, 0x37e6c - 0x37e88 (28)
             [elst] EditList @ 0x37e6c, 0x37e74 - 0x37e88 (20)
-                version = 0
                 entry_count = 1
                 [edit segment   0] duration =   5000, media_time =   1024, media_rate = 1.0
         [mdia] Media @ 0x37e88, 0x37e90 - 0x391a4 (4884)
             [mdhd] MediaHeader @ 0x37e90, 0x37e98 - 0x37eb0 (24)
-                version = 0
                 timescale = 12800
                 duration = 64000
                 language = und
@@ -45,12 +42,10 @@
                 [vmhd] VideoMediaHeader @ 0x37ee5, 0x37eed - 0x37ef9 (12)
                 [dinf] DataInformation @ 0x37ef9, 0x37f01 - 0x37f1d (28)
                     [dref] DataReference @ 0x37f01, 0x37f09 - 0x37f1d (20)
-                        version = 0, entry_count = 1
                         [url ] DataEntryUrl @ 0x37f11, 0x37f19 - 0x37f1d (4)
                             flags = 000001
                 [stbl] SampleTable @ 0x37f1d, 0x37f25 - 0x391a4 (4735)
                     [stsd] SampleDescription @ 0x37f25, 0x37f2d - 0x3891f (2546)
-                        version = 0, entry_count = 1
                         [hev1] HEVCSampleEntry @ 0x37f35, 0x37f3d - 0x3891f (2530)
                             data_reference_index = 1
                             size = 320 × 240
@@ -127,7 +122,6 @@
                         10 10 18 18  10 18 10 10  18 18 18 10  10 18 18 10   ................
                         ...
                     [ctts] CompositionOffset @ 0x389d4, 0x389dc - 0x38d74 (920)
-                        version = 0
                         entry_count = 114
                         [entry   0] [sample =      1] sample_count =     1, sample_offset =  1024
                         [entry   1] [sample =      2] sample_count =     1, sample_offset =  3072
@@ -164,18 +158,16 @@
                         ...
     [trak] Track @ 0x391a4, 0x391ac - 0x39c5d (2737)
         [tkhd] TrackHeader @ 0x391ac, 0x391b4 - 0x39208 (84)
-            version = 0, flags = 000003
+            flags = 000003
             track_ID = 2
             duration = 5000
             alternate_group = 1
         [edts] Edit @ 0x39208, 0x39210 - 0x3922c (28)
             [elst] EditList @ 0x39210, 0x39218 - 0x3922c (20)
-                version = 0
                 entry_count = 1
                 [edit segment   0] duration =   5000, media_time =   1024, media_rate = 1.0
         [mdia] Media @ 0x3922c, 0x39234 - 0x39c5d (2601)
             [mdhd] MediaHeader @ 0x39234, 0x3923c - 0x39254 (24)
-                version = 0
                 timescale = 44100
                 duration = 221524
                 language = und
@@ -185,12 +177,10 @@
                 [smhd] SoundMediaHeader @ 0x39289, 0x39291 - 0x39299 (8)
                 [dinf] DataInformation @ 0x39299, 0x392a1 - 0x392bd (28)
                     [dref] DataReference @ 0x392a1, 0x392a9 - 0x392bd (20)
-                        version = 0, entry_count = 1
                         [url ] DataEntryUrl @ 0x392b1, 0x392b9 - 0x392bd (4)
                             flags = 000001
                 [stbl] SampleTable @ 0x392bd, 0x392c5 - 0x39c5d (2456)
                     [stsd] SampleDescription @ 0x392c5, 0x392cd - 0x39343 (118)
-                        version = 0, entry_count = 1
                         [mp4a] MP4AudioSampleEntry @ 0x392d5, 0x392dd - 0x39343 (102)
                             data_reference_index = 1
                             channelcount = 6
@@ -256,14 +246,12 @@
                         - entry 1:
                           ff ff                                                ..
                     [sbgp] SampleToGroup @ 0x39c41, 0x39c49 - 0x39c5d (20)
-                        version = 0
                         grouping_type = 'roll'
                         entry_count = 1
                         [entry     1] [sample =      1] sample_count =   217, group_description_index =     1
                         [samples =    217]
     [udta] UserData @ 0x39c5d, 0x39c65 - 0x39cbf (90)
         [meta] Meta @ 0x39c65, 0x39c6d - 0x39cbf (82)
-            version = 0, flags = 000000
             [hdlr] Handler @ 0x39c71, 0x39c79 - 0x39c92 (25)
                 invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
                 handler_type = 'mdir', name = '\x00'

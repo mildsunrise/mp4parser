@@ -399,9 +399,17 @@ def parse_contents(btype: str, ps: Parser):
 	if (data := ps.read()) and max_dump:
 		print_hex_dump(data, ps.prefix)
 
-def parse_fullbox(ps: Parser):
+def parse_fullbox(ps: Parser, max_version=0, known_flags=0, default_version=0, default_flags=0):
 	version = ps.int(1)
 	flags = ps.int(3)
+	assert version <= max_version, f'unsupported box version {version}'
+	fields = [
+		('version', version, default_version, str),
+		('flags', flags, default_flags, '{:06x}'.format),
+	]
+	fields = [ f'{ansi_fg3(k)} {ansi_fg1("=")} {f(v)}'
+		for k, v, d, f in fields if show_defaults or v != d ]
+	if fields: ps.print(ansi_fg1(', ').join(fields))
 	return version, flags
 
 def parse_skip_box(ps: Parser):
@@ -417,8 +425,7 @@ parse_free_box = parse_skip_box
 # BOX CONTAINERS THAT ALSO HAVE A PREPENDED BINARY STRUCTURE
 
 def parse_meta_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
+	parse_fullbox(ps)
 	parse_boxes(ps)
 
 # hack: use a global variable because I'm too lazy to rewrite everything to pass this around
@@ -438,14 +445,12 @@ def parse_hdlr_box(ps: Parser):
 	last_handler_seen = handler_type
 
 def parse_stsd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
+	version, _ = parse_fullbox(ps, max_version=255)
 	entry_count = ps.int(4)
-	ps.print(f'version = {version}, entry_count = {entry_count}')
-	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
 
 	contents_fn = lambda *a, **b: parse_sample_entry_contents(*a, **b, version=version)
 	boxes = parse_boxes(ps, contents_fn=contents_fn)
-	assert len(boxes) == entry_count, f'entry_count not matching boxes present'
+	assert len(boxes) == entry_count, f'entry_count ({entry_count}) not matching boxes present'
 
 def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
 	ps.reserved('reserved', ps.bytes(6))
@@ -544,7 +549,6 @@ def parse_language(ps: Parser):
 
 def parse_mfhd_box(ps: Parser):
 	parse_fullbox(ps)
-
 	ps.field('sequence_number', ps.int(4))
 
 def parse_mvhd_box(ps: Parser):
@@ -567,9 +571,7 @@ def parse_mvhd_box(ps: Parser):
 	ps.field('next_track_ID', ps.int(4), default=mask(32))
 
 def parse_tkhd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version <= 1, f'invalid version: {version}'
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
+	version, box_flags = parse_fullbox(ps, 1)
 	wsize = [4, 8][version]
 	# FIXME: display flags!!
 
@@ -607,15 +609,12 @@ def parse_mehd_box(ps: Parser):
 
 def parse_smhd_box(ps: Parser):
 	parse_fullbox(ps)
-
 	ps.field('balance', ps.sint(2), default=0)
 	ps.reserved('reserved', ps.int(2))
 
 def parse_vmhd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
+	_, box_flags = parse_fullbox(ps, 0, 1, default_flags=1)
 	assert box_flags == 1, f'invalid flags: {box_flags}'
-
 	ps.field('graphicsmode', ps.int(2), default=0)
 	ps.field('opcolor', tuple(ps.int(2) for _ in range(3)), default=(0,)*3)
 
@@ -639,7 +638,6 @@ def parse_sample_flags(ps: Parser, name: str):
 
 def parse_trex_box(ps: Parser):
 	parse_fullbox(ps)
-
 	ps.field('track_ID', ps.int(4))
 	ps.field('default_sample_description_index', ps.int(4))
 	ps.field('default_sample_duration', ps.int(4))
@@ -654,34 +652,24 @@ def parse_trex_box(ps: Parser):
 # NON CODEC-SPECIFIC BOXES
 
 def parse_ID32_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
-	ps.print(f'flags = {box_flags:06x}')
+	parse_fullbox(ps)
 	parse_language(ps)
 	ps.print(f'ID3v2 data =')
 	print_hex_dump(ps.read(), ps.prefix + '  ')
 
 def parse_dref_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
+	parse_fullbox(ps)
 	entry_count = ps.int(4)
-	assert version == 0, f'invalid version: {version}'
-	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
-	ps.print(f'version = {version}, entry_count = {entry_count}')
-
 	boxes = parse_boxes(ps)
-	assert len(boxes) == entry_count, f'entry_count not matching boxes present'
+	assert len(boxes) == entry_count, f'entry_count ({entry_count}) not matching boxes present'
 
 def parse_url_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
-	ps.print(f'flags = {box_flags:06x}')
+	parse_fullbox(ps)
 	if ps.ended: return
 	ps.field('location', ps.string())
 
 def parse_urn_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
-	ps.print(f'flags = {box_flags:06x}')
+	parse_fullbox(ps)
 	if ps.ended: return
 	ps.field('location', ps.string())
 	if ps.ended: return
@@ -726,9 +714,7 @@ def parse_clap_box(ps: Parser):
 	ps.field('vertOff', (ps.int(4), ps.int(4)), format_fraction)
 
 def parse_sgpd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
-	ps.field('version', version)
+	version, box_flags = parse_fullbox(ps, 2)
 
 	ps.field('grouping_type', ps.fourcc())
 	if version == 1:
@@ -1032,9 +1018,7 @@ def parse_sbgp_box(ps: Parser):
 	ps.print(f'[samples = {sample-1:6}]')
 
 def parse_saiz_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
+	_, box_flags = parse_fullbox(ps, 0, 1)
 
 	if box_flags & 1:
 		ps.field('aux_info_type', ps.fourcc())
@@ -1051,8 +1035,7 @@ def parse_saiz_box(ps: Parser):
 			ps.print('...')
 
 def parse_saio_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
+	version, box_flags = parse_fullbox(ps, 1, 1)
 	wsize = [4, 8][version]
 
 	if box_flags & 1:
@@ -1068,18 +1051,13 @@ def parse_saio_box(ps: Parser):
 		ps.print('...')
 
 def parse_tfdt_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version <= 1, f'invalid version: {version}'
+	version, box_flags = parse_fullbox(ps, 1)
 	wsize = [4, 8][version]
-
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
 	ps.field('baseMediaDecodeTime', ps.int(wsize))
 
 def parse_tfhd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
+	version, box_flags = parse_fullbox(ps, 0, 0x3003b)
 
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
 	ps.field('track_ID', ps.int(4))
 	if box_flags & 0x10000:  # duration‐is‐empty
 		ps.print('duration-is-empty flag set')
@@ -1098,9 +1076,7 @@ def parse_tfhd_box(ps: Parser):
 		parse_sample_flags(ps, 'default_sample_flags')
 
 def parse_trun_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version <= 1, f'invalid version: {version}'
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
+	version, box_flags = parse_fullbox(ps, 1, 0xf05)
 
 	ps.field('sample_count', sample_count := ps.int(4))
 	if box_flags & (1 << 0):
@@ -1140,9 +1116,7 @@ def parse_frma_box(ps: Parser):
 	ps.field('data_format', ps.fourcc())
 
 def parse_schm_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
+	version, box_flags = parse_fullbox(ps, 0, 1)
 
 	ps.field('scheme_type', ps.fourcc())
 	ps.field('scheme_version', ps.int(4), '#x')
@@ -1150,8 +1124,7 @@ def parse_schm_box(ps: Parser):
 		ps.field('scheme_uri', ps.string())
 
 def parse_tenc_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
+	version, box_flags = parse_fullbox(ps, 1)
 
 	ps.reserved('reserved_1', ps.int(1), 0)
 
@@ -1172,8 +1145,7 @@ def format_system_id(SystemID: str):
 	return protection_systems.get(SystemID, (None, None))[0]
 
 def parse_pssh_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	ps.print(f'version = {version}, flags = {box_flags:06x}')
+	version, box_flags = parse_fullbox(ps, 1)
 
 	ps.field('SystemID', ps.uuid(), str, describe=format_system_id)
 

@@ -17,25 +17,22 @@
     ...
 [moov] Movie @ 0x417e8, 0x417f0 - 0x42b94 (5028)
     [mvhd] MovieHeader @ 0x417f0, 0x417f8 - 0x4185c (100)
-        version = 0
         timescale = 1000
         duration = 5000
         next_track_ID = 3
     [trak] Track @ 0x4185c, 0x41864 - 0x41ed5 (1649)
         [tkhd] TrackHeader @ 0x41864, 0x4186c - 0x418c0 (84)
-            version = 0, flags = 000003
+            flags = 000003
             track_ID = 1
             duration = 5000
             volume = 0.0
             size = 320.0 × 240.0
         [edts] Edit @ 0x418c0, 0x418c8 - 0x418e4 (28)
             [elst] EditList @ 0x418c8, 0x418d0 - 0x418e4 (20)
-                version = 0
                 entry_count = 1
                 [edit segment   0] duration =   5000, media_time =    512, media_rate = 1.0
         [mdia] Media @ 0x418e4, 0x418ec - 0x41ed5 (1513)
             [mdhd] MediaHeader @ 0x418ec, 0x418f4 - 0x4190c (24)
-                version = 0
                 timescale = 12800
                 duration = 64000
                 language = und
@@ -45,12 +42,10 @@
                 [vmhd] VideoMediaHeader @ 0x41941, 0x41949 - 0x41955 (12)
                 [dinf] DataInformation @ 0x41955, 0x4195d - 0x41979 (28)
                     [dref] DataReference @ 0x4195d, 0x41965 - 0x41979 (20)
-                        version = 0, entry_count = 1
                         [url ] DataEntryUrl @ 0x4196d, 0x41975 - 0x41979 (4)
                             flags = 000001
                 [stbl] SampleTable @ 0x41979, 0x41981 - 0x41ed5 (1364)
                     [stsd] SampleDescription @ 0x41981, 0x41989 - 0x41a41 (184)
-                        version = 0, entry_count = 1
                         [mp4v] MP4VisualSampleEntry @ 0x41991, 0x41999 - 0x41a41 (168)
                             data_reference_index = 1
                             size = 320 × 240
@@ -91,7 +86,6 @@
                         [sync sample     6] sample_number =     73
                         ...
                     [ctts] CompositionOffset @ 0x41a95, 0x41a9d - 0x41aad (16)
-                        version = 0
                         entry_count = 1
                         [entry   0] [sample =      1] sample_count =   125, sample_offset =   512
                         [samples =    125]
@@ -120,18 +114,16 @@
                         ...
     [trak] Track @ 0x41ed5, 0x41edd - 0x42b32 (3157)
         [tkhd] TrackHeader @ 0x41edd, 0x41ee5 - 0x41f39 (84)
-            version = 0, flags = 000003
+            flags = 000003
             track_ID = 2
             duration = 5000
             alternate_group = 1
         [edts] Edit @ 0x41f39, 0x41f41 - 0x41f5d (28)
             [elst] EditList @ 0x41f41, 0x41f49 - 0x41f5d (20)
-                version = 0
                 entry_count = 1
                 [edit segment   0] duration =   5000, media_time =   1105, media_rate = 1.0
         [mdia] Media @ 0x41f5d, 0x41f65 - 0x42b32 (3021)
             [mdhd] MediaHeader @ 0x41f65, 0x41f6d - 0x41f85 (24)
-                version = 0
                 timescale = 44100
                 duration = 221605
                 language = und
@@ -141,12 +133,10 @@
                 [smhd] SoundMediaHeader @ 0x41fba, 0x41fc2 - 0x41fca (8)
                 [dinf] DataInformation @ 0x41fca, 0x41fd2 - 0x41fee (28)
                     [dref] DataReference @ 0x41fd2, 0x41fda - 0x41fee (20)
-                        version = 0, entry_count = 1
                         [url ] DataEntryUrl @ 0x41fe2, 0x41fea - 0x41fee (4)
                             flags = 000001
                 [stbl] SampleTable @ 0x41fee, 0x41ff6 - 0x42b32 (2876)
                     [stsd] SampleDescription @ 0x41ff6, 0x41ffe - 0x4206a (108)
-                        version = 0, entry_count = 1
                         [mp4a] MP4AudioSampleEntry @ 0x42006, 0x4200e - 0x4206a (92)
                             data_reference_index = 1
                             channelcount = 1
@@ -205,7 +195,6 @@
                         ...
     [udta] UserData @ 0x42b32, 0x42b3a - 0x42b94 (90)
         [meta] Meta @ 0x42b3a, 0x42b42 - 0x42b94 (82)
-            version = 0, flags = 000000
             [hdlr] Handler @ 0x42b46, 0x42b4e - 0x42b67 (25)
                 invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
                 handler_type = 'mdir', name = '\x00'

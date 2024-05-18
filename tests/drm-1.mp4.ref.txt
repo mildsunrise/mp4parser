@@ -4,19 +4,17 @@
     - compatible: 'cmfc'
 [moov] Movie @ 0x14, 0x1c - 0x699 (1661)
     [mvhd] MovieHeader @ 0x1c, 0x24 - 0x88 (100)
-        version = 0
         timescale = 1000
         duration = 0
     [trak] Track @ 0x88, 0x90 - 0x2cf (575)
         [tkhd] TrackHeader @ 0x90, 0x98 - 0xec (84)
-            version = 0, flags = 000007
+            flags = 000007
             track_ID = 1
             duration = 0
             volume = 0.0
             size = 1920.0 × 1080.0
         [mdia] Media @ 0xec, 0xf4 - 0x2cf (475)
             [mdhd] MediaHeader @ 0xf4, 0xfc - 0x114 (24)
-                version = 0
                 timescale = 24000
                 duration = 0
                 language = und
@@ -26,12 +24,10 @@
                 [vmhd] VideoMediaHeader @ 0x151, 0x159 - 0x165 (12)
                 [dinf] DataInformation @ 0x165, 0x16d - 0x189 (28)
                     [dref] DataReference @ 0x16d, 0x175 - 0x189 (20)
-                        version = 0, entry_count = 1
                         [url ] DataEntryUrl @ 0x17d, 0x185 - 0x189 (4)
                             flags = 000001
                 [stbl] SampleTable @ 0x189, 0x191 - 0x2cf (318)
                     [stsd] SampleDescription @ 0x191, 0x199 - 0x28b (242)
-                        version = 0, entry_count = 1
                         [encv] @ 0x1a1, 0x1a9 - 0x28b (226)
                             data_reference_index = 1
                             size = 1920 × 1080
@@ -47,12 +43,10 @@
                                 [frma] OriginalFormat @ 0x243, 0x24b - 0x24f (4)
                                     data_format = 'avc1'
                                 [schm] SchemeType @ 0x24f, 0x257 - 0x263 (12)
-                                    version = 0, flags = 000000
                                     scheme_type = 'cenc'
                                     scheme_version = 0x10000
                                 [schi] SchemeInformation @ 0x263, 0x26b - 0x28b (32)
                                     [tenc] TrackEncryption @ 0x26b, 0x273 - 0x28b (24)
-                                        version = 0, flags = 000000
                                         default_isProtected = 1
                                         default_Per_Sample_IV_Size = 8
                                         default_KID = 00008862fd26283e1c1c84a256e9259c
@@ -73,13 +67,11 @@
             default_sample_size = 0
             default_sample_flags =
     [pssh] ProtectionSystemSpecificHeader @ 0x2f7, 0x2ff - 0x32f (48)
-        version = 0, flags = 000000
         SystemID = edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine Content Protection)
         Data =
           12 10 00 00  88 62 fd 26  28 3e 1c 1c  84 a2 56 e9   .....b.&(>....V.
           25 9c 48 e3  dc 95 9b 06                             %.H.....
     [pssh] ProtectionSystemSpecificHeader @ 0x32f, 0x337 - 0x699 (866)
-        version = 0, flags = 000000
         SystemID = 9a04f079-9840-4286-ab92-e65be0885f95 (Microsoft PlayReady)
         Data =
           4a 03 00 00  01 00 01 00  40 03 3c 00  57 00 52 00   J.......@.<.W.R.
@@ -102,14 +94,14 @@
         sequence_number = 27
     [traf] TrackFragment @ 0x6d1, 0x6d9 - 0xcbe (1509)
         [tfhd] TrackFragmentHeader @ 0x6d9, 0x6e1 - 0x6ed (12)
-            version = 0, flags = 020020
+            flags = 020020
             track_ID = 1
             default-base-is-moof flag set
             default_sample_flags =
                 sample_depends_on = 1 (yes)
                 sample_is_non_sync_sample = True
         [tfdt] TrackFragmentBaseMediaDecodeTime @ 0x6ed, 0x6f5 - 0x701 (12)
-            version = 1, flags = 000000
+            version = 1
             baseMediaDecodeTime = 1249248
         [trun] TrackRun @ 0x701, 0x709 - 0x959 (592)
             version = 1, flags = 000b05
@@ -126,7 +118,6 @@
             [sample    6] time=   6006 +  1001, offset=  0x4f32f + 21536, -1001
             ...
         [saiz] SampleAuxiliaryInformationSizes @ 0x959, 0x961 - 0x99a (57)
-            version = 0, flags = 000000
             default_sample_info_size = 0
             sample_count = 48
             [sample      1] sample_info_size =    16
@@ -138,7 +129,6 @@
             [sample      7] sample_info_size =    16
             ...
         [saio] SampleAuxiliaryInformationOffsets @ 0x99a, 0x9a2 - 0x9ae (12)
-            version = 0, flags = 000000
             entry_count = 1
             [entry      1] offset = 0x000305
         [senc] SampleEncryption @ 0x9ae, 0x9b6 - 0xcbe (776)
