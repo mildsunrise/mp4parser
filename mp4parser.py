@@ -130,10 +130,10 @@ class MVIO:
 		return self.read(n).tobytes()
 
 	def sint(self, n: int) -> int:
-		return int.from_bytes(self.read(n), signed=True)
+		return int.from_bytes(self.read(n), 'big', signed=True)
 
 	def int(self, n: int) -> int:
-		return int.from_bytes(self.read(n))
+		return int.from_bytes(self.read(n), 'big')
 
 	def string(self, encoding='utf-8') -> str:
 		data = self.peek()
