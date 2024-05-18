@@ -10,8 +10,9 @@ import re
 import options
 from parser_tables import *
 from contextlib import contextmanager
-from typing import Optional, Union, Callable, TypeVar
+from typing import Optional, Union, Callable, TypeVar, Iterable
 T = TypeVar('T')
+T2 = TypeVar('T2')
 
 args = options.parser.parse_args()
 fname = args.filename
@@ -241,7 +242,7 @@ class Parser(MVIO):
 		with self.in_object():
 			yield self
 
-def unique_dict(x):
+def unique_dict(x: Iterable[tuple[T, T2]]) -> dict[T, T2]:
 	r = {}
 	for k, v in x:
 		assert k not in r, f'duplicate key {repr(k)}: existing {repr(r[k])}, got {repr(v)}'
@@ -251,12 +252,12 @@ def unique_dict(x):
 # FIXME: give it a proper CLI interface
 # FIXME: display errors more nicely (last two frames, type name, you know)
 
-def pad_iter(iterable, size, default=None):
+def pad_iter(iterable: Iterable[T], size: int, default: T=None) -> Iterable[Optional[T]]:
 	iterator = iter(iterable)
 	for _ in range(size):
 		yield next(iterator, default)
 
-def split_in_groups(iterable, size):
+def split_in_groups(iterable: Iterable[T], size: int) -> Iterable[list[T]]:
 	iterator = iter(iterable)
 	while (group := list(itertools.islice(iterator, size))):
 		yield group
@@ -300,7 +301,8 @@ def print_hex_dump(data: memoryview, prefix: str):
 def print_error(exc, prefix: str):
 	print(prefix + f'{ansi_bold(ansi_fg1("ERROR:"))} {ansi_fg1(exc)}\n')
 
-format_uuid = lambda x: '-'.join(x.hex()[s:e] for s, e in itertools.pairwise([0, 8, 12, 16, 20, 32]) )
+def format_uuid(x: bytes) -> str:
+	return '-'.join(x.hex()[s:e] for s, e in itertools.pairwise([0, 8, 12, 16, 20, 32]) )
 
 def format_fraction(x: tuple[int, int]):
 	assert type(x) is tuple and len(x) == 2 and all(type(i) is int for i in x)
