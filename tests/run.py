@@ -23,7 +23,7 @@ delete_if_present('.coverage')
 failures = set()
 
 for i, case in enumerate(cases):
-	print('\r\x1b[J' + f'[{i:2}/{len(cases):2}] running {case}... ', end='', flush=True)
+	print(f'[{i:2}/{len(cases):2}] running {case}... ', end='', flush=True)
 	res = run(['coverage', 'run', '--append', '../mp4parser.py', case],
 		check=True, capture_output=True, encoding='utf-8')
 	assert not res.stderr, f'found stderr: {repr(res.stderr)}'
@@ -38,11 +38,13 @@ for i, case in enumerate(cases):
 	except FileNotFoundError:
 		with open(ref_file, 'w') as f:
 			f.write(res.stdout)
+		print(end='\r\x1b[J')
 		continue
 
 	if res.stdout == refout:
 		delete_if_present(out_file)
 		delete_if_present(diff_file)
+		print(end='\r\x1b[J')
 		continue
 
 	with open(out_file, 'w') as f:
@@ -56,14 +58,14 @@ for i, case in enumerate(cases):
 	print(f'output differs: \x1b[31m-{diffstats["-"]} \x1b[32m+{diffstats["+"]}\x1b[m')
 	failures.add(case)
 
-print('\r\x1b[J' + (
+print((
 	('\x1b[31m' + f'{len(failures)} of {len(cases)} tests failed.') if failures else
 	('\x1b[32m' + 'All tests passed.')
-) + '\x1b[m\n')
+) + '\x1b[m\n', flush=True)
 
-run(['coverage', 'report'], check=True, cwd='..', env={
-	'COVERAGE_FILE': 'tests/.coverage',
-	'COVERAGE_RCFILE': 'tests/.coveragerc',
+run(['coverage', 'report'], check=True, cwd='..', env=os.environb | {
+	b'COVERAGE_FILE': b'tests/.coverage',
+	b'COVERAGE_RCFILE': b'tests/.coveragerc',
 })
 
 if failures: exit(1)
