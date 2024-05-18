@@ -543,10 +543,10 @@ def parse_mvhd_box(ps: Parser):
 	ps.field('version', version)
 	wsize = [4, 8][version]
 
-	ps.field('creation_time', ps.int(wsize))
-	ps.field('modification_time', ps.int(wsize))
+	ps.field('creation_time', ps.int(wsize), default=0)
+	ps.field('modification_time', ps.int(wsize), default=0)
 	ps.field('timescale', ps.int(4))
-	ps.field('duration', ps.int(wsize))
+	ps.field('duration', ps.int(wsize), default=mask(wsize))
 	ps.field('rate', ps.sint(4) / (1 << 16), default=1)
 	ps.field('volume', ps.sint(2) / (1 << 8), default=1)
 	ps.reserved('reserved_1', ps.int(2))
@@ -556,27 +556,28 @@ def parse_mvhd_box(ps: Parser):
 	parse_matrix(ps)
 
 	ps.reserved('pre_defined', ps.bytes(6 * 4))
-	ps.field('next_track_ID', ps.int(4))
+	ps.field('next_track_ID', ps.int(4), default=mask(32))
 
 def parse_tkhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version <= 1, f'invalid version: {version}'
 	ps.print(f'version = {version}, flags = {box_flags:06x}')
 	wsize = [4, 8][version]
+	# FIXME: display flags!!
 
-	ps.field('creation_time', ps.int(wsize))
-	ps.field('modification_time', ps.int(wsize))
+	ps.field('creation_time', ps.int(wsize), default=0)
+	ps.field('modification_time', ps.int(wsize), default=0)
 	ps.field('track_ID', ps.int(4))
 	ps.reserved('reserved_1', ps.int(4))
-	ps.field('duration', ps.int(wsize))
+	ps.field('duration', ps.int(wsize), default=mask(wsize))
 	ps.reserved('reserved_2', ps.int(4))
 	ps.reserved('reserved_3', ps.int(4))
 	ps.field('layer', ps.sint(2), default=0)
 	ps.field('alternate_group', ps.sint(2), default=0)
-	ps.field('volume', ps.sint(2) / (1 << 8))
+	ps.field('volume', ps.sint(2) / (1 << 8), default=1)
 	ps.reserved('reserved_4', ps.int(2))
 	parse_matrix(ps)
-	ps.field('size', (ps.int(4) / (1 << 16), ps.int(4) / (1 << 16)), format_size)
+	ps.field('size', (ps.int(4) / (1 << 16), ps.int(4) / (1 << 16)), format_size, default=(0, 0))
 
 def parse_mdhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -585,10 +586,10 @@ def parse_mdhd_box(ps: Parser):
 	ps.field('version', version)
 	wsize = [4, 8][version]
 
-	ps.field('creation_time', ps.int(wsize))
-	ps.field('modification_time', ps.int(wsize))
+	ps.field('creation_time', ps.int(wsize), default=0)
+	ps.field('modification_time', ps.int(wsize), default=0)
 	ps.field('timescale', ps.int(4))
-	ps.field('duration', ps.int(wsize))
+	ps.field('duration', ps.int(wsize), default=mask(wsize))
 	parse_language(ps)
 	ps.reserved('pre_defined_1', ps.int(2))
 
