@@ -213,7 +213,7 @@ class Parser(MVIO):
 	def reserved(self, name: str, value: T, expected: Optional[T] = None):
 		ok = (value == expected) if expected != None else \
 			(not any(value)) if isinstance(value, bytes) else (not value)
-		assert ok, f'invalid {name}: {value}'
+		if not ok: self.print(ansi_fg1(f'invalid {name}: {value}'))
 
 	@contextmanager
 	def subparser(self, n: int):
