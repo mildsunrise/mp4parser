@@ -18,20 +18,16 @@
 [moov] Movie @ 0x417e8, 0x417f0 - 0x42b94 (5028)
     [mvhd] MovieHeader @ 0x417f0, 0x417f8 - 0x4185c (100)
         version = 0
-        creation_time = 0
-        modification_time = 0
         timescale = 1000
         duration = 5000
         next_track_ID = 3
     [trak] Track @ 0x4185c, 0x41864 - 0x41ed5 (1649)
         [tkhd] TrackHeader @ 0x41864, 0x4186c - 0x418c0 (84)
             version = 0, flags = 000003
-            creation_time = 0
-            modification_time = 0
             track_ID = 1
             duration = 5000
             volume = 0.0
-            size = 320.0 x 240.0
+            size = 320.0 × 240.0
         [edts] Edit @ 0x418c0, 0x418c8 - 0x418e4 (28)
             [elst] EditList @ 0x418c8, 0x418d0 - 0x418e4 (20)
                 version = 0
@@ -40,8 +36,6 @@
         [mdia] Media @ 0x418e4, 0x418ec - 0x41ed5 (1513)
             [mdhd] MediaHeader @ 0x418ec, 0x418f4 - 0x4190c (24)
                 version = 0
-                creation_time = 0
-                modification_time = 0
                 timescale = 12800
                 duration = 64000
                 language = und
@@ -59,7 +53,7 @@
                         version = 0, entry_count = 1
                         [mp4v] MP4VisualSampleEntry @ 0x41991, 0x41999 - 0x41a41 (168)
                             data_reference_index = 1
-                            size = 320 x 240
+                            size = 320 × 240
                             compressorname = 'Lavc60.31.102 mpeg2video'
                             [esds] ESD @ 0x419e7, 0x419ef - 0x41a13 (36)
                                 [3] ES_Descriptor -> BaseDescriptor (4 length bytes)
@@ -127,13 +121,9 @@
     [trak] Track @ 0x41ed5, 0x41edd - 0x42b32 (3157)
         [tkhd] TrackHeader @ 0x41edd, 0x41ee5 - 0x41f39 (84)
             version = 0, flags = 000003
-            creation_time = 0
-            modification_time = 0
             track_ID = 2
             duration = 5000
             alternate_group = 1
-            volume = 1.0
-            size = 0.0 x 0.0
         [edts] Edit @ 0x41f39, 0x41f41 - 0x41f5d (28)
             [elst] EditList @ 0x41f41, 0x41f49 - 0x41f5d (20)
                 version = 0
@@ -142,8 +132,6 @@
         [mdia] Media @ 0x41f5d, 0x41f65 - 0x42b32 (3021)
             [mdhd] MediaHeader @ 0x41f65, 0x41f6d - 0x41f85 (24)
                 version = 0
-                creation_time = 0
-                modification_time = 0
                 timescale = 44100
                 duration = 221605
                 language = und
@@ -219,10 +207,8 @@
         [meta] Meta @ 0x42b3a, 0x42b42 - 0x42b94 (82)
             version = 0, flags = 000000
             [hdlr] Handler @ 0x42b46, 0x42b4e - 0x42b67 (25)
-                ERROR: invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-
-                00 00 00 00  00 00 00 00  6d 64 69 72  61 70 70 6c   ........mdirappl
-                00 00 00 00  00 00 00 00  00                         .........
+                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                handler_type = 'mdir', name = '\x00'
             [ilst] @ 0x42b67, 0x42b6f - 0x42b94 (37)
                 [©too] @ 0x42b6f, 0x42b77 - 0x42b94 (29)
                     [data] @ 0x42b77, 0x42b7f - 0x42b94 (21)

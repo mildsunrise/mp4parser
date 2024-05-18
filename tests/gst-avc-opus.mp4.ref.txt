@@ -19,20 +19,20 @@
 [moov] Movie @ 0xd2f1b, 0xd2f23 - 0xd5ffa (12503)
     [mvhd] MovieHeader @ 0xd2f23, 0xd2f2b - 0xd2f8f (100)
         version = 0
-        creation_time = 3796658196
-        modification_time = 3796658201
+        creation_time = 2024-04-22 19:16:36Z
+        modification_time = 2024-04-22 19:16:41Z
         timescale = 3000
         duration = 96600
         next_track_ID = 3
     [trak] Track @ 0xd2f8f, 0xd2f97 - 0xd43d2 (5179)
         [tkhd] TrackHeader @ 0xd2f97, 0xd2f9f - 0xd2ff3 (84)
             version = 0, flags = 000007
-            creation_time = 3796658196
-            modification_time = 3796658201
+            creation_time = 2024-04-22 19:16:36Z
+            modification_time = 2024-04-22 19:16:41Z
             track_ID = 1
             duration = 96600
             volume = 0.0
-            size = 800.0 x 600.0
+            size = 800.0 × 600.0
         [edts] Edit @ 0xd2ff3, 0xd2ffb - 0xd3017 (28)
             [elst] EditList @ 0xd2ffb, 0xd3003 - 0xd3017 (20)
                 version = 0
@@ -41,8 +41,8 @@
         [mdia] Media @ 0xd3017, 0xd301f - 0xd4379 (4954)
             [mdhd] MediaHeader @ 0xd301f, 0xd3027 - 0xd303f (24)
                 version = 0
-                creation_time = 3796658196
-                modification_time = 3796658201
+                creation_time = 2024-04-22 19:16:36Z
+                modification_time = 2024-04-22 19:16:41Z
                 timescale = 3000
                 duration = 96600
                 language = und
@@ -60,7 +60,7 @@
                         version = 0, entry_count = 1
                         [avc1] AVCSampleEntry @ 0xd30c4, 0xd30cc - 0xd3185 (185)
                             data_reference_index = 1
-                            size = 800 x 600
+                            size = 800 × 600
                             compressorname = ''
                             [avcC] AVCConfiguration @ 0xd311a, 0xd3122 - 0xd314e (44)
                                 profile / compat / level = 42c01f
@@ -121,10 +121,8 @@
             [meta] Meta @ 0xd4381, 0xd4389 - 0xd43d2 (73)
                 version = 0, flags = 000000
                 [hdlr] Handler @ 0xd438d, 0xd4395 - 0xd43ae (25)
-                    ERROR: invalid pre-defined: 1835560050
-
-                    00 00 00 00  6d 68 6c 72  6d 64 69 72  00 00 00 00   ....mhlrmdir....
-                    00 00 00 00  00 00 00 00  00                         .........
+                    invalid pre_defined: b'mhlr'
+                    handler_type = 'mdir', name = '\x00'
                 [ilst] @ 0xd43ae, 0xd43b6 - 0xd43d2 (28)
                     [©too] @ 0xd43b6, 0xd43be - 0xd43d2 (20)
                         [data] @ 0xd43be, 0xd43c6 - 0xd43d2 (12)
@@ -132,12 +130,10 @@
     [trak] Track @ 0xd43d2, 0xd43da - 0xd5fbd (7139)
         [tkhd] TrackHeader @ 0xd43da, 0xd43e2 - 0xd4436 (84)
             version = 0, flags = 000007
-            creation_time = 3796658196
-            modification_time = 3796658201
+            creation_time = 2024-04-22 19:16:36Z
+            modification_time = 2024-04-22 19:16:41Z
             track_ID = 2
             duration = 91456
-            volume = 1.0
-            size = 0.0 x 0.0
         [edts] Edit @ 0xd4436, 0xd443e - 0xd445a (28)
             [elst] EditList @ 0xd443e, 0xd4446 - 0xd445a (20)
                 version = 0
@@ -146,8 +142,8 @@
         [mdia] Media @ 0xd445a, 0xd4462 - 0xd5f5a (6904)
             [mdhd] MediaHeader @ 0xd4462, 0xd446a - 0xd4482 (24)
                 version = 0
-                creation_time = 3796658196
-                modification_time = 3796658201
+                creation_time = 2024-04-22 19:16:36Z
+                modification_time = 2024-04-22 19:16:41Z
                 timescale = 48000
                 duration = 1463296
                 language = und
@@ -207,20 +203,17 @@
             [meta] Meta @ 0xd5f62, 0xd5f6a - 0xd5fbd (83)
                 version = 0, flags = 000000
                 [hdlr] Handler @ 0xd5f6e, 0xd5f76 - 0xd5f8f (25)
-                    ERROR: invalid pre-defined: 1835560050
-
-                    00 00 00 00  6d 68 6c 72  6d 64 69 72  00 00 00 00   ....mhlrmdir....
-                    00 00 00 00  00 00 00 00  00                         .........
+                    invalid pre_defined: b'mhlr'
+                    handler_type = 'mdir', name = '\x00'
                 [ilst] @ 0xd5f8f, 0xd5f97 - 0xd5fbd (38)
                     [©des] @ 0xd5f97, 0xd5f9f - 0xd5fbd (30)
-                        00 00 00 1e  64 61 74 61  00 00 00 01  00 00 00 00   ....data........
-                        61 75 64 69  6f 74 65 73  74 20 77 61  76 65         audiotest wave
+                        [data] @ 0xd5f9f, 0xd5fa7 - 0xd5fbd (22)
+                            00 00 00 01  00 00 00 00  61 75 64 69  6f 74 65 73   ........audiotes
+                            74 20 77 61  76 65                                   t wave
     [udta] UserData @ 0xd5fbd, 0xd5fc5 - 0xd5ffa (53)
         [meta] Meta @ 0xd5fc5, 0xd5fcd - 0xd5ffa (45)
             version = 0, flags = 000000
             [hdlr] Handler @ 0xd5fd1, 0xd5fd9 - 0xd5ff2 (25)
-                ERROR: invalid pre-defined: 1835560050
-
-                00 00 00 00  6d 68 6c 72  6d 64 69 72  00 00 00 00   ....mhlrmdir....
-                00 00 00 00  00 00 00 00  00                         .........
+                invalid pre_defined: b'mhlr'
+                handler_type = 'mdir', name = '\x00'
             [ilst] @ 0xd5ff2, 0xd5ffa - 0xd5ffa (0)

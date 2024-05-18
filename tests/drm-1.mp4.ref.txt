@@ -5,25 +5,18 @@
 [moov] Movie @ 0x14, 0x1c - 0x699 (1661)
     [mvhd] MovieHeader @ 0x1c, 0x24 - 0x88 (100)
         version = 0
-        creation_time = 0
-        modification_time = 0
         timescale = 1000
         duration = 0
-        next_track_ID = 4294967295
     [trak] Track @ 0x88, 0x90 - 0x2cf (575)
         [tkhd] TrackHeader @ 0x90, 0x98 - 0xec (84)
             version = 0, flags = 000007
-            creation_time = 0
-            modification_time = 0
             track_ID = 1
             duration = 0
             volume = 0.0
-            size = 1920.0 x 1080.0
+            size = 1920.0 × 1080.0
         [mdia] Media @ 0xec, 0xf4 - 0x2cf (475)
             [mdhd] MediaHeader @ 0xf4, 0xfc - 0x114 (24)
                 version = 0
-                creation_time = 0
-                modification_time = 0
                 timescale = 24000
                 duration = 0
                 language = und
@@ -41,7 +34,7 @@
                         version = 0, entry_count = 1
                         [encv] @ 0x1a1, 0x1a9 - 0x28b (226)
                             data_reference_index = 1
-                            size = 1920 x 1080
+                            size = 1920 × 1080
                             compressorname = ''
                             [avcC] AVCConfiguration @ 0x1f7, 0x1ff - 0x22b (44)
                                 profile / compat / level = 640028
@@ -78,18 +71,16 @@
             default_sample_description_index = 1
             default_sample_duration = 0
             default_sample_size = 0
-            default_sample_flags = 00000000
+            default_sample_flags =
     [pssh] ProtectionSystemSpecificHeader @ 0x2f7, 0x2ff - 0x32f (48)
         version = 0, flags = 000000
         SystemID = edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine Content Protection)
-        DataSize = 24
         Data =
           12 10 00 00  88 62 fd 26  28 3e 1c 1c  84 a2 56 e9   .....b.&(>....V.
           25 9c 48 e3  dc 95 9b 06                             %.H.....
     [pssh] ProtectionSystemSpecificHeader @ 0x32f, 0x337 - 0x699 (866)
         version = 0, flags = 000000
         SystemID = 9a04f079-9840-4286-ab92-e65be0885f95 (Microsoft PlayReady)
-        DataSize = 842
         Data =
           4a 03 00 00  01 00 01 00  40 03 3c 00  57 00 52 00   J.......@.<.W.R.
           4d 00 48 00  45 00 41 00  44 00 45 00  52 00 20 00   M.H.E.A.D.E.R. .
@@ -99,7 +90,7 @@
           63 00 72 00  6f 00 73 00  6f 00 66 00  74 00 2e 00   c.r.o.s.o.f.t...
           63 00 6f 00  6d 00 2f 00  44 00 52 00  4d 00 2f 00   c.o.m./.D.R.M./.
           ...
-[styp] @ 0x699, 0x6a1 - 0x6b9 (24)
+[styp] SegmentType @ 0x699, 0x6a1 - 0x6b9 (24)
     major_brand = 'iso6'
     minor_version = 00000000
     - compatible: 'cmfc'
@@ -114,13 +105,18 @@
             version = 0, flags = 020020
             track_ID = 1
             default-base-is-moof flag set
+            default_sample_flags =
+                sample_depends_on = 1 (yes)
+                sample_is_non_sync_sample = True
         [tfdt] TrackFragmentBaseMediaDecodeTime @ 0x6ed, 0x6f5 - 0x701 (12)
             version = 1, flags = 000000
             baseMediaDecodeTime = 1249248
         [trun] TrackRun @ 0x701, 0x709 - 0x959 (592)
-            version = 1, flags = 000b05, sample_count = 48
+            version = 1, flags = 000b05
+            sample_count = 48
             data_offset = 0x60d
-            first_sample_flags = 02000000
+            first_sample_flags =
+                sample_depends_on = 2 (no)
             [sample    0] time=      0 +  1001, offset=      0x0 + 175618, 0
             [sample    1] time=   1001 +  1001, offset=  0x2ae02 + 41231, 0
             [sample    2] time=   2002 +  1001, offset=  0x34f11 + 30753, 0

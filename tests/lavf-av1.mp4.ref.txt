@@ -19,20 +19,16 @@
 [moov] Movie @ 0x275b, 0x2763 - 0x2c69 (1286)
     [mvhd] MovieHeader @ 0x2763, 0x276b - 0x27cf (100)
         version = 0
-        creation_time = 0
-        modification_time = 0
         timescale = 1000
         duration = 5000
         next_track_ID = 2
     [trak] Track @ 0x27cf, 0x27d7 - 0x2c07 (1072)
         [tkhd] TrackHeader @ 0x27d7, 0x27df - 0x2833 (84)
             version = 0, flags = 000003
-            creation_time = 0
-            modification_time = 0
             track_ID = 1
             duration = 5000
             volume = 0.0
-            size = 320.0 x 240.0
+            size = 320.0 × 240.0
         [edts] Edit @ 0x2833, 0x283b - 0x2857 (28)
             [elst] EditList @ 0x283b, 0x2843 - 0x2857 (20)
                 version = 0
@@ -41,8 +37,6 @@
         [mdia] Media @ 0x2857, 0x285f - 0x2c07 (936)
             [mdhd] MediaHeader @ 0x285f, 0x2867 - 0x287f (24)
                 version = 0
-                creation_time = 0
-                modification_time = 0
                 timescale = 12800
                 duration = 64000
                 language = und
@@ -60,7 +54,7 @@
                         version = 0, entry_count = 1
                         [av01] AV1SampleEntry @ 0x2904, 0x290c - 0x29a3 (151)
                             data_reference_index = 1
-                            size = 320 x 240
+                            size = 320 × 240
                             compressorname = 'Lavc60.31.102 libaom-av1'
                             [av1C] AV1CodecConfiguration @ 0x295a, 0x2962 - 0x2975 (19)
                                 81 20 00 00  0a 0d 20 00  00 04 3c ff  bc ff f9 a0   . .... ...<.....
@@ -100,10 +94,8 @@
         [meta] Meta @ 0x2c0f, 0x2c17 - 0x2c69 (82)
             version = 0, flags = 000000
             [hdlr] Handler @ 0x2c1b, 0x2c23 - 0x2c3c (25)
-                ERROR: invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-
-                00 00 00 00  00 00 00 00  6d 64 69 72  61 70 70 6c   ........mdirappl
-                00 00 00 00  00 00 00 00  00                         .........
+                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                handler_type = 'mdir', name = '\x00'
             [ilst] @ 0x2c3c, 0x2c44 - 0x2c69 (37)
                 [©too] @ 0x2c44, 0x2c4c - 0x2c69 (29)
                     [data] @ 0x2c4c, 0x2c54 - 0x2c69 (21)

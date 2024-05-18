@@ -18,20 +18,16 @@
 [moov] Movie @ 0x37d8c, 0x37d94 - 0x39cbf (7979)
     [mvhd] MovieHeader @ 0x37d94, 0x37d9c - 0x37e00 (100)
         version = 0
-        creation_time = 0
-        modification_time = 0
         timescale = 1000
         duration = 5000
         next_track_ID = 3
     [trak] Track @ 0x37e00, 0x37e08 - 0x391a4 (5020)
         [tkhd] TrackHeader @ 0x37e08, 0x37e10 - 0x37e64 (84)
             version = 0, flags = 000003
-            creation_time = 0
-            modification_time = 0
             track_ID = 1
             duration = 5000
             volume = 0.0
-            size = 320.0 x 240.0
+            size = 320.0 × 240.0
         [edts] Edit @ 0x37e64, 0x37e6c - 0x37e88 (28)
             [elst] EditList @ 0x37e6c, 0x37e74 - 0x37e88 (20)
                 version = 0
@@ -40,8 +36,6 @@
         [mdia] Media @ 0x37e88, 0x37e90 - 0x391a4 (4884)
             [mdhd] MediaHeader @ 0x37e90, 0x37e98 - 0x37eb0 (24)
                 version = 0
-                creation_time = 0
-                modification_time = 0
                 timescale = 12800
                 duration = 64000
                 language = und
@@ -59,7 +53,7 @@
                         version = 0, entry_count = 1
                         [hev1] HEVCSampleEntry @ 0x37f35, 0x37f3d - 0x3891f (2530)
                             data_reference_index = 1
-                            size = 320 x 240
+                            size = 320 × 240
                             compressorname = 'Lavc60.31.102 libx265'
                             [hvcC] HEVCConfiguration @ 0x37f8b, 0x37f93 - 0x388f1 (2398)
                                 general_profile_space = 0
@@ -81,25 +75,25 @@
                                 - array 0:
                                     array_completeness = False
                                     NAL_unit_type = 32
-                                    - NALU 0 @ 0x37fad, 0x37faf - 0x37fc6 (23)
+                                    - NALU 0
                                         40 01 0c 01  ff ff 04 08  00 00 03 00  9e 08 00 00   @...............
                                         03 00 00 3c  95 98 09                                ...<...
                                 - array 1:
                                     array_completeness = False
                                     NAL_unit_type = 33
-                                    - NALU 0 @ 0x37fc9, 0x37fcb - 0x37ff6 (43)
+                                    - NALU 0
                                         42 01 01 04  08 00 00 03  00 9e 08 00  00 03 00 00   B...............
                                         3c 90 01 41  01 e2 cb 2b  34 92 65 78  0b 70 20 20   <..A...+4.ex.p  
                                         00 40 00 00  03 00 40 00  00 06 42                   .@....@...B
                                 - array 2:
                                     array_completeness = False
                                     NAL_unit_type = 34
-                                    - NALU 0 @ 0x37ff9, 0x37ffb - 0x38003 (8)
+                                    - NALU 0
                                         44 01 c1 72  86 0c 46 24                             D..r..F$
                                 - array 3:
                                     array_completeness = False
                                     NAL_unit_type = 39
-                                    - NALU 0 @ 0x38006, 0x38008 - 0x388f1 (2281)
+                                    - NALU 0
                                         4e 01 05 ff  ff ff ff ff  ff ff ff e4  2c a2 de 09   N...........,...
                                         b5 17 47 db  bb 55 a4 fe  7f c2 fc 4e  78 32 36 35   ..G..U.....Nx265
                                         20 28 62 75  69 6c 64 20  31 39 39 29  20 2d 20 33    (build 199) - 3
@@ -171,13 +165,9 @@
     [trak] Track @ 0x391a4, 0x391ac - 0x39c5d (2737)
         [tkhd] TrackHeader @ 0x391ac, 0x391b4 - 0x39208 (84)
             version = 0, flags = 000003
-            creation_time = 0
-            modification_time = 0
             track_ID = 2
             duration = 5000
             alternate_group = 1
-            volume = 1.0
-            size = 0.0 x 0.0
         [edts] Edit @ 0x39208, 0x39210 - 0x3922c (28)
             [elst] EditList @ 0x39210, 0x39218 - 0x3922c (20)
                 version = 0
@@ -186,8 +176,6 @@
         [mdia] Media @ 0x3922c, 0x39234 - 0x39c5d (2601)
             [mdhd] MediaHeader @ 0x39234, 0x3923c - 0x39254 (24)
                 version = 0
-                creation_time = 0
-                modification_time = 0
                 timescale = 44100
                 duration = 221524
                 language = und
@@ -277,10 +265,8 @@
         [meta] Meta @ 0x39c65, 0x39c6d - 0x39cbf (82)
             version = 0, flags = 000000
             [hdlr] Handler @ 0x39c71, 0x39c79 - 0x39c92 (25)
-                ERROR: invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-
-                00 00 00 00  00 00 00 00  6d 64 69 72  61 70 70 6c   ........mdirappl
-                00 00 00 00  00 00 00 00  00                         .........
+                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                handler_type = 'mdir', name = '\x00'
             [ilst] @ 0x39c92, 0x39c9a - 0x39cbf (37)
                 [©too] @ 0x39c9a, 0x39ca2 - 0x39cbf (29)
                     [data] @ 0x39ca2, 0x39caa - 0x39cbf (21)
