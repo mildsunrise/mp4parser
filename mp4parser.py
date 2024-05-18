@@ -185,7 +185,7 @@ class Parser(MVIO):
 		print(prefix + val)
 
 	def raw_field(self, name: str, value: str):
-		self.print(name + ' = ' + value)
+		self.print(ansi_fg3(name) + ' ' + ansi_fg1('=') + ' ' + value)
 
 	def field(self,
 		name: str, value: T,
@@ -312,7 +312,7 @@ def format_fraction(x: tuple[int, int]):
 def format_size(x: Union[tuple[int, int], tuple[float, float]]):
 	assert type(x) is tuple and len(x) == 2
 	width, height = x
-	return f'{width} x {height}'
+	return f'{width} × {height}'
 
 
 # CORE PARSING
@@ -375,7 +375,7 @@ def parse_box(ps: Parser, contents_fn=None):
 
 nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'sinf', 'schi' }
 # apple(?) / quicktime metadata
-nesting_boxes |= { 'ilst', '\u00a9too', '\u00a9nam', '\u00a9day', '\u00a9ART', 'aART', '\u00a9alb', '\u00a9cmt', '\u00a9day', 'trkn', 'covr', '----' }
+nesting_boxes |= { 'ilst', '\u00a9too', '\u00a9des', '\u00a9nam', '\u00a9day', '\u00a9ART', 'aART', '\u00a9alb', '\u00a9cmt', '\u00a9day', 'trkn', 'covr', '----' }
 
 def parse_contents(btype: str, ps: Parser):
 	if (handler := globals().get(f'parse_{btype}_box')):
@@ -415,7 +415,7 @@ def parse_hdlr_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
 	assert version == 0 and box_flags == 0, 'invalid version / flags'
 	# FIXME: a lot of videos seem to break the second assertion (apple metadata?), some break the first
-	ps.reserved('pre_defined', ps.int(4))
+	ps.reserved('pre_defined', ps.bytes(4))
 	handler_type = ps.fourcc()
 	ps.reserved('reserved', ps.bytes(4 * 3))
 	name = ps.bytes().decode('utf-8')
@@ -453,7 +453,7 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	ps.reserved('reserved', ps.bytes(16))
 
 	ps.field('size', (ps.int(2), ps.int(2)), format_size)
-	ps.field('resolution', (ps.int(4), ps.int(4)), format_size, default=(0x00480000,)*2)
+	ps.field('resolution', (ps.int(4) / (1 << 16), ps.int(4) / (1 << 16)), format_size, default=(72,)*2)
 	ps.reserved('reserved_2', ps.int(4))
 	ps.field('frame_count', ps.int(2), default=1)
 
@@ -461,7 +461,7 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 		ps.field('compressorname', ps2.bytes(ps2.int(1)).decode('utf-8'))
 		ps.reserved('compressorname_pad', ps2.bytes())
 
-	ps.field('depth', ps.int(2), default=0x18)
+	ps.field('depth', ps.int(2), default=24)
 	ps.reserved('pre_defined_3', ps.sint(2), -1)
 
 	parse_boxes(ps)
@@ -616,7 +616,7 @@ def parse_vmhd_box(ps: Parser):
 	assert box_flags == 1, f'invalid flags: {box_flags}'
 
 	ps.field('graphicsmode', ps.int(2), default=0)
-	ps.field('opcolor', [ps.int(2) for _ in range(3)], default=[0,]*3)
+	ps.field('opcolor', tuple(ps.int(2) for _ in range(3)), default=(0,)*3)
 
 def format_sdtp_value(x: int) -> str:
 	return ['unknown', 'yes', 'no', ansi_fg1('reserved')][x]

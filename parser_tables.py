@@ -10,6 +10,7 @@ box_registry = [
 		'url': 'https://www.iso.org/standard/68960.html',
 	}, {
 		'ftyp': ('FileTypeBox', 'Box'),
+		'styp': ('SegmentTypeBox', 'Box'), # class name not explicitly given in spec
 		'mdat': ('MediaDataBox', 'Box'),
 		'pdin': ('ProgressiveDownloadInfoBox', 'FullBox'),
 		'moov': ('MovieBox', 'Box'),
