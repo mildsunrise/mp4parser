@@ -426,8 +426,7 @@ def parse_meta_box(ps: Parser):
 last_handler_seen = None
 
 def parse_hdlr_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0 and box_flags == 0, 'invalid version / flags'
+	parse_fullbox(ps)
 	# FIXME: a lot of videos seem to break the second assertion (apple metadata?), some break the first
 	ps.reserved('pre_defined', ps.bytes(4))
 	handler_type = ps.fourcc()
@@ -544,17 +543,12 @@ def parse_language(ps: Parser):
 		ps.field('language', decode_language([br.read(5) for _ in range(3)]), str)
 
 def parse_mfhd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
-	assert box_flags == 0, f'invalid flags: {box_flags}'
+	parse_fullbox(ps)
 
 	ps.field('sequence_number', ps.int(4))
 
 def parse_mvhd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version <= 1, f'invalid version: {version}'
-	assert not box_flags, f'invalid flags: {box_flags}'
-	ps.field('version', version)
+	version, box_flags = parse_fullbox(ps, 1)
 	wsize = [4, 8][version]
 
 	ps.field('creation_time', ps.int(wsize), format_time, default=0)
@@ -594,10 +588,7 @@ def parse_tkhd_box(ps: Parser):
 	ps.field('size', (ps.fixed16(), ps.fixed16()), format_size, default=(0, 0))
 
 def parse_mdhd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version <= 1, f'invalid version: {version}'
-	assert not box_flags, f'invalid flags: {box_flags}'
-	ps.field('version', version)
+	version, box_flags = parse_fullbox(ps, 1)
 	wsize = [4, 8][version]
 
 	ps.field('creation_time', ps.int(wsize), format_time, default=0)
@@ -608,19 +599,14 @@ def parse_mdhd_box(ps: Parser):
 	ps.reserved('pre_defined_1', ps.int(2))
 
 def parse_mehd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version <= 1, f'invalid version: {version}'
-	assert not box_flags, f'invalid flags: {box_flags}'
-	ps.field('version', version)
+	version, box_flags = parse_fullbox(ps, 1)
 	wsize = [4, 8][version]
 
 	fragment_duration = ps.int(wsize)
 	ps.field('fragment_duration', fragment_duration)
 
 def parse_smhd_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
-	assert box_flags == 0, f'invalid flags: {box_flags}'
+	parse_fullbox(ps)
 
 	ps.field('balance', ps.sint(2), default=0)
 	ps.reserved('reserved', ps.int(2))
@@ -652,9 +638,7 @@ def parse_sample_flags(ps: Parser, name: str):
 		ps.field('sample_degradation_priority', br.read(16), default=0)
 
 def parse_trex_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
-	assert box_flags == 0, f'invalid flags: {box_flags}'
+	parse_fullbox(ps)
 
 	ps.field('track_ID', ps.int(4))
 	ps.field('default_sample_description_index', ps.int(4))
@@ -860,9 +844,7 @@ def parse_hvcC_box(ps: Parser):
 # FIXME: implement av1C
 
 def parse_esds_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert version == 0, f'invalid version: {version}'
-	assert box_flags == 0, f'invalid flags: {box_flags:06x}'
+	parse_fullbox(ps)
 	with ps.in_object():
 		parse_descriptor(ps, expected=3)
 
@@ -889,10 +871,7 @@ def parse_dOps_box(ps: Parser):
 # TABLES
 
 def parse_elst_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version <= 1, f'invalid version: {version}'
-	ps.field('version', version)
+	version, box_flags = parse_fullbox(ps, 1)
 	wsize = [4, 8][version]
 
 	entry_count = ps.int(4)
@@ -907,10 +886,7 @@ def parse_elst_box(ps: Parser):
 		ps.print('...')
 
 def parse_sidx_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version <= 1, f'invalid version: {version}'
-	ps.field('version', version)
+	version, box_flags = parse_fullbox(ps, 1)
 	wsize = [4, 8][version]
 
 	ps.field('reference_ID', ps.int(4))
@@ -934,9 +910,7 @@ def parse_sidx_box(ps: Parser):
 		ps.print('...')
 
 def parse_stts_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version == 0, f'invalid version: {version}'
+	parse_fullbox(ps)
 
 	sample, time = 1, 0
 	entry_count = ps.int(4)
@@ -953,10 +927,7 @@ def parse_stts_box(ps: Parser):
 	ps.print(f'[samples = {sample-1:6}, time = {time:6}]')
 
 def parse_ctts_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version <= 1, f'invalid version: {version}'
-	ps.field('version', version)
+	version, box_flags = parse_fullbox(ps, 1)
 
 	sample = 1
 	entry_count = ps.int(4)
@@ -972,9 +943,7 @@ def parse_ctts_box(ps: Parser):
 	ps.print(f'[samples = {sample-1:6}]')
 
 def parse_stsc_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version == 0, f'invalid version: {version}'
+	parse_fullbox(ps)
 
 	sample, last = 1, None
 	entry_count = ps.int(4)
@@ -994,9 +963,7 @@ def parse_stsc_box(ps: Parser):
 		ps.print('...')
 
 def parse_stsz_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version == 0, f'invalid version: {version}'
+	parse_fullbox(ps)
 
 	ps.field('sample_size', sample_size := ps.int(4), default=0)
 	ps.field('sample_count', sample_count := ps.int(4))
@@ -1009,9 +976,7 @@ def parse_stsz_box(ps: Parser):
 			ps.print('...')
 
 def parse_stco_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version == 0, f'invalid version: {version}'
+	parse_fullbox(ps)
 
 	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
@@ -1023,9 +988,7 @@ def parse_stco_box(ps: Parser):
 		ps.print('...')
 
 def parse_co64_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version == 0, f'invalid version: {version}'
+	parse_fullbox(ps)
 
 	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
@@ -1037,9 +1000,7 @@ def parse_co64_box(ps: Parser):
 		ps.print('...')
 
 def parse_stss_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version == 0, f'invalid version: {version}'
+	parse_fullbox(ps)
 
 	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
@@ -1051,10 +1012,7 @@ def parse_stss_box(ps: Parser):
 		ps.print('...')
 
 def parse_sbgp_box(ps: Parser):
-	version, box_flags = parse_fullbox(ps)
-	assert not box_flags, f'invalid box_flags: {box_flags}'
-	assert version <= 1, f'invalid version: {version}'
-	ps.field('version', version)
+	version, box_flags = parse_fullbox(ps, 1)
 
 	ps.field('grouping_type', ps.fourcc())
 	if version == 1:
