@@ -156,6 +156,14 @@ class MVIO:
 	def uuid(self) -> str:
 		return format_uuid(self.bytes(16))
 
+	def sfixed16(self) -> float:
+		# this division is lossless, as it's a power of 2
+		return self.sint(4) / (1 << 16)
+
+	def fixed16(self) -> float:
+		# this division is lossless, as it's a power of 2
+		return self.int(4) / (1 << 16)
+
 	# support for 'with' (checks all data is consumed)
 
 	def __enter__(self):
@@ -459,7 +467,7 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	ps.reserved('reserved', ps.bytes(16))
 
 	ps.field('size', (ps.int(2), ps.int(2)), format_size)
-	ps.field('resolution', (ps.int(4) / (1 << 16), ps.int(4) / (1 << 16)), format_size, default=(72,)*2)
+	ps.field('resolution', (ps.fixed16(), ps.fixed16()), format_size, default=(72,)*2)
 	ps.reserved('reserved_2', ps.int(4))
 	ps.field('frame_count', ps.int(2), default=1)
 
@@ -485,7 +493,7 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 	ps.field('samplesize', ps.int(2), default=16)
 	ps.reserved('pre_defined_1', ps.int(2))
 	ps.reserved('reserved_2', ps.int(2))
-	ps.field('samplerate', ps.int(4) / (1 << 16), default=(None if version == 0 else 1))
+	ps.field('samplerate', ps.fixed16(), default=(None if version == 0 else 1))
 
 	parse_boxes(ps)
 
@@ -521,7 +529,7 @@ def parse_ftyp_box(ps: Parser):
 parse_styp_box = parse_ftyp_box
 
 def parse_matrix(ps: Parser):
-	matrix = [ ps.sint(4) / (1 << 16) for _ in range(9) ]
+	matrix = [ ps.sfixed16() for _ in range(9) ]
 	ps.field('matrix', matrix, default=[1,0,0, 0,1,0, 0,0,0x4000])
 
 def decode_language(syms: list[int]):
@@ -553,7 +561,7 @@ def parse_mvhd_box(ps: Parser):
 	ps.field('modification_time', ps.int(wsize), format_time, default=0)
 	ps.field('timescale', ps.int(4))
 	ps.field('duration', ps.int(wsize), default=mask(wsize))
-	ps.field('rate', ps.sint(4) / (1 << 16), default=1)
+	ps.field('rate', ps.sfixed16(), default=1)
 	ps.field('volume', ps.sint(2) / (1 << 8), default=1)
 	ps.reserved('reserved_1', ps.int(2))
 	ps.reserved('reserved_2', ps.int(4))
@@ -583,7 +591,7 @@ def parse_tkhd_box(ps: Parser):
 	ps.field('volume', ps.sint(2) / (1 << 8), default=1)
 	ps.reserved('reserved_4', ps.int(2))
 	parse_matrix(ps)
-	ps.field('size', (ps.int(4) / (1 << 16), ps.int(4) / (1 << 16)), format_size, default=(0, 0))
+	ps.field('size', (ps.fixed16(), ps.fixed16()), format_size, default=(0, 0))
 
 def parse_mdhd_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps)
@@ -892,7 +900,7 @@ def parse_elst_box(ps: Parser):
 	for i in range(entry_count):
 		segment_duration = ps.int(wsize)
 		media_time = ps.sint(wsize)
-		media_rate = ps.sint(4) / (1 << 16)
+		media_rate = ps.sfixed16()
 		if i < max_rows:
 			ps.print(f'[edit segment {i:3}] duration = {segment_duration:6}, media_time = {media_time:6}, media_rate = {media_rate}')
 	if entry_count > max_rows:
