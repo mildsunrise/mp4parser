@@ -726,6 +726,7 @@ def parse_sgpd_box(ps: Parser):
 	for i in range(entry_count):
 		ps.print(f'- entry {i+1}:')
 		if version == 1:
+			default_length = default_length # type: ignore
 			if (description_length := default_length) == 0:
 				description_length = ps.int(4)
 				ps.print(f'  description_length = {description_length}')
