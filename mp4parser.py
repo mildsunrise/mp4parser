@@ -7,6 +7,8 @@ import sys
 import mmap
 import itertools
 import re
+from datetime import datetime, timezone
+
 import options
 from parser_tables import *
 from contextlib import contextmanager
@@ -314,6 +316,10 @@ def format_size(x: Union[tuple[int, int], tuple[float, float]]):
 	width, height = x
 	return f'{width} × {height}'
 
+def format_time(x: int) -> str:
+	ts = datetime.fromtimestamp(x - 2082844800, timezone.utc)
+	return ts.isoformat(' ', 'seconds').replace('+00:00', 'Z')
+
 
 # CORE PARSING
 
@@ -543,8 +549,8 @@ def parse_mvhd_box(ps: Parser):
 	ps.field('version', version)
 	wsize = [4, 8][version]
 
-	ps.field('creation_time', ps.int(wsize), default=0)
-	ps.field('modification_time', ps.int(wsize), default=0)
+	ps.field('creation_time', ps.int(wsize), format_time, default=0)
+	ps.field('modification_time', ps.int(wsize), format_time, default=0)
 	ps.field('timescale', ps.int(4))
 	ps.field('duration', ps.int(wsize), default=mask(wsize))
 	ps.field('rate', ps.sint(4) / (1 << 16), default=1)
@@ -565,8 +571,8 @@ def parse_tkhd_box(ps: Parser):
 	wsize = [4, 8][version]
 	# FIXME: display flags!!
 
-	ps.field('creation_time', ps.int(wsize), default=0)
-	ps.field('modification_time', ps.int(wsize), default=0)
+	ps.field('creation_time', ps.int(wsize), format_time, default=0)
+	ps.field('modification_time', ps.int(wsize), format_time, default=0)
 	ps.field('track_ID', ps.int(4))
 	ps.reserved('reserved_1', ps.int(4))
 	ps.field('duration', ps.int(wsize), default=mask(wsize))
@@ -586,8 +592,8 @@ def parse_mdhd_box(ps: Parser):
 	ps.field('version', version)
 	wsize = [4, 8][version]
 
-	ps.field('creation_time', ps.int(wsize), default=0)
-	ps.field('modification_time', ps.int(wsize), default=0)
+	ps.field('creation_time', ps.int(wsize), format_time, default=0)
+	ps.field('modification_time', ps.int(wsize), format_time, default=0)
 	ps.field('timescale', ps.int(4))
 	ps.field('duration', ps.int(wsize), default=mask(wsize))
 	parse_language(ps)
