@@ -17,4 +17,12 @@ jobs:
         run: pip install -r tests/requirements.txt
 
       - name: Run tests
+        id: tests
         run: tests/run.py
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/tests.diff
+        if: ${{ failure() && steps.tests.conclusion == 'failure' }}

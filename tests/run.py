@@ -20,6 +20,7 @@ cases = sorted(filter(is_case, os.listdir()))
 # we'll be using --append, so make sure to start with an empty dataset
 delete_if_present('.coverage')
 
+global_diff = ''
 failures = set()
 
 for i, case in enumerate(cases):
@@ -30,7 +31,6 @@ for i, case in enumerate(cases):
 
 	ref_file = case + '.ref.txt'
 	out_file = case + '.out.txt'
-	diff_file = case + '.diff'
 
 	try:
 		with open(ref_file) as f:
@@ -43,7 +43,6 @@ for i, case in enumerate(cases):
 
 	if res.stdout == refout:
 		delete_if_present(out_file)
-		delete_if_present(diff_file)
 		print(end='\r\x1b[J')
 		continue
 
@@ -51,8 +50,7 @@ for i, case in enumerate(cases):
 		f.write(res.stdout)
 	diff = run(['git', 'diff', '--no-index', ref_file, out_file],
 		check=False, capture_output=True, encoding='utf-8')
-	with open(diff_file, 'w') as f:
-		f.write(diff.stdout)
+	global_diff += diff.stdout
 
 	diffstats = Counter(line[0] for line in diff.stdout.splitlines()[4:] if line[0] in {'+', '-'})
 	print(f'output differs: \x1b[31m-{diffstats["-"]} \x1b[32m+{diffstats["+"]}\x1b[m')
@@ -62,6 +60,9 @@ print((
 	('\x1b[31m' + f'{len(failures)} of {len(cases)} tests failed.') if failures else
 	('\x1b[32m' + 'All tests passed.')
 ) + '\x1b[m\n', flush=True)
+
+with open('tests.diff', 'w') as f:
+	f.write(global_diff)
 
 run(['coverage', 'report'], check=True, cwd='..', env=os.environb | {
 	b'COVERAGE_FILE': b'tests/.coverage',
