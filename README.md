@@ -1,5 +1,7 @@
 # mp4parser
 
+[![codecov](https://codecov.io/github/mildsunrise/mp4parser/graph/badge.svg?token=44EXPECU5J)](https://codecov.io/github/mildsunrise/mp4parser)
+
 Portable* <abbr title="ISO Base Media File Format">ISOBMFF</abbr> dissector / parser for your terminal.
 
 Used to be hosted in [a gist](https://gist.github.com/mildsunrise/ffd74730504e4dc44f47fc7528e7bf59).

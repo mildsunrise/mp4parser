@@ -26,3 +26,10 @@ jobs:
           name: test-results
           path: tests/tests.diff
         if: ${{ failure() && steps.tests.conclusion == 'failure' }}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: tests/.coverage
+        if: ${{ !cancelled() }}
