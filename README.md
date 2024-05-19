@@ -24,11 +24,8 @@ No dependencies needed.
 
 <!-- BEGIN USAGE -->
 ```
-usage: mp4parser [-h] [-C | --color | --no-color] [-r N]
-                 [--offsets | --no-offsets] [--lengths | --no-lengths]
-                 [--descriptions | --no-descriptions]
-                 [--defaults | --no-defaults] [--indent N]
-                 [--bytes-per-line N]
+usage: mp4parser [-h] [-C] [-r N] [--offsets] [--lengths] [--descriptions]
+                 [--defaults] [--indent N] [--bytes-per-line N]
                  filename
 
 Portable ISOBMFF dissector / parser for your terminal.
@@ -36,7 +33,7 @@ Portable ISOBMFF dissector / parser for your terminal.
 positional arguments:
   filename
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -C, --color, --no-color
                         Colorize the output [default: only if stdout is a

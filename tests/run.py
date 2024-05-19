@@ -54,7 +54,8 @@ print((
 with open('tests.diff', 'w') as f:
 	f.write(global_diff)
 
-run(['coverage', 'report'], check=True, cwd='..', env=os.environb | {
+run(['coverage', 'report'], check=True, cwd='..', env={
+	**os.environb,
 	b'COVERAGE_FILE': b'tests/.coverage',
 	b'COVERAGE_RCFILE': b'tests/.coveragerc',
 })

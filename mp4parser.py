@@ -12,7 +12,7 @@ import options
 import boxes
 from parser_tables import box_registry
 from contextlib import contextmanager
-from typing import Optional, Union, Callable, TypeVar, Iterable
+from typing import Optional, Union, Callable, TypeVar, Iterable, List, Tuple
 T = TypeVar('T')
 
 args = options.parser.parse_args()
@@ -264,7 +264,7 @@ def pad_iter(iterable: Iterable[T], size: int, default: T=None) -> Iterable[Opti
 	for _ in range(size):
 		yield next(iterator, default)
 
-def split_in_groups(iterable: Iterable[T], size: int) -> Iterable[list[T]]:
+def split_in_groups(iterable: Iterable[T], size: int) -> Iterable[List[T]]:
 	iterator = iter(iterable)
 	while (group := list(itertools.islice(iterator, size))):
 		yield group
@@ -309,14 +309,15 @@ def print_error(exc, prefix: str):
 	print(prefix + f'{ansi_bold(ansi_fg1("ERROR:"))} {ansi_fg1(exc)}\n')
 
 def format_uuid(x: bytes) -> str:
-	return '-'.join(x.hex()[s:e] for s, e in itertools.pairwise([0, 8, 12, 16, 20, 32]) )
+	with MVIO(memoryview(x)) as r:
+		return '-'.join(r.bytes(i).hex() for i in [4, 2, 2, 2, 6])
 
-def format_fraction(x: tuple[int, int]):
+def format_fraction(x: Tuple[int, int]):
 	assert type(x) is tuple and len(x) == 2 and all(type(i) is int for i in x)
 	num, denom = x
 	return f'{num}/{denom}'
 
-def format_size(x: Union[tuple[int, int], tuple[float, float]]):
+def format_size(x: Union[Tuple[int, int], Tuple[float, float]]):
 	assert type(x) is tuple and len(x) == 2
 	width, height = x
 	return f'{width} × {height}'

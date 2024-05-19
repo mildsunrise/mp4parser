@@ -5,7 +5,7 @@ they're still part of MPEG-4 and not widely known so we'll make an exception)
 '''
 
 import re
-from typing import Iterable, TypeVar
+from typing import Iterable, TypeVar, Tuple, Dict
 
 from mp4parser import \
 	Parser, \
@@ -16,7 +16,7 @@ from parser_tables import descriptor_namespaces, object_types, stream_types
 T = TypeVar('T')
 T2 = TypeVar('T2')
 
-def unique_dict(x: Iterable[tuple[T, T2]]) -> dict[T, T2]:
+def unique_dict(x: Iterable[Tuple[T, T2]]) -> Dict[T, T2]:
 	r = {}
 	for k, v in x:
 		assert k not in r, f'duplicate key {repr(k)}: existing {repr(r[k])}, got {repr(v)}'

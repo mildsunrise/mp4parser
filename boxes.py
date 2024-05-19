@@ -2,6 +2,8 @@
 Handlers for each box
 '''
 
+from typing import List
+
 from mp4parser import \
 	Parser, max_dump, max_rows, mask, print_hex_dump, \
 	format_time, format_size, format_fraction, \
@@ -135,7 +137,7 @@ def parse_matrix(ps: Parser):
 	matrix = [ ps.sfixed16() for _ in range(9) ]
 	ps.field('matrix', matrix, default=[1,0,0, 0,1,0, 0,0,0x4000])
 
-def decode_language(syms: list[int]):
+def decode_language(syms: List[int]):
 	if not any(syms):
 		return None
 	assert all(0 <= (x - 1) < 26 for x in syms), f'invalid language characters: {syms}'
