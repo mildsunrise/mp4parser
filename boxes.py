@@ -6,10 +6,11 @@ from typing import List
 
 from mp4parser import \
 	Parser, max_dump, max_rows, mask, print_hex_dump, \
-	format_time, format_size, format_fraction, \
+	format_time, format_size, format_fraction, decode_language, \
 	parse_boxes, parse_fullbox, \
 	ansi_bold, ansi_dim, ansi_fg1, ansi_fg2
-from parser_tables import protection_systems
+from parser_tables import \
+	protection_systems, qtff_well_known_types, iso_369_2t_lang_codes
 import descriptors
 
 
@@ -35,7 +36,7 @@ last_handler_seen = None
 
 def parse_hdlr_box(ps: Parser):
 	parse_fullbox(ps)
-	# FIXME: a lot of videos seem to break the second assertion (apple metadata?), some break the first
+	# FIXME: a lot of videos seem to put stuff in the 2nd reserved (apple metadata?), some in the 1st
 	ps.reserved('pre_defined', ps.bytes(4))
 	handler_type = ps.fourcc()
 	ps.reserved('reserved', ps.bytes(4 * 3))
@@ -137,16 +138,10 @@ def parse_matrix(ps: Parser):
 	matrix = [ ps.sfixed16() for _ in range(9) ]
 	ps.field('matrix', matrix, default=[1,0,0, 0,1,0, 0,0,0x4000])
 
-def decode_language(syms: List[int]):
-	if not any(syms):
-		return None
-	assert all(0 <= (x - 1) < 26 for x in syms), f'invalid language characters: {syms}'
-	return ''.join(chr((x - 1) + ord('a')) for x in syms)
-
 def parse_language(ps: Parser):
-	with ps.bits(2) as br:
-		ps.reserved('language_pad', br.read(1))
-		ps.field('language', decode_language([br.read(5) for _ in range(3)]), str)
+	language = ps.bytes(2)
+	ps.field('language', decode_language(language) if any(language) else None,
+		str, describe=lambda l: l and iso_369_2t_lang_codes.get(l))
 
 def parse_mfhd_box(ps: Parser):
 	parse_fullbox(ps)
@@ -758,3 +753,33 @@ def parse_pssh_box(ps: Parser):
 
 	ps.print(f'Data =')
 	print_hex_dump(ps.read(ps.int(4)), ps.prefix + '  ')
+
+
+# QTFF METADATA
+# <https://developer.apple.com/documentation/quicktime-file-format/metadata_atoms_and_types>
+
+def parse_ilst_box(ps: Parser):
+	parse_boxes(ps, parse_metadata_value_box)
+
+def parse_metadata_value_box(btype: str, ps: Parser):
+	parse_boxes(ps)
+
+def parse_data_box(ps: Parser):
+	# type indicator
+	ps.field('type_indicator_byte', type_indicator_byte := ps.int(1),
+		default=0, describe={ 0: 'well known type' }.get)
+	ps.field('type_indicator_type', type_indicator := ps.int(3),
+		default=1, describe=lambda x: qtff_well_known_types.get(x, (None,None))[0])
+
+	# locale indicator
+	parse_country = lambda x: x.decode('latin-1') if x[0] else x[1]
+	ps.field('country_indicator', parse_country(ps.bytes(2)), default=0) # FIXME: describe function
+	parse_language = lambda x: decode_language(x) if x[0] else x[1]
+	ps.field('language_indicator', parse_language(ps.bytes(2)), default=0) # FIXME: describe function
+
+	# data
+	if type_indicator_byte == 0 and type_indicator == 1:
+		ps.field('value', ps.bytes().decode('utf-8'))
+	else:
+		ps.print('value =')
+		print_hex_dump(ps.read(), ps.prefix)

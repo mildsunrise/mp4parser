@@ -326,6 +326,15 @@ def format_time(x: int) -> str:
 	ts = datetime.fromtimestamp(x - 2082844800, timezone.utc)
 	return ts.isoformat(' ', 'seconds').replace('+00:00', 'Z')
 
+def decode_language(data: bytes) -> Optional[str]:
+	''' decode a (2-byte) packed ISO 639-2/T code '''
+	with BitReader(memoryview(data)) as br:
+		pad = br.read(1)
+		assert not pad, f'invalid language pad {pad}'
+		syms = [br.read(5) for _ in range(3)]
+	assert all(0 <= (x - 1) < 26 for x in syms), f'invalid language characters: {syms}'
+	return ''.join(chr((x - 1) + ord('a')) for x in syms)
+
 
 # CORE BOX PARSING
 
@@ -359,15 +368,15 @@ def parse_box_header(ps: Parser):
 	assert length >= 0, f'invalid box length'
 	return btype, length, last_box, large_size
 
-def parse_boxes(ps: Parser, contents_fn=None):
+def parse_boxes(ps: Parser, contents_fn: Optional[Callable[[str, Parser], T]]=None) -> List[T]:
 	result = []
 	with ps.in_list():
 		while not ps.ended:
 			with ps.in_list_item():
-				result.append(parse_box(ps, contents_fn))
+				result.append(parse_box(ps, contents_fn or parse_contents))
 	return result
 
-def parse_box(ps: Parser, contents_fn=None):
+def parse_box(ps: Parser, contents_fn: Callable[[str, Parser], T]) -> T:
 		offset = ps.offset
 		btype, length, last_box, large_size = parse_box_header(ps)
 		offset_text = ansi_fg4(f' @ {offset:#x}, {ps.offset:#x} - {ps.offset + length:#x}') if show_offsets else ''
@@ -386,11 +395,11 @@ def parse_box(ps: Parser, contents_fn=None):
 			type_label = f'UUID {btype}'
 		ps.print(ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text, header=True)
 		with ps.subparser(length) as data, data.handle_errors():
-			return (contents_fn or parse_contents)(btype, data)
+			return contents_fn(btype, data)
 
 nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'sinf', 'schi' }
-# apple(?) / quicktime metadata
-nesting_boxes |= { 'ilst', '\u00a9too', '\u00a9des', '\u00a9nam', '\u00a9day', '\u00a9ART', 'aART', '\u00a9alb', '\u00a9cmt', '\u00a9day', 'trkn', 'covr', '----' }
+# metadata?
+nesting_boxes |= { 'aART', 'trkn', 'covr', '----' }
 
 def parse_contents(btype: str, ps: Parser):
 	if (handler := getattr(boxes, f'parse_{btype}_box', None)):

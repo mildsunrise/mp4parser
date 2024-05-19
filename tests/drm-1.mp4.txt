@@ -17,7 +17,7 @@
             [mdhd] MediaHeader @ 0xf4, 0xfc - 0x114 (24)
                 timescale = 24000
                 duration = 0
-                language = und
+                language = und (Undetermined)
             [hdlr] Handler @ 0x114, 0x11c - 0x149 (45)
                 handler_type = 'vide', name = 'Bento4 Video Handler\x00'
             [minf] MediaInformation @ 0x149, 0x151 - 0x2cf (382)

@@ -35,7 +35,7 @@
             [mdhd] MediaHeader @ 0x418ec, 0x418f4 - 0x4190c (24)
                 timescale = 12800
                 duration = 64000
-                language = und
+                language = und (Undetermined)
             [hdlr] Handler @ 0x4190c, 0x41914 - 0x41939 (37)
                 handler_type = 'vide', name = 'VideoHandler\x00'
             [minf] MediaInformation @ 0x41939, 0x41941 - 0x41ed5 (1428)
@@ -126,7 +126,7 @@
             [mdhd] MediaHeader @ 0x41f65, 0x41f6d - 0x41f85 (24)
                 timescale = 44100
                 duration = 221605
-                language = und
+                language = und (Undetermined)
             [hdlr] Handler @ 0x41f85, 0x41f8d - 0x41fb2 (37)
                 handler_type = 'soun', name = 'SoundHandler\x00'
             [minf] MediaInformation @ 0x41fb2, 0x41fba - 0x42b32 (2936)
@@ -198,8 +198,7 @@
             [hdlr] Handler @ 0x42b46, 0x42b4e - 0x42b67 (25)
                 invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
                 handler_type = 'mdir', name = '\x00'
-            [ilst] @ 0x42b67, 0x42b6f - 0x42b94 (37)
+            [ilst] MetadataItemList @ 0x42b67, 0x42b6f - 0x42b94 (37)
                 [©too] @ 0x42b6f, 0x42b77 - 0x42b94 (29)
                     [data] @ 0x42b77, 0x42b7f - 0x42b94 (21)
-                        00 00 00 01  00 00 00 00  4c 61 76 66  36 30 2e 31   ........Lavf60.1
-                        36 2e 31 30  30                                      6.100
+                        value = 'Lavf60.16.100'

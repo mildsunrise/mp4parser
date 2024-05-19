@@ -42,7 +42,7 @@
                 modification_time = 2024-04-22 19:16:41Z
                 timescale = 3000
                 duration = 96600
-                language = und
+                language = und (Undetermined)
             [hdlr] Handler @ 0xd303f, 0xd3047 - 0xd306c (37)
                 handler_type = 'vide', name = 'VideoHandler\x00'
             [minf] MediaInformation @ 0xd306c, 0xd3074 - 0xd4379 (4869)
@@ -117,10 +117,10 @@
                 [hdlr] Handler @ 0xd438d, 0xd4395 - 0xd43ae (25)
                     invalid pre_defined: b'mhlr'
                     handler_type = 'mdir', name = '\x00'
-                [ilst] @ 0xd43ae, 0xd43b6 - 0xd43d2 (28)
+                [ilst] MetadataItemList @ 0xd43ae, 0xd43b6 - 0xd43d2 (28)
                     [©too] @ 0xd43b6, 0xd43be - 0xd43d2 (20)
                         [data] @ 0xd43be, 0xd43c6 - 0xd43d2 (12)
-                            00 00 00 01  00 00 00 00  78 32 36 34                ........x264
+                            value = 'x264'
     [trak] Track @ 0xd43d2, 0xd43da - 0xd5fbd (7139)
         [tkhd] TrackHeader @ 0xd43da, 0xd43e2 - 0xd4436 (84)
             flags = 000007
@@ -138,7 +138,7 @@
                 modification_time = 2024-04-22 19:16:41Z
                 timescale = 48000
                 duration = 1463296
-                language = und
+                language = und (Undetermined)
             [hdlr] Handler @ 0xd4482, 0xd448a - 0xd44af (37)
                 handler_type = 'soun', name = 'SoundHandler\x00'
             [minf] MediaInformation @ 0xd44af, 0xd44b7 - 0xd5f5a (6819)
@@ -194,14 +194,13 @@
                 [hdlr] Handler @ 0xd5f6e, 0xd5f76 - 0xd5f8f (25)
                     invalid pre_defined: b'mhlr'
                     handler_type = 'mdir', name = '\x00'
-                [ilst] @ 0xd5f8f, 0xd5f97 - 0xd5fbd (38)
+                [ilst] MetadataItemList @ 0xd5f8f, 0xd5f97 - 0xd5fbd (38)
                     [©des] @ 0xd5f97, 0xd5f9f - 0xd5fbd (30)
                         [data] @ 0xd5f9f, 0xd5fa7 - 0xd5fbd (22)
-                            00 00 00 01  00 00 00 00  61 75 64 69  6f 74 65 73   ........audiotes
-                            74 20 77 61  76 65                                   t wave
+                            value = 'audiotest wave'
     [udta] UserData @ 0xd5fbd, 0xd5fc5 - 0xd5ffa (53)
         [meta] Meta @ 0xd5fc5, 0xd5fcd - 0xd5ffa (45)
             [hdlr] Handler @ 0xd5fd1, 0xd5fd9 - 0xd5ff2 (25)
                 invalid pre_defined: b'mhlr'
                 handler_type = 'mdir', name = '\x00'
-            [ilst] @ 0xd5ff2, 0xd5ffa - 0xd5ffa (0)
+            [ilst] MetadataItemList @ 0xd5ff2, 0xd5ffa - 0xd5ffa (0)
