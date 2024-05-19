@@ -33,3 +33,16 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: tests/.coverage
         if: ${{ !cancelled() }}
+
+      - name: Regenerate usage
+        id: update_usage
+        run: |
+          tests/update-usage.py
+          git diff --exit-code README.md > tests/update-usage.diff
+
+      - name: Upload 'regenerate usage' patch
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-usage
+          path: tests/update-usage.diff
+        if: ${{ failure() && steps.update_usage.conclusion == 'failure' }}

@@ -44,13 +44,15 @@ options:
   -r N, --rows N        Maximum amount of lines to show in tables / lists /
                         hexdumps
   --offsets, --no-offsets
-                        Show file offsets of boxes / blobs
+                        Show file offsets of boxes / blobs (default: True)
   --lengths, --no-lengths
-                        Show byte sizes of boxes / blobs
+                        Show byte sizes of boxes / blobs (default: True)
   --descriptions, --no-descriptions
-                        Show meanings of numerical field values
+                        Show meanings of numerical field values (default:
+                        True)
   --defaults, --no-defaults
                         Show all fields, even those with default values
+                        (default: False)
   --indent N            Amount of spaces to indent each level by
   --bytes-per-line N    Bytes per line in hexdumps
 ```
