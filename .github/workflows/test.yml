@@ -5,7 +5,6 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -46,3 +45,12 @@ jobs:
           name: update-usage
           path: tests/update-usage.diff
         if: ${{ failure() && steps.update_usage.conclusion == 'failure' }}
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jakebailey/pyright-action@v2
+        with:
+          version: 1.1.363
+          python-version: '3.8'

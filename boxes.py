@@ -72,7 +72,7 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	ps.reserved('reserved', ps.bytes(16))
 
 	ps.field('size', (ps.int(2), ps.int(2)), format_size)
-	ps.field('resolution', (ps.fixed16(), ps.fixed16()), format_size, default=(72,)*2)
+	ps.field('resolution', (ps.fixed16(), ps.fixed16()), format_size, default=(72, 72))
 	ps.reserved('reserved_2', ps.int(4))
 	ps.field('frame_count', ps.int(2), default=1)
 
