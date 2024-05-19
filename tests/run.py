@@ -20,6 +20,7 @@ cases = sorted(filter(is_case, os.listdir()))
 # we'll be using --append, so make sure to start with an empty dataset
 delete_if_present('.coverage')
 
+out_file = lambda x: x + '.txt'
 global_diff = ''
 failures = set()
 
@@ -29,29 +30,18 @@ for i, case in enumerate(cases):
 		check=True, capture_output=True, encoding='utf-8')
 	assert not res.stderr, f'found stderr: {repr(res.stderr)}'
 
-	ref_file = case + '.ref.txt'
-	out_file = case + '.out.txt'
-
-	try:
-		with open(ref_file) as f:
-			refout = f.read()
-	except FileNotFoundError:
-		with open(ref_file, 'w') as f:
-			f.write(res.stdout)
-		print(end='\r\x1b[J')
-		continue
-
-	if res.stdout == refout:
-		delete_if_present(out_file)
-		print(end='\r\x1b[J')
-		continue
-
-	with open(out_file, 'w') as f:
+	with open(out_file(case), 'w') as f:
 		f.write(res.stdout)
-	diff = run(['git', 'diff', '--no-index', ref_file, out_file],
-		check=False, capture_output=True, encoding='utf-8')
-	global_diff += diff.stdout
 
+	diff = run(['git', 'diff', '--exit-code', out_file(case)],
+		check=False, capture_output=True, encoding='utf-8')
+	assert not res.stderr, f'found stderr: {repr(res.stderr)}'
+	if not diff.returncode:
+		assert not diff.stdout, f'found stdout: {repr(res.stdout)}'
+		print(end='\r\x1b[J')
+		continue
+
+	global_diff += diff.stdout
 	diffstats = Counter(line[0] for line in diff.stdout.splitlines()[4:] if line[0] in {'+', '-'})
 	print(f'output differs: \x1b[31m-{diffstats["-"]} \x1b[32m+{diffstats["+"]}\x1b[m')
 	failures.add(case)
