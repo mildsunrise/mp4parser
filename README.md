@@ -26,12 +26,13 @@ No dependencies needed.
 ```
 usage: mp4parser [-h] [-C] [-r N] [--offsets] [--lengths] [--descriptions]
                  [--defaults] [--indent N] [--bytes-per-line N]
+                 [--senc-per-sample-iv N]
                  filename
 
 Portable ISOBMFF dissector / parser for your terminal.
 
 positional arguments:
-  filename
+  filename              input file to parse
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -52,6 +53,15 @@ optional arguments:
                         (default: False)
   --indent N            Amount of spaces to indent each level by
   --bytes-per-line N    Bytes per line in hexdumps
+
+box-specific parsing parameters:
+  Though very uncommon, parsing of some boxes may be dependent on parameters
+  derived from other boxes. These arguments allow manually supplying
+  parameters to allow parsing the boxes. Without them, parsing usually falls
+  back to a hexdump.
+
+  --senc-per-sample-iv N
+                        Value of Per_Sample_IV_Size when parsing senc boxes
 ```
 <!-- END USAGE -->
 

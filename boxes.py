@@ -5,7 +5,7 @@ Handlers for each box
 from typing import List
 
 from mp4parser import \
-	Parser, max_dump, max_rows, mask, print_hex_dump, \
+	Parser, max_dump, max_rows, mask, print_hex_dump, args, \
 	format_time, format_size, format_fraction, decode_language, \
 	parse_boxes, parse_fullbox, \
 	ansi_bold, ansi_dim, ansi_fg1, ansi_fg2
@@ -778,6 +778,32 @@ def parse_pssh_box(ps: Parser):
 
 	ps.print(f'Data =')
 	print_hex_dump(ps.read(ps.int(4)), ps.prefix + '  ')
+
+def parse_senc_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps, 0, 2, default_flags=2)
+
+	if args.senc_per_sample_iv == None:
+		ps.field('sample_count', ps.int(4))
+		ps.print('auxiliary data =')
+		print_hex_dump(ps.read(), ps.prefix + '  ')
+		return
+
+	sample_count = ps.int(4)
+	for s_idx in range(sample_count):
+		s_text = []
+		if args.senc_per_sample_iv:
+			InitializationVector = ps.bytes(args.senc_per_sample_iv).hex()
+			s_text.append(f'time={InitializationVector}')
+		if box_flags & (1 << 1):
+			subsamples = [ (ps.int(2), ps.int(4)) for _ in range(ps.int(2)) ]
+			s_text.append(f'subsamples={subsamples}')
+		if s_idx < max_rows:
+			ps.print(f'[sample {s_idx:4}] {", ".join(s_text)}')
+	if sample_count > max_rows:
+		ps.print('...')
+
+# according to the Protected Interoperable File Format spec from Microsoft
+globals()['parse_a2394f52-5a9b-4f14-a244-6c427c648df4_box'] = parse_senc_box
 
 
 # QTFF METADATA

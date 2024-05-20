@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser(
 	description='Portable ISOBMFF dissector / parser for your terminal.',
 )
 
-parser.add_argument('filename')
+parser.add_argument('filename', help='input file to parse')
 
 parser.add_argument('-C', '--color',
 	action=BooleanOptionalAction,
@@ -61,3 +61,11 @@ parser.add_argument('--bytes-per-line',
 	type=int, default=16, metavar='N',
 	help='Bytes per line in hexdumps')
 
+boxargs = parser.add_argument_group('box-specific parsing parameters',
+	'Though very uncommon, parsing of some boxes may be dependent '
+	'on parameters derived from other boxes. These arguments '
+	'allow manually supplying parameters to allow parsing the '
+	'boxes. Without them, parsing usually falls back to a hexdump.')
+boxargs.add_argument('--senc-per-sample-iv',
+	type=int, metavar='N',
+	help='Value of Per_Sample_IV_Size when parsing senc boxes')
