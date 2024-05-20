@@ -377,25 +377,25 @@ def parse_boxes(ps: Parser, contents_fn: Optional[Callable[[str, Parser], T]]=No
 	return result
 
 def parse_box(ps: Parser, contents_fn: Callable[[str, Parser], T]) -> T:
-		offset = ps.offset
-		btype, length, last_box, large_size = parse_box_header(ps)
-		offset_text = ansi_fg4(f' @ {offset:#x}, {ps.offset:#x} - {ps.offset + length:#x}') if show_offsets else ''
-		length_text = ansi_fg4(f' ({length})') if show_lengths else ''
-		name_text = ''
-		if show_descriptions and (box_desc := info_by_box.get(btype)):
-			desc = box_desc[1]
-			if desc.endswith('Box'): desc = desc[:-3]
-			name_text = ansi_bold(f' {desc}')
-		if last_box:
-			offset_text = ' (last)' + offset_text
-		if large_size:
-			offset_text = ' (large size)' + offset_text
-		type_label = btype
-		if len(btype) != 4: # it's a UUID
-			type_label = f'UUID {btype}'
-		ps.print(ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text, header=True)
-		with ps.subparser(length) as data, data.handle_errors():
-			return contents_fn(btype, data)
+	offset = ps.offset
+	btype, length, last_box, large_size = parse_box_header(ps)
+	offset_text = ansi_fg4(f' @ {offset:#x}, {ps.offset:#x} - {ps.offset + length:#x}') if show_offsets else ''
+	length_text = ansi_fg4(f' ({length})') if show_lengths else ''
+	name_text = ''
+	if show_descriptions and (box_desc := info_by_box.get(btype)):
+		desc = box_desc[1]
+		if desc.endswith('Box'): desc = desc[:-3]
+		name_text = ansi_bold(f' {desc}')
+	if last_box:
+		offset_text = ' (last)' + offset_text
+	if large_size:
+		offset_text = ' (large size)' + offset_text
+	type_label = btype
+	if len(btype) != 4: # it's a UUID
+		type_label = f'UUID {btype}'
+	ps.print(ansi_bold(f'[{type_label}]') + name_text + offset_text + length_text, header=True)
+	with ps.subparser(length) as data, data.handle_errors():
+		return contents_fn(btype, data)
 
 nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'sinf', 'schi' }
 # metadata?
