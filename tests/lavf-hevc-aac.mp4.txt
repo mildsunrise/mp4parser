@@ -243,7 +243,7 @@
                         version = 1
                         grouping_type = 'roll'
                         default_length = 2
-                        - entry 1:
+                        description = @ 0x39c3f, 0x39c3f - 0x39c41 (2)
                           ff ff                                                ..
                     [sbgp] SampleToGroup @ 0x39c41, 0x39c49 - 0x39c5d (20)
                         grouping_type = 'roll'

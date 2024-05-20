@@ -212,6 +212,15 @@ class Parser(MVIO):
 			text += f' ({description})'
 		self.raw_field(name, text)
 
+	def field_dump(self, name: str, pre_offset=None, n=-1):
+		offset = self.offset
+		data = self.read(n)
+		pre_offset_text = f'{pre_offset:#x}, ' if pre_offset != None else ''
+		offset_text = f' @ {pre_offset_text}{offset:#x} - {self.offset:#x}' if show_offsets else ''
+		length_text = f' ({len(data)})' if show_lengths else ''
+		self.print(ansi_fg3(name) + ' ' + ansi_fg1('=') + ansi_fg4(offset_text + length_text))
+		print_hex_dump(data, self.prefix + '  ')
+
 	def reserved(self, name: str, value: T, expected: Optional[T] = None):
 		ok = (value == expected) if expected != None else \
 			(not any(value)) if isinstance(value, bytes) else (not value)

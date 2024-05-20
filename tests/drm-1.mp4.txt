@@ -68,12 +68,12 @@
             default_sample_flags =
     [pssh] ProtectionSystemSpecificHeader @ 0x2f7, 0x2ff - 0x32f (48)
         SystemID = edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine Content Protection)
-        Data =
+        Data = @ 0x313, 0x317 - 0x32f (24)
           12 10 00 00  88 62 fd 26  28 3e 1c 1c  84 a2 56 e9   .....b.&(>....V.
           25 9c 48 e3  dc 95 9b 06                             %.H.....
     [pssh] ProtectionSystemSpecificHeader @ 0x32f, 0x337 - 0x699 (866)
         SystemID = 9a04f079-9840-4286-ab92-e65be0885f95 (Microsoft PlayReady)
-        Data =
+        Data = @ 0x34b, 0x34f - 0x699 (842)
           4a 03 00 00  01 00 01 00  40 03 3c 00  57 00 52 00   J.......@.<.W.R.
           4d 00 48 00  45 00 41 00  44 00 45 00  52 00 20 00   M.H.E.A.D.E.R. .
           78 00 6d 00  6c 00 6e 00  73 00 3d 00  22 00 68 00   x.m.l.n.s.=.".h.
@@ -133,7 +133,7 @@
             [entry      1] offset = 0x000305
         [senc] SampleEncryption @ 0x9ae, 0x9b6 - 0xcbe (776)
             sample_count = 48
-            auxiliary data =
+            auxiliary data = @ 0x9be - 0xcbe (768)
               a9 5b 5b f5  a2 29 d5 9e  00 01 00 92  00 02 ad 70   .[[..).........p
               a9 5b 5b f5  a2 29 d5 9f  00 01 00 6f  00 00 a0 a0   .[[..).....o....
               a9 5b 5b f5  a2 29 d5 a0  00 01 00 61  00 00 77 c0   .[[..).....a..w.

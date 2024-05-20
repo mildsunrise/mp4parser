@@ -250,8 +250,7 @@ def parse_trex_box(ps: Parser):
 def parse_ID32_box(ps: Parser):
 	parse_fullbox(ps)
 	parse_language(ps)
-	ps.print(f'ID3v2 data =')
-	print_hex_dump(ps.read(), ps.prefix + '  ')
+	ps.field_dump('ID3v2 data')
 
 def parse_dref_box(ps: Parser):
 	parse_fullbox(ps)
@@ -292,8 +291,7 @@ def parse_colr_box(ps: Parser):
 			ps.reserved('reserved', br.read())
 	else:
 		name = 'ICC_profile' if colour_type in { 'rICC', 'prof' } else 'data'
-		ps.print(f'{name} =')
-		print_hex_dump(ps.read(), ps.prefix + '  ')
+		ps.field_dump(name)
 
 def parse_btrt_box(ps: Parser):
 	ps.field('bufferSizeDB', ps.int(4))
@@ -320,14 +318,9 @@ def parse_sgpd_box(ps: Parser):
 
 	entry_count = ps.int(4)
 	for i in range(entry_count):
-		ps.print(f'- entry {i+1}:')
 		if version == 1:
 			default_length = default_length # type: ignore
-			if (description_length := default_length) == 0:
-				description_length = ps.int(4)
-				ps.print(f'  description_length = {description_length}')
-			description = ps.read(description_length)
-			print_hex_dump(description, ps.prefix + '  ')
+			ps.field_dump('description', ps.offset, default_length or ps.int(4))
 		else:
 			raise NotImplementedError('TODO: parse box')
 
@@ -445,8 +438,7 @@ def parse_av1C_box(ps: Parser):
 		else:
 			ps.reserved('reserved', br.read(4))
 
-	ps.print('configOBUs =')
-	print_hex_dump(ps.read(), ps.prefix + '  ')
+	ps.field_dump('configOBUs')
 
 def parse_av1f_box(ps: Parser):
 	ps.field('fwd_distance', ps.int(1))
@@ -776,16 +768,14 @@ def parse_pssh_box(ps: Parser):
 		for i in range(KID_count):
 			ps.print(f'- KID: {ps.bytes(16).hex()}')
 
-	ps.print(f'Data =')
-	print_hex_dump(ps.read(ps.int(4)), ps.prefix + '  ')
+	ps.field_dump('Data', ps.offset, ps.int(4))
 
 def parse_senc_box(ps: Parser):
 	version, box_flags = parse_fullbox(ps, 0, 2, default_flags=2)
 
 	if args.senc_per_sample_iv == None:
 		ps.field('sample_count', ps.int(4))
-		ps.print('auxiliary data =')
-		print_hex_dump(ps.read(), ps.prefix + '  ')
+		ps.field_dump('auxiliary data')
 		return
 
 	sample_count = ps.int(4)
@@ -832,5 +822,4 @@ def parse_data_box(ps: Parser):
 	if type_indicator_byte == 0 and type_indicator == 1:
 		ps.field('value', ps.bytes().decode('utf-8'))
 	else:
-		ps.print('value =')
-		print_hex_dump(ps.read(), ps.prefix)
+		ps.field_dump('value')

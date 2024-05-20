@@ -61,7 +61,7 @@
                                 chroma_subsampling_x = False
                                 chroma_subsampling_y = False
                                 chroma_sample_position = 0
-                                configOBUs =
+                                configOBUs = @ 0x2966 - 0x2975 (15)
                                   0a 0d 20 00  00 04 3c ff  bc ff f9 a0  21 a0 04      .. ...<.....!..
                             [fiel] @ 0x2975, 0x297d - 0x297f (2)
                                 01 00                                                ..
