@@ -52,8 +52,17 @@
                             size = 320 × 240
                             compressorname = 'Lavc60.31.102 libaom-av1'
                             [av1C] AV1CodecConfiguration @ 0x295a, 0x2962 - 0x2975 (19)
-                                81 20 00 00  0a 0d 20 00  00 04 3c ff  bc ff f9 a0   . .... ...<.....
-                                21 a0 04                                             !..
+                                seq_profile = 1
+                                seq_level_idx_0 = 0
+                                seq_tier_0 = False
+                                high_bitdepth = False
+                                twelve_bit = False
+                                monochrome = False
+                                chroma_subsampling_x = False
+                                chroma_subsampling_y = False
+                                chroma_sample_position = 0
+                                configOBUs =
+                                  0a 0d 20 00  00 04 3c ff  bc ff f9 a0  21 a0 04      .. ...<.....!..
                             [fiel] @ 0x2975, 0x297d - 0x297f (2)
                                 01 00                                                ..
                             [pasp] PixelAspectRatio @ 0x297f, 0x2987 - 0x298f (8)

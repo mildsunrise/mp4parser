@@ -424,7 +424,32 @@ def parse_hvcC_box(ps: Parser):
 			ps.print(f'    - NALU {n}')
 			print_hex_dump(ps.read(ps.int(2)), ps.prefix + '        ')
 
-# FIXME: implement av1C
+def parse_av1C_box(ps: Parser):
+	with ps.bits(4) as br:
+		ps.reserved('marker', br.bit(), 1)
+		if (version := br.read(7)) != 1:
+			raise AssertionError(f'invalid configuration version: {version}')
+		ps.field('seq_profile', br.read(3))
+		ps.field('seq_level_idx_0', br.read(5))
+		ps.field('seq_tier_0', br.bit())
+		ps.field('high_bitdepth', br.bit())
+		ps.field('twelve_bit', br.bit())
+		ps.field('monochrome', br.bit())
+		ps.field('chroma_subsampling_x', br.bit())
+		ps.field('chroma_subsampling_y', br.bit())
+		ps.field('chroma_sample_position', br.read(2))
+		ps.reserved('reserved', br.read(3))
+
+		if br.bit():
+			ps.field('initial_presentation_delay_minus_one', br.read(4))
+		else:
+			ps.reserved('reserved', br.read(4))
+
+	ps.print('configOBUs =')
+	print_hex_dump(ps.read(), ps.prefix + '  ')
+
+def parse_av1f_box(ps: Parser):
+	ps.field('fwd_distance', ps.int(1))
 
 def parse_esds_box(ps: Parser):
 	parse_fullbox(ps)
