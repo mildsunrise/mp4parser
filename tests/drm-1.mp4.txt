@@ -1,79 +1,79 @@
-[ftyp] FileType @ 0x0, 0x8 - 0x14 (12)
+[ftyp] FileType @ 0x0, 0x8 .. 0x14 (12)
     major_brand = 'iso6'
     minor_version = 00000000
     - compatible: 'cmfc'
-[moov] Movie @ 0x14, 0x1c - 0x699 (1661)
-    [mvhd] MovieHeader @ 0x1c, 0x24 - 0x88 (100)
+[moov] Movie @ 0x14, 0x1c .. 0x699 (1661)
+    [mvhd] MovieHeader @ 0x1c, 0x24 .. 0x88 (100)
         timescale = 1000
         duration = 0
-    [trak] Track @ 0x88, 0x90 - 0x2cf (575)
-        [tkhd] TrackHeader @ 0x90, 0x98 - 0xec (84)
+    [trak] Track @ 0x88, 0x90 .. 0x2cf (575)
+        [tkhd] TrackHeader @ 0x90, 0x98 .. 0xec (84)
             flags = 000007
             track_ID = 1
             duration = 0
             volume = 0.0
             size = 1920.0 × 1080.0
-        [mdia] Media @ 0xec, 0xf4 - 0x2cf (475)
-            [mdhd] MediaHeader @ 0xf4, 0xfc - 0x114 (24)
+        [mdia] Media @ 0xec, 0xf4 .. 0x2cf (475)
+            [mdhd] MediaHeader @ 0xf4, 0xfc .. 0x114 (24)
                 timescale = 24000
                 duration = 0
                 language = und (Undetermined)
-            [hdlr] Handler @ 0x114, 0x11c - 0x149 (45)
+            [hdlr] Handler @ 0x114, 0x11c .. 0x149 (45)
                 handler_type = 'vide', name = 'Bento4 Video Handler\x00'
-            [minf] MediaInformation @ 0x149, 0x151 - 0x2cf (382)
-                [vmhd] VideoMediaHeader @ 0x151, 0x159 - 0x165 (12)
-                [dinf] DataInformation @ 0x165, 0x16d - 0x189 (28)
-                    [dref] DataReference @ 0x16d, 0x175 - 0x189 (20)
-                        [url ] DataEntryUrl @ 0x17d, 0x185 - 0x189 (4)
+            [minf] MediaInformation @ 0x149, 0x151 .. 0x2cf (382)
+                [vmhd] VideoMediaHeader @ 0x151, 0x159 .. 0x165 (12)
+                [dinf] DataInformation @ 0x165, 0x16d .. 0x189 (28)
+                    [dref] DataReference @ 0x16d, 0x175 .. 0x189 (20)
+                        [url ] DataEntryUrl @ 0x17d, 0x185 .. 0x189 (4)
                             flags = 000001
-                [stbl] SampleTable @ 0x189, 0x191 - 0x2cf (318)
-                    [stsd] SampleDescription @ 0x191, 0x199 - 0x28b (242)
-                        [encv] @ 0x1a1, 0x1a9 - 0x28b (226)
+                [stbl] SampleTable @ 0x189, 0x191 .. 0x2cf (318)
+                    [stsd] SampleDescription @ 0x191, 0x199 .. 0x28b (242)
+                        [encv] @ 0x1a1, 0x1a9 .. 0x28b (226)
                             data_reference_index = 1
                             size = 1920 × 1080
                             compressorname = ''
-                            [avcC] AVCConfiguration @ 0x1f7, 0x1ff - 0x22b (44)
+                            [avcC] AVCConfiguration @ 0x1f7, 0x1ff .. 0x22b (44)
                                 profile / compat / level = 640028
                                 lengthSizeMinusOne = 3
                                 - SPS: 67640028acd100780227e5c05a808080a000007d2000177011e3062240
                                 - PPS: 68ebe7cb
-                            [pasp] PixelAspectRatio @ 0x22b, 0x233 - 0x23b (8)
+                            [pasp] PixelAspectRatio @ 0x22b, 0x233 .. 0x23b (8)
                                 pixel aspect ratio = 1/1
-                            [sinf] ProtectionSchemeInfo @ 0x23b, 0x243 - 0x28b (72)
-                                [frma] OriginalFormat @ 0x243, 0x24b - 0x24f (4)
+                            [sinf] ProtectionSchemeInfo @ 0x23b, 0x243 .. 0x28b (72)
+                                [frma] OriginalFormat @ 0x243, 0x24b .. 0x24f (4)
                                     data_format = 'avc1'
-                                [schm] SchemeType @ 0x24f, 0x257 - 0x263 (12)
+                                [schm] SchemeType @ 0x24f, 0x257 .. 0x263 (12)
                                     scheme_type = 'cenc'
                                     scheme_version = 0x10000
-                                [schi] SchemeInformation @ 0x263, 0x26b - 0x28b (32)
-                                    [tenc] TrackEncryption @ 0x26b, 0x273 - 0x28b (24)
+                                [schi] SchemeInformation @ 0x263, 0x26b .. 0x28b (32)
+                                    [tenc] TrackEncryption @ 0x26b, 0x273 .. 0x28b (24)
                                         default_isProtected = 1
                                         default_Per_Sample_IV_Size = 8
                                         default_KID = 00008862fd26283e1c1c84a256e9259c
-                    [stts] TimeToSample @ 0x28b, 0x293 - 0x29b (8)
+                    [stts] TimeToSample @ 0x28b, 0x293 .. 0x29b (8)
                         entry_count = 0
                         [samples =      0, time =      0]
-                    [stsc] SampleToChunk @ 0x29b, 0x2a3 - 0x2ab (8)
+                    [stsc] SampleToChunk @ 0x29b, 0x2a3 .. 0x2ab (8)
                         entry_count = 0
-                    [stsz] SampleSize @ 0x2ab, 0x2b3 - 0x2bf (12)
+                    [stsz] SampleSize @ 0x2ab, 0x2b3 .. 0x2bf (12)
                         sample_count = 0
-                    [stco] ChunkOffset @ 0x2bf, 0x2c7 - 0x2cf (8)
+                    [stco] ChunkOffset @ 0x2bf, 0x2c7 .. 0x2cf (8)
                         entry_count = 0
-    [mvex] MovieExtends @ 0x2cf, 0x2d7 - 0x2f7 (32)
-        [trex] TrackExtends @ 0x2d7, 0x2df - 0x2f7 (24)
+    [mvex] MovieExtends @ 0x2cf, 0x2d7 .. 0x2f7 (32)
+        [trex] TrackExtends @ 0x2d7, 0x2df .. 0x2f7 (24)
             track_ID = 1
             default_sample_description_index = 1
             default_sample_duration = 0
             default_sample_size = 0
             default_sample_flags =
-    [pssh] ProtectionSystemSpecificHeader @ 0x2f7, 0x2ff - 0x32f (48)
+    [pssh] ProtectionSystemSpecificHeader @ 0x2f7, 0x2ff .. 0x32f (48)
         SystemID = edef8ba9-79d6-4ace-a3c8-27dcd51d21ed (Widevine Content Protection)
-        Data = @ 0x313, 0x317 - 0x32f (24)
+        Data = @ 0x313, 0x317 .. 0x32f (24)
           12 10 00 00  88 62 fd 26  28 3e 1c 1c  84 a2 56 e9   .....b.&(>....V.
           25 9c 48 e3  dc 95 9b 06                             %.H.....
-    [pssh] ProtectionSystemSpecificHeader @ 0x32f, 0x337 - 0x699 (866)
+    [pssh] ProtectionSystemSpecificHeader @ 0x32f, 0x337 .. 0x699 (866)
         SystemID = 9a04f079-9840-4286-ab92-e65be0885f95 (Microsoft PlayReady)
-        Data = @ 0x34b, 0x34f - 0x699 (842)
+        Data = @ 0x34b, 0x34f .. 0x699 (842)
           4a 03 00 00  01 00 01 00  40 03 3c 00  57 00 52 00   J.......@.<.W.R.
           4d 00 48 00  45 00 41 00  44 00 45 00  52 00 20 00   M.H.E.A.D.E.R. .
           78 00 6d 00  6c 00 6e 00  73 00 3d 00  22 00 68 00   x.m.l.n.s.=.".h.
@@ -82,28 +82,28 @@
           63 00 72 00  6f 00 73 00  6f 00 66 00  74 00 2e 00   c.r.o.s.o.f.t...
           63 00 6f 00  6d 00 2f 00  44 00 52 00  4d 00 2f 00   c.o.m./.D.R.M./.
           ...
-[styp] SegmentType @ 0x699, 0x6a1 - 0x6b9 (24)
+[styp] SegmentType @ 0x699, 0x6a1 .. 0x6b9 (24)
     major_brand = 'iso6'
     minor_version = 00000000
     - compatible: 'cmfc'
     - compatible: 'cmfs'
     - compatible: 'cmff'
     - compatible: 'cmfl'
-[moof] MovieFragment @ 0x6b9, 0x6c1 - 0xcbe (1533)
-    [mfhd] MovieFragmentHeader @ 0x6c1, 0x6c9 - 0x6d1 (8)
+[moof] MovieFragment @ 0x6b9, 0x6c1 .. 0xcbe (1533)
+    [mfhd] MovieFragmentHeader @ 0x6c1, 0x6c9 .. 0x6d1 (8)
         sequence_number = 27
-    [traf] TrackFragment @ 0x6d1, 0x6d9 - 0xcbe (1509)
-        [tfhd] TrackFragmentHeader @ 0x6d9, 0x6e1 - 0x6ed (12)
+    [traf] TrackFragment @ 0x6d1, 0x6d9 .. 0xcbe (1509)
+        [tfhd] TrackFragmentHeader @ 0x6d9, 0x6e1 .. 0x6ed (12)
             flags = 020020
             track_ID = 1
             default-base-is-moof flag set
             default_sample_flags =
                 sample_depends_on = 1 (yes)
                 sample_is_non_sync_sample = True
-        [tfdt] TrackFragmentBaseMediaDecodeTime @ 0x6ed, 0x6f5 - 0x701 (12)
+        [tfdt] TrackFragmentBaseMediaDecodeTime @ 0x6ed, 0x6f5 .. 0x701 (12)
             version = 1
             baseMediaDecodeTime = 1249248
-        [trun] TrackRun @ 0x701, 0x709 - 0x959 (592)
+        [trun] TrackRun @ 0x701, 0x709 .. 0x959 (592)
             version = 1, flags = 000b05
             sample_count = 48
             data_offset = 0x60d
@@ -117,7 +117,7 @@
             [sample    5] time=   5005 +  1001, offset=  0x4f2db +    84, 2002
             [sample    6] time=   6006 +  1001, offset=  0x4f32f + 21536, -1001
             ...
-        [saiz] SampleAuxiliaryInformationSizes @ 0x959, 0x961 - 0x99a (57)
+        [saiz] SampleAuxiliaryInformationSizes @ 0x959, 0x961 .. 0x99a (57)
             default_sample_info_size = 0
             sample_count = 48
             [sample      1] sample_info_size =    16
@@ -128,12 +128,12 @@
             [sample      6] sample_info_size =    16
             [sample      7] sample_info_size =    16
             ...
-        [saio] SampleAuxiliaryInformationOffsets @ 0x99a, 0x9a2 - 0x9ae (12)
+        [saio] SampleAuxiliaryInformationOffsets @ 0x99a, 0x9a2 .. 0x9ae (12)
             entry_count = 1
             [entry      1] offset = 0x000305
-        [senc] SampleEncryption @ 0x9ae, 0x9b6 - 0xcbe (776)
+        [senc] SampleEncryption @ 0x9ae, 0x9b6 .. 0xcbe (776)
             sample_count = 48
-            auxiliary data = @ 0x9be - 0xcbe (768)
+            auxiliary data = @ 0x9be .. 0xcbe (768)
               a9 5b 5b f5  a2 29 d5 9e  00 01 00 92  00 02 ad 70   .[[..).........p
               a9 5b 5b f5  a2 29 d5 9f  00 01 00 6f  00 00 a0 a0   .[[..).....o....
               a9 5b 5b f5  a2 29 d5 a0  00 01 00 61  00 00 77 c0   .[[..).....a..w.
@@ -142,7 +142,7 @@
               a9 5b 5b f5  a2 29 d5 a3  00 01 00 54  00 00 00 00   .[[..).....T....
               a9 5b 5b f5  a2 29 d5 a4  00 01 00 60  00 00 53 c0   .[[..).....`..S.
               ...
-[mdat] MediaData @ 0xcbe, 0xcc6 - 0x95224 (607582)
+[mdat] MediaData @ 0xcbe, 0xcc6 .. 0x95224 (607582)
     00 00 00 1d  67 64 00 28  ac d1 00 78  02 27 e5 c0   ....gd.(...x.'..
     5a 80 80 80  a0 00 00 7d  20 00 17 70  11 e3 06 22   Z......} ..p..."
     40 00 00 00  04 68 eb e7  cb 00 02 ad  d5 65 88 84   @....h.......e..

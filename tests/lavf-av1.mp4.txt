@@ -1,13 +1,13 @@
-[ftyp] FileType @ 0x0, 0x8 - 0x20 (24)
+[ftyp] FileType @ 0x0, 0x8 .. 0x20 (24)
     major_brand = 'isom'
     minor_version = 00000200
     - compatible: 'isom'
     - compatible: 'av01'
     - compatible: 'iso2'
     - compatible: 'mp41'
-[free] FreeSpace @ 0x20, 0x28 - 0x28 (0)
+[free] FreeSpace @ 0x20, 0x28 .. 0x28 (0)
     (0 empty bytes)
-[mdat] MediaData @ 0x28, 0x30 - 0x275b (10027)
+[mdat] MediaData @ 0x28, 0x30 .. 0x275b (10027)
     0a 0d 20 00  00 04 3c ff  bc ff f9 a0  21 a0 04 32   .. ...<.....!..2
     98 07 14 00  a1 e8 34 cd  a2 3f e1 c6  5b 00 e0 d6   ......4..?..[...
     eb b5 0b 6b  55 00 ec 34  a2 f6 45 af  be e6 8e b0   ...kU..4..E.....
@@ -16,42 +16,42 @@
     ca ce 77 dd  ef 29 54 05  5a 36 af 7f  24 f7 c1 fe   ..w..)T.Z6..$...
     b7 49 98 70  8c 02 98 d2  93 41 d7 e9  79 6d 6b 36   .I.p.....A..ymk6
     ...
-[moov] Movie @ 0x275b, 0x2763 - 0x2c69 (1286)
-    [mvhd] MovieHeader @ 0x2763, 0x276b - 0x27cf (100)
+[moov] Movie @ 0x275b, 0x2763 .. 0x2c69 (1286)
+    [mvhd] MovieHeader @ 0x2763, 0x276b .. 0x27cf (100)
         timescale = 1000
         duration = 5000
         next_track_ID = 2
-    [trak] Track @ 0x27cf, 0x27d7 - 0x2c07 (1072)
-        [tkhd] TrackHeader @ 0x27d7, 0x27df - 0x2833 (84)
+    [trak] Track @ 0x27cf, 0x27d7 .. 0x2c07 (1072)
+        [tkhd] TrackHeader @ 0x27d7, 0x27df .. 0x2833 (84)
             flags = 000003
             track_ID = 1
             duration = 5000
             volume = 0.0
             size = 320.0 × 240.0
-        [edts] Edit @ 0x2833, 0x283b - 0x2857 (28)
-            [elst] EditList @ 0x283b, 0x2843 - 0x2857 (20)
+        [edts] Edit @ 0x2833, 0x283b .. 0x2857 (28)
+            [elst] EditList @ 0x283b, 0x2843 .. 0x2857 (20)
                 entry_count = 1
                 [edit segment   0] duration =   5000, media_time =      0, media_rate = 1.0
-        [mdia] Media @ 0x2857, 0x285f - 0x2c07 (936)
-            [mdhd] MediaHeader @ 0x285f, 0x2867 - 0x287f (24)
+        [mdia] Media @ 0x2857, 0x285f .. 0x2c07 (936)
+            [mdhd] MediaHeader @ 0x285f, 0x2867 .. 0x287f (24)
                 timescale = 12800
                 duration = 64000
                 language = und (Undetermined)
-            [hdlr] Handler @ 0x287f, 0x2887 - 0x28ac (37)
+            [hdlr] Handler @ 0x287f, 0x2887 .. 0x28ac (37)
                 handler_type = 'vide', name = 'VideoHandler\x00'
-            [minf] MediaInformation @ 0x28ac, 0x28b4 - 0x2c07 (851)
-                [vmhd] VideoMediaHeader @ 0x28b4, 0x28bc - 0x28c8 (12)
-                [dinf] DataInformation @ 0x28c8, 0x28d0 - 0x28ec (28)
-                    [dref] DataReference @ 0x28d0, 0x28d8 - 0x28ec (20)
-                        [url ] DataEntryUrl @ 0x28e0, 0x28e8 - 0x28ec (4)
+            [minf] MediaInformation @ 0x28ac, 0x28b4 .. 0x2c07 (851)
+                [vmhd] VideoMediaHeader @ 0x28b4, 0x28bc .. 0x28c8 (12)
+                [dinf] DataInformation @ 0x28c8, 0x28d0 .. 0x28ec (28)
+                    [dref] DataReference @ 0x28d0, 0x28d8 .. 0x28ec (20)
+                        [url ] DataEntryUrl @ 0x28e0, 0x28e8 .. 0x28ec (4)
                             flags = 000001
-                [stbl] SampleTable @ 0x28ec, 0x28f4 - 0x2c07 (787)
-                    [stsd] SampleDescription @ 0x28f4, 0x28fc - 0x29a3 (167)
-                        [av01] AV1SampleEntry @ 0x2904, 0x290c - 0x29a3 (151)
+                [stbl] SampleTable @ 0x28ec, 0x28f4 .. 0x2c07 (787)
+                    [stsd] SampleDescription @ 0x28f4, 0x28fc .. 0x29a3 (167)
+                        [av01] AV1SampleEntry @ 0x2904, 0x290c .. 0x29a3 (151)
                             data_reference_index = 1
                             size = 320 × 240
                             compressorname = 'Lavc60.31.102 libaom-av1'
-                            [av1C] AV1CodecConfiguration @ 0x295a, 0x2962 - 0x2975 (19)
+                            [av1C] AV1CodecConfiguration @ 0x295a, 0x2962 .. 0x2975 (19)
                                 seq_profile = 1
                                 seq_level_idx_0 = 0
                                 seq_tier_0 = False
@@ -61,27 +61,27 @@
                                 chroma_subsampling_x = False
                                 chroma_subsampling_y = False
                                 chroma_sample_position = 0
-                                configOBUs = @ 0x2966 - 0x2975 (15)
+                                configOBUs = @ 0x2966 .. 0x2975 (15)
                                   0a 0d 20 00  00 04 3c ff  bc ff f9 a0  21 a0 04      .. ...<.....!..
-                            [fiel] @ 0x2975, 0x297d - 0x297f (2)
+                            [fiel] @ 0x2975, 0x297d .. 0x297f (2)
                                 01 00                                                ..
-                            [pasp] PixelAspectRatio @ 0x297f, 0x2987 - 0x298f (8)
+                            [pasp] PixelAspectRatio @ 0x297f, 0x2987 .. 0x298f (8)
                                 pixel aspect ratio = 1/1
-                            [btrt] BitRate @ 0x298f, 0x2997 - 0x29a3 (12)
+                            [btrt] BitRate @ 0x298f, 0x2997 .. 0x29a3 (12)
                                 bufferSizeDB = 0
                                 maxBitrate = 16043
                                 avgBitrate = 16043
-                    [stts] TimeToSample @ 0x29a3, 0x29ab - 0x29bb (16)
+                    [stts] TimeToSample @ 0x29a3, 0x29ab .. 0x29bb (16)
                         entry_count = 1
                         [entry   0] [sample =      1, time =      0] sample_count =   125, sample_delta =   512
                         [samples =    125, time =  64000]
-                    [stss] SyncSample @ 0x29bb, 0x29c3 - 0x29cf (12)
+                    [stss] SyncSample @ 0x29bb, 0x29c3 .. 0x29cf (12)
                         entry_count = 1
                         [sync sample     0] sample_number =      1
-                    [stsc] SampleToChunk @ 0x29cf, 0x29d7 - 0x29eb (20)
+                    [stsc] SampleToChunk @ 0x29cf, 0x29d7 .. 0x29eb (20)
                         entry_count = 1
                         [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =  125, sample_description_index = 1
-                    [stsz] SampleSize @ 0x29eb, 0x29f3 - 0x2bf3 (512)
+                    [stsz] SampleSize @ 0x29eb, 0x29f3 .. 0x2bf3 (512)
                         sample_count = 125
                         [sample      1] sample_size =   938
                         [sample      2] sample_size =   793
@@ -91,15 +91,15 @@
                         [sample      6] sample_size =    85
                         [sample      7] sample_size =     3
                         ...
-                    [stco] ChunkOffset @ 0x2bf3, 0x2bfb - 0x2c07 (12)
+                    [stco] ChunkOffset @ 0x2bf3, 0x2bfb .. 0x2c07 (12)
                         entry_count = 1
                         [chunk     1] offset = 0x000030
-    [udta] UserData @ 0x2c07, 0x2c0f - 0x2c69 (90)
-        [meta] Meta @ 0x2c0f, 0x2c17 - 0x2c69 (82)
-            [hdlr] Handler @ 0x2c1b, 0x2c23 - 0x2c3c (25)
+    [udta] UserData @ 0x2c07, 0x2c0f .. 0x2c69 (90)
+        [meta] Meta @ 0x2c0f, 0x2c17 .. 0x2c69 (82)
+            [hdlr] Handler @ 0x2c1b, 0x2c23 .. 0x2c3c (25)
                 invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
                 handler_type = 'mdir', name = '\x00'
-            [ilst] MetadataItemList @ 0x2c3c, 0x2c44 - 0x2c69 (37)
-                [©too] @ 0x2c44, 0x2c4c - 0x2c69 (29)
-                    [data] @ 0x2c4c, 0x2c54 - 0x2c69 (21)
+            [ilst] MetadataItemList @ 0x2c3c, 0x2c44 .. 0x2c69 (37)
+                [©too] @ 0x2c44, 0x2c4c .. 0x2c69 (29)
+                    [data] @ 0x2c4c, 0x2c54 .. 0x2c69 (21)
                         value = 'Lavf60.16.100'

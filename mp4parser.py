@@ -216,7 +216,7 @@ class Parser(MVIO):
 		offset = self.offset
 		data = self.read(n)
 		pre_offset_text = f'{pre_offset:#x}, ' if pre_offset != None else ''
-		offset_text = f' @ {pre_offset_text}{offset:#x} - {self.offset:#x}' if show_offsets else ''
+		offset_text = f' @ {pre_offset_text}{offset:#x} .. {self.offset:#x}' if show_offsets else ''
 		length_text = f' ({len(data)})' if show_lengths else ''
 		self.print(ansi_fg3(name) + ' ' + ansi_fg1('=') + ansi_fg4(offset_text + length_text))
 		print_hex_dump(data, self.prefix + '  ')
@@ -388,7 +388,7 @@ def parse_boxes(ps: Parser, contents_fn: Optional[Callable[[str, Parser], T]]=No
 def parse_box(ps: Parser, contents_fn: Callable[[str, Parser], T]) -> T:
 	offset = ps.offset
 	btype, length, last_box, large_size = parse_box_header(ps)
-	offset_text = ansi_fg4(f' @ {offset:#x}, {ps.offset:#x} - {ps.offset + length:#x}') if show_offsets else ''
+	offset_text = ansi_fg4(f' @ {offset:#x}, {ps.offset:#x} .. {ps.offset + length:#x}') if show_offsets else ''
 	length_text = ansi_fg4(f' ({length})') if show_lengths else ''
 	name_text = ''
 	if show_descriptions and (box_desc := info_by_box.get(btype)):

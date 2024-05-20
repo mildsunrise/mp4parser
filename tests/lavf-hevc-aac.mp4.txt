@@ -1,12 +1,12 @@
-[ftyp] FileType @ 0x0, 0x8 - 0x1c (20)
+[ftyp] FileType @ 0x0, 0x8 .. 0x1c (20)
     major_brand = 'isom'
     minor_version = 00000200
     - compatible: 'isom'
     - compatible: 'iso2'
     - compatible: 'mp41'
-[free] FreeSpace @ 0x1c, 0x24 - 0x24 (0)
+[free] FreeSpace @ 0x1c, 0x24 .. 0x24 (0)
     (0 empty bytes)
-[mdat] MediaData @ 0x24, 0x2c - 0x37d8c (228704)
+[mdat] MediaData @ 0x24, 0x2c .. 0x37d8c (228704)
     00 00 0b 21  28 01 af 1d  20 ad de 42  bb e0 30 e9   ...!(... ..B..0.
     f5 5f ff 6e  a9 2f d1 75  ff 46 7f ff  36 6a 7f d8   ._.n./.u.F..6j..
     99 1f e4 72  d4 47 4b 96  e7 ce 1b aa  11 b1 3d 2d   ...r.GK.......=-
@@ -15,42 +15,42 @@
     55 07 c0 b2  0f be d7 38  80 2b bb 79  43 4d e6 01   U......8.+.yCM..
     84 d5 62 61  34 df dc 2f  a8 eb 2b 40  42 71 35 35   ..ba4../..+@Bq55
     ...
-[moov] Movie @ 0x37d8c, 0x37d94 - 0x39cbf (7979)
-    [mvhd] MovieHeader @ 0x37d94, 0x37d9c - 0x37e00 (100)
+[moov] Movie @ 0x37d8c, 0x37d94 .. 0x39cbf (7979)
+    [mvhd] MovieHeader @ 0x37d94, 0x37d9c .. 0x37e00 (100)
         timescale = 1000
         duration = 5000
         next_track_ID = 3
-    [trak] Track @ 0x37e00, 0x37e08 - 0x391a4 (5020)
-        [tkhd] TrackHeader @ 0x37e08, 0x37e10 - 0x37e64 (84)
+    [trak] Track @ 0x37e00, 0x37e08 .. 0x391a4 (5020)
+        [tkhd] TrackHeader @ 0x37e08, 0x37e10 .. 0x37e64 (84)
             flags = 000003
             track_ID = 1
             duration = 5000
             volume = 0.0
             size = 320.0 × 240.0
-        [edts] Edit @ 0x37e64, 0x37e6c - 0x37e88 (28)
-            [elst] EditList @ 0x37e6c, 0x37e74 - 0x37e88 (20)
+        [edts] Edit @ 0x37e64, 0x37e6c .. 0x37e88 (28)
+            [elst] EditList @ 0x37e6c, 0x37e74 .. 0x37e88 (20)
                 entry_count = 1
                 [edit segment   0] duration =   5000, media_time =   1024, media_rate = 1.0
-        [mdia] Media @ 0x37e88, 0x37e90 - 0x391a4 (4884)
-            [mdhd] MediaHeader @ 0x37e90, 0x37e98 - 0x37eb0 (24)
+        [mdia] Media @ 0x37e88, 0x37e90 .. 0x391a4 (4884)
+            [mdhd] MediaHeader @ 0x37e90, 0x37e98 .. 0x37eb0 (24)
                 timescale = 12800
                 duration = 64000
                 language = und (Undetermined)
-            [hdlr] Handler @ 0x37eb0, 0x37eb8 - 0x37edd (37)
+            [hdlr] Handler @ 0x37eb0, 0x37eb8 .. 0x37edd (37)
                 handler_type = 'vide', name = 'VideoHandler\x00'
-            [minf] MediaInformation @ 0x37edd, 0x37ee5 - 0x391a4 (4799)
-                [vmhd] VideoMediaHeader @ 0x37ee5, 0x37eed - 0x37ef9 (12)
-                [dinf] DataInformation @ 0x37ef9, 0x37f01 - 0x37f1d (28)
-                    [dref] DataReference @ 0x37f01, 0x37f09 - 0x37f1d (20)
-                        [url ] DataEntryUrl @ 0x37f11, 0x37f19 - 0x37f1d (4)
+            [minf] MediaInformation @ 0x37edd, 0x37ee5 .. 0x391a4 (4799)
+                [vmhd] VideoMediaHeader @ 0x37ee5, 0x37eed .. 0x37ef9 (12)
+                [dinf] DataInformation @ 0x37ef9, 0x37f01 .. 0x37f1d (28)
+                    [dref] DataReference @ 0x37f01, 0x37f09 .. 0x37f1d (20)
+                        [url ] DataEntryUrl @ 0x37f11, 0x37f19 .. 0x37f1d (4)
                             flags = 000001
-                [stbl] SampleTable @ 0x37f1d, 0x37f25 - 0x391a4 (4735)
-                    [stsd] SampleDescription @ 0x37f25, 0x37f2d - 0x3891f (2546)
-                        [hev1] HEVCSampleEntry @ 0x37f35, 0x37f3d - 0x3891f (2530)
+                [stbl] SampleTable @ 0x37f1d, 0x37f25 .. 0x391a4 (4735)
+                    [stsd] SampleDescription @ 0x37f25, 0x37f2d .. 0x3891f (2546)
+                        [hev1] HEVCSampleEntry @ 0x37f35, 0x37f3d .. 0x3891f (2530)
                             data_reference_index = 1
                             size = 320 × 240
                             compressorname = 'Lavc60.31.102 libx265'
-                            [hvcC] HEVCConfiguration @ 0x37f8b, 0x37f93 - 0x388f1 (2398)
+                            [hvcC] HEVCConfiguration @ 0x37f8b, 0x37f93 .. 0x388f1 (2398)
                                 general_profile_space = 0
                                 general_tier_flag = 0
                                 general_profile_idc = 04
@@ -97,22 +97,22 @@
                                         62 69 74 2b  31 30 62 69  74 2b 31 32  62 69 74 20   bit+10bit+12bit 
                                         2d 20 48 2e  32 36 35 2f  48 45 56 43  20 63 6f 64   - H.265/HEVC cod
                                         ...
-                            [fiel] @ 0x388f1, 0x388f9 - 0x388fb (2)
+                            [fiel] @ 0x388f1, 0x388f9 .. 0x388fb (2)
                                 01 00                                                ..
-                            [pasp] PixelAspectRatio @ 0x388fb, 0x38903 - 0x3890b (8)
+                            [pasp] PixelAspectRatio @ 0x388fb, 0x38903 .. 0x3890b (8)
                                 pixel aspect ratio = 1/1
-                            [btrt] BitRate @ 0x3890b, 0x38913 - 0x3891f (12)
+                            [btrt] BitRate @ 0x3890b, 0x38913 .. 0x3891f (12)
                                 bufferSizeDB = 0
                                 maxBitrate = 24904
                                 avgBitrate = 24904
-                    [stts] TimeToSample @ 0x3891f, 0x38927 - 0x38937 (16)
+                    [stts] TimeToSample @ 0x3891f, 0x38927 .. 0x38937 (16)
                         entry_count = 1
                         [entry   0] [sample =      1, time =      0] sample_count =   125, sample_delta =   512
                         [samples =    125, time =  64000]
-                    [stss] SyncSample @ 0x38937, 0x3893f - 0x3894b (12)
+                    [stss] SyncSample @ 0x38937, 0x3893f .. 0x3894b (12)
                         entry_count = 1
                         [sync sample     0] sample_number =      1
-                    [sdtp] SampleDependencyType @ 0x3894b, 0x38953 - 0x389d4 (129)
+                    [sdtp] SampleDependencyType @ 0x3894b, 0x38953 .. 0x389d4 (129)
                         00 00 00 00  20 10 10 18  18 18 10 10  18 18 18 10   .... ...........
                         10 18 10 10  18 18 18 10  10 18 10 10  18 18 10 10   ................
                         18 18 18 10  10 18 18 10  10 18 18 18  10 10 18 18   ................
@@ -121,7 +121,7 @@
                         18 10 10 18  18 18 10 10  18 18 18 10  10 18 18 18   ................
                         10 10 18 18  10 18 10 10  18 18 18 10  10 18 18 10   ................
                         ...
-                    [ctts] CompositionOffset @ 0x389d4, 0x389dc - 0x38d74 (920)
+                    [ctts] CompositionOffset @ 0x389d4, 0x389dc .. 0x38d74 (920)
                         entry_count = 114
                         [entry   0] [sample =      1] sample_count =     1, sample_offset =  1024
                         [entry   1] [sample =      2] sample_count =     1, sample_offset =  3072
@@ -132,11 +132,11 @@
                         [entry   6] [sample =      8] sample_count =     1, sample_offset =  1536
                         ...
                         [samples =    125]
-                    [stsc] SampleToChunk @ 0x38d74, 0x38d7c - 0x38d9c (32)
+                    [stsc] SampleToChunk @ 0x38d74, 0x38d7c .. 0x38d9c (32)
                         entry_count = 2
                         [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =    2, sample_description_index = 1
                         [entry   1] [sample =      3] first_chunk =     2, samples_per_chunk =    1, sample_description_index = 1
-                    [stsz] SampleSize @ 0x38d9c, 0x38da4 - 0x38fa4 (512)
+                    [stsz] SampleSize @ 0x38d9c, 0x38da4 .. 0x38fa4 (512)
                         sample_count = 125
                         [sample      1] sample_size =  2853
                         [sample      2] sample_size =   305
@@ -146,7 +146,7 @@
                         [sample      6] sample_size =    27
                         [sample      7] sample_size =   320
                         ...
-                    [stco] ChunkOffset @ 0x38fa4, 0x38fac - 0x391a4 (504)
+                    [stco] ChunkOffset @ 0x38fa4, 0x38fac .. 0x391a4 (504)
                         entry_count = 124
                         [chunk     1] offset = 0x00002c
                         [chunk     2] offset = 0x000cb0
@@ -156,36 +156,36 @@
                         [chunk     6] offset = 0x0025e5
                         [chunk     7] offset = 0x002eb2
                         ...
-    [trak] Track @ 0x391a4, 0x391ac - 0x39c5d (2737)
-        [tkhd] TrackHeader @ 0x391ac, 0x391b4 - 0x39208 (84)
+    [trak] Track @ 0x391a4, 0x391ac .. 0x39c5d (2737)
+        [tkhd] TrackHeader @ 0x391ac, 0x391b4 .. 0x39208 (84)
             flags = 000003
             track_ID = 2
             duration = 5000
             alternate_group = 1
-        [edts] Edit @ 0x39208, 0x39210 - 0x3922c (28)
-            [elst] EditList @ 0x39210, 0x39218 - 0x3922c (20)
+        [edts] Edit @ 0x39208, 0x39210 .. 0x3922c (28)
+            [elst] EditList @ 0x39210, 0x39218 .. 0x3922c (20)
                 entry_count = 1
                 [edit segment   0] duration =   5000, media_time =   1024, media_rate = 1.0
-        [mdia] Media @ 0x3922c, 0x39234 - 0x39c5d (2601)
-            [mdhd] MediaHeader @ 0x39234, 0x3923c - 0x39254 (24)
+        [mdia] Media @ 0x3922c, 0x39234 .. 0x39c5d (2601)
+            [mdhd] MediaHeader @ 0x39234, 0x3923c .. 0x39254 (24)
                 timescale = 44100
                 duration = 221524
                 language = und (Undetermined)
-            [hdlr] Handler @ 0x39254, 0x3925c - 0x39281 (37)
+            [hdlr] Handler @ 0x39254, 0x3925c .. 0x39281 (37)
                 handler_type = 'soun', name = 'SoundHandler\x00'
-            [minf] MediaInformation @ 0x39281, 0x39289 - 0x39c5d (2516)
-                [smhd] SoundMediaHeader @ 0x39289, 0x39291 - 0x39299 (8)
-                [dinf] DataInformation @ 0x39299, 0x392a1 - 0x392bd (28)
-                    [dref] DataReference @ 0x392a1, 0x392a9 - 0x392bd (20)
-                        [url ] DataEntryUrl @ 0x392b1, 0x392b9 - 0x392bd (4)
+            [minf] MediaInformation @ 0x39281, 0x39289 .. 0x39c5d (2516)
+                [smhd] SoundMediaHeader @ 0x39289, 0x39291 .. 0x39299 (8)
+                [dinf] DataInformation @ 0x39299, 0x392a1 .. 0x392bd (28)
+                    [dref] DataReference @ 0x392a1, 0x392a9 .. 0x392bd (20)
+                        [url ] DataEntryUrl @ 0x392b1, 0x392b9 .. 0x392bd (4)
                             flags = 000001
-                [stbl] SampleTable @ 0x392bd, 0x392c5 - 0x39c5d (2456)
-                    [stsd] SampleDescription @ 0x392c5, 0x392cd - 0x39343 (118)
-                        [mp4a] MP4AudioSampleEntry @ 0x392d5, 0x392dd - 0x39343 (102)
+                [stbl] SampleTable @ 0x392bd, 0x392c5 .. 0x39c5d (2456)
+                    [stsd] SampleDescription @ 0x392c5, 0x392cd .. 0x39343 (118)
+                        [mp4a] MP4AudioSampleEntry @ 0x392d5, 0x392dd .. 0x39343 (102)
                             data_reference_index = 1
                             channelcount = 6
                             samplerate = 44100.0
-                            [esds] ESD @ 0x392f9, 0x39301 - 0x3932f (46)
+                            [esds] ESD @ 0x392f9, 0x39301 .. 0x3932f (46)
                                 [3] ES_Descriptor -> BaseDescriptor (4 length bytes)
                                     ES_ID = 2
                                     streamPriority = 0
@@ -200,16 +200,16 @@
                                             12 30 56 e5  00                                      .0V..
                                     [6] SLConfigDescriptor -> BaseDescriptor (4 length bytes)
                                         predefined = 2 (Reserved for use in MP4 files)
-                            [btrt] BitRate @ 0x3932f, 0x39337 - 0x39343 (12)
+                            [btrt] BitRate @ 0x3932f, 0x39337 .. 0x39343 (12)
                                 bufferSizeDB = 0
                                 maxBitrate = 341000
                                 avgBitrate = 339446
-                    [stts] TimeToSample @ 0x39343, 0x3934b - 0x39363 (24)
+                    [stts] TimeToSample @ 0x39343, 0x3934b .. 0x39363 (24)
                         entry_count = 2
                         [entry   0] [sample =      1, time =      0] sample_count =   216, sample_delta =  1024
                         [entry   1] [sample =    217, time = 221184] sample_count =     1, sample_delta =   340
                         [samples =    217, time = 221524]
-                    [stsc] SampleToChunk @ 0x39363, 0x3936b - 0x396af (836)
+                    [stsc] SampleToChunk @ 0x39363, 0x3936b .. 0x396af (836)
                         entry_count = 69
                         [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =    1, sample_description_index = 1
                         [entry   1] [sample =      2] first_chunk =     2, samples_per_chunk =    2, sample_description_index = 1
@@ -219,7 +219,7 @@
                         [entry   5] [sample =     16] first_chunk =    10, samples_per_chunk =    2, sample_description_index = 1
                         [entry   6] [sample =     20] first_chunk =    12, samples_per_chunk =    1, sample_description_index = 1
                         ...
-                    [stsz] SampleSize @ 0x396af, 0x396b7 - 0x39a27 (880)
+                    [stsz] SampleSize @ 0x396af, 0x396b7 .. 0x39a27 (880)
                         sample_count = 217
                         [sample      1] sample_size =    46
                         [sample      2] sample_size =    46
@@ -229,7 +229,7 @@
                         [sample      6] sample_size =   847
                         [sample      7] sample_size =   937
                         ...
-                    [stco] ChunkOffset @ 0x39a27, 0x39a2f - 0x39c27 (504)
+                    [stco] ChunkOffset @ 0x39a27, 0x39a2f .. 0x39c27 (504)
                         entry_count = 124
                         [chunk     1] offset = 0x000c82
                         [chunk     2] offset = 0x000ceb
@@ -239,23 +239,23 @@
                         [chunk     6] offset = 0x002725
                         [chunk     7] offset = 0x002ef1
                         ...
-                    [sgpd] SampleGroupDescription @ 0x39c27, 0x39c2f - 0x39c41 (18)
+                    [sgpd] SampleGroupDescription @ 0x39c27, 0x39c2f .. 0x39c41 (18)
                         version = 1
                         grouping_type = 'roll'
                         default_length = 2
-                        description = @ 0x39c3f, 0x39c3f - 0x39c41 (2)
+                        description = @ 0x39c3f, 0x39c3f .. 0x39c41 (2)
                           ff ff                                                ..
-                    [sbgp] SampleToGroup @ 0x39c41, 0x39c49 - 0x39c5d (20)
+                    [sbgp] SampleToGroup @ 0x39c41, 0x39c49 .. 0x39c5d (20)
                         grouping_type = 'roll'
                         entry_count = 1
                         [entry     1] [sample =      1] sample_count =   217, group_description_index =     1
                         [samples =    217]
-    [udta] UserData @ 0x39c5d, 0x39c65 - 0x39cbf (90)
-        [meta] Meta @ 0x39c65, 0x39c6d - 0x39cbf (82)
-            [hdlr] Handler @ 0x39c71, 0x39c79 - 0x39c92 (25)
+    [udta] UserData @ 0x39c5d, 0x39c65 .. 0x39cbf (90)
+        [meta] Meta @ 0x39c65, 0x39c6d .. 0x39cbf (82)
+            [hdlr] Handler @ 0x39c71, 0x39c79 .. 0x39c92 (25)
                 invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
                 handler_type = 'mdir', name = '\x00'
-            [ilst] MetadataItemList @ 0x39c92, 0x39c9a - 0x39cbf (37)
-                [©too] @ 0x39c9a, 0x39ca2 - 0x39cbf (29)
-                    [data] @ 0x39ca2, 0x39caa - 0x39cbf (21)
+            [ilst] MetadataItemList @ 0x39c92, 0x39c9a .. 0x39cbf (37)
+                [©too] @ 0x39c9a, 0x39ca2 .. 0x39cbf (29)
+                    [data] @ 0x39ca2, 0x39caa .. 0x39cbf (21)
                         value = 'Lavf60.16.100'
