@@ -6,6 +6,7 @@ box_registry = [
 	({
 		'name': 'ISO/IEC 14496-12',
 		'title': 'Information technology — Coding of audio-visual objects — Part 12: ISO base media file format',
+		'alias': 'ISOBMFF',
 		'version': '2015',
 		'url': 'https://www.iso.org/standard/68960.html',
 	}, {
@@ -188,6 +189,7 @@ box_registry = [
 	({
 		'name': 'ISO/IEC 14496-14',
 		'title': 'Information technology — Coding of audio-visual objects — Part 14: MP4 file format',
+		'alias': 'ISOBMFF-MP4',
 		'version': '2003',
 		'url': 'https://www.iso.org/standard/38538.html',
 	}, {
@@ -200,6 +202,7 @@ box_registry = [
 	({
 		'name': 'ISO/IEC 14496-15',
 		'title': 'Information technology — Coding of audio-visual objects — Part 15: Carriage of network abstraction layer (NAL) unit structured video in ISO base media file format',
+		'alias': 'ISOBMFF-NAL',
 		'version': '2014',
 		'url': 'https://www.iso.org/standard/65216.html',
 	}, {
@@ -264,6 +267,7 @@ box_registry = [
 	({
 		'name': 'ISO/IEC 23001-7',
 		'title': 'Information technology — MPEG systems technologies — Part 7: Common encryption in ISO base media file format files',
+		'alias': 'CENC',
 		'version': '2016',
 		'url': 'https://www.iso.org/standard/68042.html',
 	}, {
@@ -275,6 +279,7 @@ box_registry = [
 	({
 		'name': 'ISO/IEC 23008-12',
 		'title': 'Information technology — MPEG systems technologies — Part 12: Image File Format',
+		'alias': 'HEIF',
 		'version': '17 January 2014 working draft',
 		'url': 'https://www.iso.org/standard/83650.html',
 	}, {
@@ -284,6 +289,7 @@ box_registry = [
 	}),
 	({
 		'title': 'Encapsulation of Opus in ISO Base Media File Format',
+		'alias': 'Opus-ISOBMFF',
 		'version': '0.8.1 (incomplete)',
 		'url': 'https://vfrmaniac.fushizen.eu/contents/opus_in_isobmff.html'
 	}, {
@@ -292,6 +298,7 @@ box_registry = [
 	}),
 	({
 		'title': 'AV1 Codec ISO Media File Format Binding',
+		'alias': 'AV1-ISOBMFF',
 		'version': 'v1.2.0',
 		'url': 'https://aomediacodec.github.io/av1-isobmff/v1.2.0.html',
 	}, {
@@ -310,6 +317,7 @@ box_registry = [
 	}),
 	({
 		'title': 'QuickTime File Format',
+		'alias': 'QTFF',
 		'url': 'https://developer.apple.com/documentation/quicktime-file-format',
 	}, {
 		# class names adapted from spec descriptions, replacing 'atom' with 'box'
