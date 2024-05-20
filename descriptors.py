@@ -8,7 +8,7 @@ import re
 from typing import Iterable, TypeVar, Tuple, Dict
 
 from mp4parser import \
-	Parser, \
+	Parser, mask, \
 	ansi_bold, ansi_dim, ansi_fg4, ansi_fg1, \
 	max_dump, show_descriptions, print_hex_dump
 from parser_tables import descriptor_namespaces, object_types, stream_types
@@ -190,6 +190,27 @@ def parse_QoS_Qualifier_descriptor(ps: Parser):
 
 def parse_BaseCommand_descriptor(ps: Parser):
 	pass
+
+def parse_InitialObjectDescriptor_descriptor(ps: Parser):
+	with ps.bits(2) as br:
+		ps.field('ObjectDescriptorID', br.read(10))
+		URL_Flag = br.bit()
+		ps.field('includeInlineProfileLevelFlag', br.bit())
+		ps.reserved('reserved', br.read(4), mask(4))
+	if URL_Flag:
+		ps.field('URLstring', ps.bytes(ps.int(1)).decode('utf-8'))
+	else:
+		ps.field('ODProfileLevelIndication', ps.int(1))
+		ps.field('sceneProfileLevelIndication', ps.int(1))
+		ps.field('audioProfileLevelIndication', ps.int(1))
+		ps.field('visualProfileLevelIndication', ps.int(1))
+		ps.field('graphicsProfileLevelIndication', ps.int(1))
+		# ES_Descriptor esDescr[1 .. 255];
+		# OCI_Descriptor ociDescr[0 .. 255];
+		# IPMP_DescriptorPointer ipmpDescrPtr[0 .. 255];
+		# IPMP_Descriptor ipmpDescr [0 .. 255];
+		# IPMP_ToolListDescriptor toolListDescr[0 .. 1];
+	parse_descriptors(ps)
 
 
 # METADATA

@@ -12,7 +12,13 @@
         next_track_ID = 4
     [iods] ObjectDescriptor @ 0x8c, 0x94 - 0xa1 (13)
         [16] <MP4InitialObjectDescriptor> -> InitialObjectDescriptor -> ObjectDescriptorBase -> BaseDescriptor
-            00 4f ff ff  fe 15 ff                                .O.....
+            ObjectDescriptorID = 1
+            includeInlineProfileLevelFlag = False
+            ODProfileLevelIndication = 255
+            sceneProfileLevelIndication = 255
+            audioProfileLevelIndication = 254
+            visualProfileLevelIndication = 21
+            graphicsProfileLevelIndication = 255
     [trak] Track @ 0xa1, 0xa9 - 0x37058 (225199)
         [tkhd] TrackHeader @ 0xa9, 0xb1 - 0x105 (84)
             flags = 000001
