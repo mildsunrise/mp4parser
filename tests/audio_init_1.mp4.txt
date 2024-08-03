@@ -1,0 +1,98 @@
+[ftyp] FileType @ 0x0, 0x8 .. 0x2c (36)
+    major_brand = 'mp42'
+    minor_version = 00000001
+    - compatible: 'isom'
+    - compatible: 'iso2'
+    - compatible: 'avc1'
+    - compatible: 'iso6'
+    - compatible: 'mp41'
+    - compatible: 'mp42'
+    - compatible: 'dash'
+[moov] Movie @ 0x2c, 0x34 .. 0x2cd (665)
+    [mvhd] MovieHeader @ 0x34, 0x3c .. 0xa0 (100)
+        creation_time = 1970-01-01 00:00:00Z
+        modification_time = 1970-01-01 00:00:00Z
+        timescale = 90000
+        duration = 0
+        next_track_ID = 0
+    [mvex] MovieExtends @ 0xa0, 0xa8 .. 0xc8 (32)
+        [trex] TrackExtends @ 0xa8, 0xb0 .. 0xc8 (24)
+            track_ID = 1
+            default_sample_description_index = 1
+            default_sample_duration = 0
+            default_sample_size = 0
+            default_sample_flags =
+    [trak] Track @ 0xc8, 0xd0 .. 0x2cd (509)
+        [tkhd] TrackHeader @ 0xd0, 0xd8 .. 0x12c (84)
+            flags = 000003
+            creation_time = 1970-01-01 00:00:00Z
+            modification_time = 1970-01-01 00:00:00Z
+            track_ID = 1
+            duration = 0
+        [edts] Edit @ 0x12c, 0x134 .. 0x144 (16)
+            [elst] EditList @ 0x134, 0x13c .. 0x144 (8)
+                entry_count = 0
+        [mdia] Media @ 0x144, 0x14c .. 0x2cd (385)
+            [mdhd] MediaHeader @ 0x14c, 0x154 .. 0x16c (24)
+                creation_time = 1970-01-01 00:00:00Z
+                modification_time = 1970-01-01 00:00:00Z
+                timescale = 90000
+                duration = 0
+                language = eng (English)
+            [hdlr] Handler @ 0x16c, 0x174 .. 0x199 (37)
+                handler_type = 'soun', name = 'SoundHandler\x00'
+            [minf] MediaInformation @ 0x199, 0x1a1 .. 0x2cd (300)
+                [smhd] SoundMediaHeader @ 0x1a1, 0x1a9 .. 0x1b1 (8)
+                [dinf] DataInformation @ 0x1b1, 0x1b9 .. 0x1d5 (28)
+                    [dref] DataReference @ 0x1b9, 0x1c1 .. 0x1d5 (20)
+                        [url ] DataEntryUrl @ 0x1c9, 0x1d1 .. 0x1d5 (4)
+                            flags = 000001
+                [stbl] SampleTable @ 0x1d5, 0x1dd .. 0x2cd (240)
+                    [stsd] SampleDescription @ 0x1dd, 0x1e5 .. 0x238 (83)
+                        [mp4a] MP4AudioSampleEntry @ 0x1ed, 0x1f5 .. 0x238 (67)
+                            data_reference_index = 1
+                            samplerate = 44100.0
+                            [esds] ESD @ 0x211, 0x219 .. 0x238 (31)
+                                [3] ES_Descriptor -> BaseDescriptor
+                                    ES_ID = 0
+                                    streamPriority = 0
+                                    [4] DecoderConfigDescriptor -> BaseDescriptor
+                                        objectTypeIndication = 64 (AAC)
+                                        streamType = 5 (AudioStream)
+                                        upStream = False
+                                        bufferSizeDB = 0
+                                        maxBitrate = 0
+                                        avgBitrate = 0
+                                        [5] DecoderSpecificInfo -> BaseDescriptor
+                                            12 10                                                ..
+                                    [6] SLConfigDescriptor -> BaseDescriptor
+                                        predefined = 2 (Reserved for use in MP4 files)
+                    [stts] TimeToSample @ 0x238, 0x240 .. 0x248 (8)
+                        entry_count = 0
+                        [samples =      0, time =      0]
+                    [ctts] CompositionOffset @ 0x248, 0x250 .. 0x258 (8)
+                        entry_count = 0
+                        [samples =      0]
+                    [stsc] SampleToChunk @ 0x258, 0x260 .. 0x268 (8)
+                        entry_count = 0
+                    [stsz] SampleSize @ 0x268, 0x270 .. 0x27c (12)
+                        sample_count = 0
+                    [co64] ChunkLargeOffset @ 0x27c, 0x284 .. 0x28c (8)
+                        entry_count = 0
+                    [senc] SampleEncryption @ 0x28c, 0x294 .. 0x29c (8)
+                        flags = 000000
+                        sample_count = 0
+                        auxiliary data = @ 0x29c .. 0x29c (0)
+                    [saio] SampleAuxiliaryInformationOffsets @ 0x29c, 0x2a4 .. 0x2b4 (16)
+                        flags = 000001
+                        grouping_type_parameter = 1667591779
+                        entry_count = 0
+                        ERROR: 4 unparsed trailing bytes
+
+                        00 00 00 01  63 65 6e 63  00 00 00 00  00 00 00 00   ....cenc........
+                    [saiz] SampleAuxiliaryInformationSizes @ 0x2b4, 0x2bc .. 0x2cd (17)
+                        flags = 000001
+                        aux_info_type = 'cenc'
+                        aux_info_type_parameter = 0x0
+                        default_sample_info_size = 0
+                        sample_count = 0
