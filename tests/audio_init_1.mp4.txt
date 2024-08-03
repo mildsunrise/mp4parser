@@ -85,14 +85,10 @@
                         auxiliary data = @ 0x29c .. 0x29c (0)
                     [saio] SampleAuxiliaryInformationOffsets @ 0x29c, 0x2a4 .. 0x2b4 (16)
                         flags = 000001
-                        grouping_type_parameter = 1667591779
+                        aux_info_type = 'cenc'
                         entry_count = 0
-                        ERROR: 4 unparsed trailing bytes
-
-                        00 00 00 01  63 65 6e 63  00 00 00 00  00 00 00 00   ....cenc........
                     [saiz] SampleAuxiliaryInformationSizes @ 0x2b4, 0x2bc .. 0x2cd (17)
                         flags = 000001
                         aux_info_type = 'cenc'
-                        aux_info_type_parameter = 0x0
                         default_sample_info_size = 0
                         sample_count = 0

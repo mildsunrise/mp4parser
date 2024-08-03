@@ -616,7 +616,7 @@ def parse_sbgp_box(ps: Parser):
 
 	ps.field('grouping_type', ps.fourcc())
 	if version == 1:
-		ps.field('grouping_type_parameter', ps.int(4))
+		ps.field('grouping_type_parameter', ps.int(4), '#x', default=0)
 
 	sample = 1
 	entry_count = ps.int(4)
@@ -636,7 +636,7 @@ def parse_saiz_box(ps: Parser):
 
 	if box_flags & 1:
 		ps.field('aux_info_type', ps.fourcc())
-		ps.field('aux_info_type_parameter', ps.int(4), '#x')
+		ps.field('aux_info_type_parameter', ps.int(4), '#x', default=0)
 
 	ps.field('default_sample_info_size', default_sample_info_size := ps.int(1))
 	ps.field('sample_count', sample_count := ps.int(4))
@@ -653,7 +653,8 @@ def parse_saio_box(ps: Parser):
 	wsize = [4, 8][version]
 
 	if box_flags & 1:
-		ps.field('grouping_type_parameter', ps.int(4))
+		ps.field('aux_info_type', ps.fourcc())
+		ps.field('aux_info_type_parameter', ps.int(4), '#x', default=0)
 
 	entry_count = ps.int(4)
 	ps.field('entry_count', entry_count)
