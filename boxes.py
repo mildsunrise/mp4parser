@@ -824,3 +824,55 @@ def parse_data_box(ps: Parser):
 		ps.field('value', ps.bytes().decode('utf-8'))
 	else:
 		ps.field_dump('value')
+
+# CHAPTER LIST
+#
+# As far as I know, there is no standard-sanctioned way to implement chapters in MP4.
+# Instead, there are two competing ways derived from two related formats:
+#
+# * QuickTime-style chapters: uses a special text-track where each sample defines a chapter.
+#   The tracks for which the chapters are defined contain a TrackReference (tref) with reference
+#   type 'chap'.
+#   See the QuickTime spec for details.
+#
+# * F4V or Nero-style chapters: uses a single moov.udta.chpl box.
+#
+# For obvious compatibility reasons, files often implement both. This is the case for files
+# generated with ffmpeg: https://ikyle.me/blog/2020/add-mp4-chapters-ffmpeg
+#
+# As of 2024 both VLC and mpv support both styles of chapters. Given both, VLC prefers
+# Nero-style and mpv prefers QT-style.
+
+# moov.udta.chpl: Chapter list
+# Defined as part of the F4V format: https://www.adobe.com/content/dam/acom/en/devnet/flv/video_file_format_spec_v10.pdf
+# Used in other BMFF derivates like MP4, supported by at least mpv and VLC.
+# Referred also as "Nero-style chapters": https://github.com/Borewit/music-metadata/issues/800
+def parse_chpl_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps, max_version=1)
+
+	# Version 1 adds one 4-byte field at the beginning, but I haven't been
+	# able to find any explanation of what it represents, or any definition
+	# of Version 1.
+	# ffmpeg fills it with zeroes.
+	# Note: Despite lack of specification, Version 1 is the most common.
+	# VLC will ignore chpl box version 0.
+	if version == 1:
+		ps.field('dummy', ps.int(4))
+	
+	entry_count = ps.int(1)
+	ps.field('entry_count', entry_count)
+	for i in range(entry_count):
+		# > The absolute timestamp of the chapter, in reference to the master
+		# > timescale and timeline of the F4V file
+		timestamp = ps.int(8)
+		title_size = ps.int(1)
+		title_bytes = ps.bytes(title_size)
+		# The F4V spec makes no mention of character encoding.
+		# VLC seems to assume UTF-8, so I'll go with that.
+		title_str = title_bytes.decode("utf-8", "replace")
+		if i < max_rows:
+			ps.print(f'[entry {i+1:3}] time={timestamp:12} {title_str!r}')
+	if entry_count > max_rows:
+		ps.print('...')
+
+# TODO: implement QuickTime-style chapter list
