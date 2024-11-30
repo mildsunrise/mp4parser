@@ -1,0 +1,186 @@
+[ftyp] FileType @ 0x0, 0x8 .. 0x20 (24)
+    major_brand = 'isom'
+    minor_version = 00000200
+    - compatible: 'isom'
+    - compatible: 'iso2'
+    - compatible: 'avc1'
+    - compatible: 'mp41'
+[free] FreeSpace @ 0x20, 0x28 .. 0x28 (0)
+    (0 empty bytes)
+[mdat] MediaData @ 0x28, 0x30 .. 0xf686 (63062)
+    00 07 54 68  65 20 6f 6e  65 00 00 00  0c 65 6e 63   ..The one....enc
+    64 00 00 01  00 00 07 54  68 65 20 74  77 6f 00 00   d......The two..
+    00 0c 65 6e  63 64 00 00  01 00 00 0f  47 61 70 20   ..encd......Gap 
+    61 6e 64 20  61 20 74 68  72 65 65 00  00 00 0c 65   and a three....e
+    6e 63 64 00  00 01 00 00  00 02 ac 06  05 ff ff a8   ncd.............
+    dc 45 e9 bd  e6 d9 48 b7  96 2c d8 20  d9 23 ee ef   .E....H..,. .#..
+    78 32 36 34  20 2d 20 63  6f 72 65 20  31 36 34 20   x264 - core 164 
+    ...
+[moov] Movie @ 0xf686, 0xf68e .. 0x10216 (2952)
+    [mvhd] MovieHeader @ 0xf68e, 0xf696 .. 0xf6fa (100)
+        timescale = 1000
+        duration = 4000
+        next_track_ID = 3
+    [trak] Track @ 0xf6fa, 0xf702 .. 0xff09 (2055)
+        [tkhd] TrackHeader @ 0xf702, 0xf70a .. 0xf75e (84)
+            flags = 000003
+            track_ID = 1
+            duration = 4000
+            volume = 0.0
+            size = 800.0 × 600.0
+        [edts] Edit @ 0xf75e, 0xf766 .. 0xf782 (28)
+            [elst] EditList @ 0xf766, 0xf76e .. 0xf782 (20)
+                entry_count = 1
+                [edit segment   0] duration =   4000, media_time =   1024, media_rate = 1.0
+        [tref] TrackReference @ 0xf782, 0xf78a .. 0xf796 (12)
+            [chap] @ 0xf78a, 0xf792 .. 0xf796 (4)
+                - track_ID: 2
+        [mdia] Media @ 0xf796, 0xf79e .. 0xff09 (1899)
+            [mdhd] MediaHeader @ 0xf79e, 0xf7a6 .. 0xf7be (24)
+                timescale = 15360
+                duration = 61440
+                language = und (Undetermined)
+            [hdlr] Handler @ 0xf7be, 0xf7c6 .. 0xf7eb (37)
+                handler_type = 'vide', name = 'VideoHandler\x00'
+            [minf] MediaInformation @ 0xf7eb, 0xf7f3 .. 0xff09 (1814)
+                [vmhd] VideoMediaHeader @ 0xf7f3, 0xf7fb .. 0xf807 (12)
+                [dinf] DataInformation @ 0xf807, 0xf80f .. 0xf82b (28)
+                    [dref] DataReference @ 0xf80f, 0xf817 .. 0xf82b (20)
+                        [url ] DataEntryUrl @ 0xf81f, 0xf827 .. 0xf82b (4)
+                            flags = 000001
+                [stbl] SampleTable @ 0xf82b, 0xf833 .. 0xff09 (1750)
+                    [stsd] SampleDescription @ 0xf833, 0xf83b .. 0xf8f5 (186)
+                        [avc1] AVCSampleEntry @ 0xf843, 0xf84b .. 0xf8f5 (170)
+                            data_reference_index = 1
+                            size = 800 × 600
+                            compressorname = 'Lavc61.19.100 libx264'
+                            [avcC] AVCConfiguration @ 0xf899, 0xf8a1 .. 0xf8d1 (48)
+                                profile / compat / level = f4001f
+                                lengthSizeMinusOne = 3
+                                - SPS: 67f4001f919b2819026fc4e022000003000200000300781e30632c
+                                - PPS: 68ebe3c44844
+                                ERROR: 4 unparsed trailing bytes
+
+                                01 f4 00 1f  ff e1 00 1b  67 f4 00 1f  91 9b 28 19   ........g.....(.
+                                02 6f c4 e0  22 00 00 03  00 02 00 00  03 00 78 1e   .o..".........x.
+                                30 63 2c 01  00 06 68 eb  e3 c4 48 44  ff f8 f8 00   0c,...h...HD....
+                            [pasp] PixelAspectRatio @ 0xf8d1, 0xf8d9 .. 0xf8e1 (8)
+                                pixel aspect ratio = 1/1
+                            [btrt] BitRate @ 0xf8e1, 0xf8e9 .. 0xf8f5 (12)
+                                bufferSizeDB = 0
+                                maxBitrate = 125982
+                                avgBitrate = 125982
+                    [stts] TimeToSample @ 0xf8f5, 0xf8fd .. 0xf90d (16)
+                        entry_count = 1
+                        [entry   0] [sample =      1, time =      0] sample_count =   120, sample_delta =   512
+                        [samples =    120, time =  61440]
+                    [stss] SyncSample @ 0xf90d, 0xf915 .. 0xf92d (24)
+                        entry_count = 4
+                        [sync sample     0] sample_number =      1
+                        [sync sample     1] sample_number =     31
+                        [sync sample     2] sample_number =     61
+                        [sync sample     3] sample_number =     91
+                    [ctts] CompositionOffset @ 0xf92d, 0xf935 .. 0xfce5 (944)
+                        entry_count = 117
+                        [entry   0] [sample =      1] sample_count =     1, sample_offset =  1024
+                        [entry   1] [sample =      2] sample_count =     1, sample_offset =  2560
+                        [entry   2] [sample =      3] sample_count =     1, sample_offset =  1024
+                        [entry   3] [sample =      4] sample_count =     1, sample_offset =     0
+                        [entry   4] [sample =      5] sample_count =     1, sample_offset =   512
+                        [entry   5] [sample =      6] sample_count =     1, sample_offset =  2560
+                        [entry   6] [sample =      7] sample_count =     1, sample_offset =  1024
+                        ...
+                        [samples =    120]
+                    [stsc] SampleToChunk @ 0xfce5, 0xfced .. 0xfd01 (20)
+                        entry_count = 1
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =  120, sample_description_index = 1
+                    [stsz] SampleSize @ 0xfd01, 0xfd09 .. 0xfef5 (492)
+                        sample_count = 120
+                        [sample      1] sample_size =  7246
+                        [sample      2] sample_size =  1135
+                        [sample      3] sample_size =   198
+                        [sample      4] sample_size =   134
+                        [sample      5] sample_size =   121
+                        [sample      6] sample_size =   782
+                        [sample      7] sample_size =   155
+                        ...
+                    [stco] ChunkOffset @ 0xfef5, 0xfefd .. 0xff09 (12)
+                        entry_count = 1
+                        [chunk     1] offset = 0x000077
+    [trak] Track @ 0xff09, 0xff11 .. 0x10140 (559)
+        [tkhd] TrackHeader @ 0xff11, 0xff19 .. 0xff6d (84)
+            flags = 000002
+            track_ID = 2
+            duration = 4000
+            volume = 0.0
+        [edts] Edit @ 0xff6d, 0xff75 .. 0xff91 (28)
+            [elst] EditList @ 0xff75, 0xff7d .. 0xff91 (20)
+                entry_count = 1
+                [edit segment   0] duration =   4000, media_time =      0, media_rate = 1.0
+        [mdia] Media @ 0xff91, 0xff99 .. 0x10140 (423)
+            [mdhd] MediaHeader @ 0xff99, 0xffa1 .. 0xffb9 (24)
+                timescale = 1000
+                duration = 4000
+            [hdlr] Handler @ 0xffb9, 0xffc1 .. 0xffe9 (40)
+                handler_type = 'text', name = 'SubtitleHandler\x00'
+            [minf] MediaInformation @ 0xffe9, 0xfff1 .. 0x10140 (335)
+                [gmhd] BaseMediaInformationHeader @ 0xfff1, 0xfff9 .. 0x1003d (68)
+                    [gmin] BaseMediaInfo @ 0xfff9, 0x10001 .. 0x10011 (16)
+                        00 00 00 00  00 40 80 00  80 00 80 00  00 00 00 00   .....@..........
+                    [text] @ 0x10011, 0x10019 .. 0x1003d (36)
+                        00 01 00 00  00 00 00 00  00 00 00 00  00 00 00 00   ................
+                        00 01 00 00  00 00 00 00  00 00 00 00  00 00 00 00   ................
+                        40 00 00 00                                          @...
+                [dinf] DataInformation @ 0x1003d, 0x10045 .. 0x10061 (28)
+                    [dref] DataReference @ 0x10045, 0x1004d .. 0x10061 (20)
+                        [url ] DataEntryUrl @ 0x10055, 0x1005d .. 0x10061 (4)
+                            flags = 000001
+                [stbl] SampleTable @ 0x10061, 0x10069 .. 0x10140 (215)
+                    [stsd] SampleDescription @ 0x10069, 0x10071 .. 0x100c8 (87)
+                        [text] @ 0x10079, 0x10081 .. 0x100c8 (71)
+                            data_reference_index = 1
+                            display_flags =
+                                invalid unassigned: 1
+                            font_identifier = 1
+                            [ftab] FontTable @ 0x100a7, 0x100af .. 0x100b4 (5)
+                                00 01 00 01  00                                      .....
+                            [btrt] BitRate @ 0x100b4, 0x100bc .. 0x100c8 (12)
+                                bufferSizeDB = 0
+                                maxBitrate = 142
+                                avgBitrate = 142
+                    [stts] TimeToSample @ 0x100c8, 0x100d0 .. 0x100f0 (32)
+                        entry_count = 3
+                        [entry   0] [sample =      1, time =      0] sample_count =     1, sample_delta =  1000
+                        [entry   1] [sample =      2, time =   1000] sample_count =     1, sample_delta =  2000
+                        [entry   2] [sample =      3, time =   3000] sample_count =     1, sample_delta =  1000
+                        [samples =      3, time =   4000]
+                    [stsc] SampleToChunk @ 0x100f0, 0x100f8 .. 0x1010c (20)
+                        entry_count = 1
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =    3, sample_description_index = 1
+                    [stsz] SampleSize @ 0x1010c, 0x10114 .. 0x1012c (24)
+                        sample_count = 3
+                        [sample      1] sample_size =    21
+                        [sample      2] sample_size =    21
+                        [sample      3] sample_size =    29
+                    [stco] ChunkOffset @ 0x1012c, 0x10134 .. 0x10140 (12)
+                        entry_count = 1
+                        [chunk     1] offset = 0x000030
+    [udta] UserData @ 0x10140, 0x10148 .. 0x10216 (206)
+        [meta] Meta @ 0x10148, 0x10150 .. 0x101cd (125)
+            [hdlr] Handler @ 0x10154, 0x1015c .. 0x10175 (25)
+                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                handler_type = 'mdir', name = '\x00'
+            [ilst] MetadataItemList @ 0x10175, 0x1017d .. 0x101cd (80)
+                [©nam] @ 0x1017d, 0x10185 .. 0x101a9 (36)
+                    [data] @ 0x10185, 0x1018d .. 0x101a9 (28)
+                        value = 'ffmpeg metadata test'
+                [©too] @ 0x101a9, 0x101b1 .. 0x101cd (28)
+                    [data] @ 0x101b1, 0x101b9 .. 0x101cd (20)
+                        value = 'Lavf61.7.100'
+        [chpl] ChapterList @ 0x101cd, 0x101d5 .. 0x10216 (65)
+            version = 1
+            dummy = 0
+            entry_count = 3
+            [entry   1] time=           0 'The one'
+            [entry   2] time=    10000000 'The two'
+            [entry   3] time=    30000000 'Gap and a three'
