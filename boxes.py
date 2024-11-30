@@ -264,6 +264,13 @@ def parse_dref_box(ps: Parser):
 	boxes = parse_boxes(ps)
 	assert len(boxes) == entry_count, f'entry_count ({entry_count}) not matching boxes present'
 
+def parse_tref_type_box(ref_type: str, ps: Parser):
+	while not ps.ended:
+		ps.print(f'- track_ID: {ps.int(4)}')
+
+def parse_tref_box(ps: Parser):
+	parse_boxes(ps, parse_tref_type_box)
+
 def parse_url_box(ps: Parser):
 	parse_fullbox(ps)
 	if ps.ended: return
