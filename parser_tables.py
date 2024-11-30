@@ -328,6 +328,9 @@ box_registry = [
 		'ilst': ('MetadataItemListBox', 'Box'),
 		'itif': ('ItemInformationBox', 'Box'),
 		'mdta': ('QuickTimeMetadataBox', 'Box'),
+		'gmhd': ('BaseMediaInformationHeaderBox', 'Box'),
+		'gmin': ('BaseMediaInfoBox', 'Box'),
+        'ftab': ('FontTableBox', 'Box'),
 	}),
     ({
         'title': 'Video File Format Specification',

@@ -106,6 +106,12 @@ def parse_audio_sample_entry_contents(btype: str, ps: Parser, version: int):
 def parse_text_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
 
+	if btype == 'tx3g' or btype == 'text': # ffmpeg uses 'text', contradicting the QTFF spec
+		return parse_tx3g_sample_desc(ps)
+
+	if btype == 'text':
+		return parse_text_sample_desc(ps)
+
 	fields = {
 		# meta
 		'metx': ('content_encoding', 'namespace', 'schema_location'),
@@ -804,6 +810,60 @@ def parse_ilst_box(ps: Parser):
 	parse_boxes(ps, parse_metadata_value_box)
 
 def parse_metadata_value_box(btype: str, ps: Parser):
+	parse_boxes(ps)
+
+def parse_tx3g_sample_desc(ps: Parser):
+	ps.print(f'display_flags =')
+	with ps.in_object(), ps.bits(4) as br:
+		ps.field('all_samples_are_forced', br.bit(), default=False)
+		ps.field('some_samples_are_forced', br.bit(), default=False)
+		ps.field('vertical_placement', br.bit(), default=False)
+		ps.reserved('unassigned', br.read())
+	ps.reserved('reserved_0', ps.int(1))
+	ps.reserved('reserved_1', ps.int(1))
+	ps.reserved('reserved_2', ps.int(4))
+	ps.field('default_text_box', ps.int(8), '016x', default=0) # FIXME
+	ps.reserved('reserved_3', ps.int(4))
+	ps.field('font_identifier', ps.int(2))
+	ps.field('font_face', ps.int(1), default=0)
+	ps.field('font_size', ps.int(1), default=0)
+	ps.field('foreground_color', ps.int(4), '08x', default=0) # FIXME
+
+	parse_boxes(ps)
+
+def parse_48bit_color(ps: Parser, name: str):
+	ps.field(name, ps.int(6), '012x') # FIXME
+
+def parse_text_sample_desc(ps: Parser):
+	ps.print(f'display_flags =')
+	with ps.in_object(), ps.bits(4) as br:
+		ps.reserved('unassigned', br.read(32 - 15))
+		ps.field('key_text', br.bit(), default=False)
+		ps.field('anti_alias', br.bit(), default=False)
+		ps.field('drop_shadow', br.bit(), default=False)
+		ps.reserved('reserved_11', br.bit())
+		ps.reserved('reserved_10', br.bit())
+		ps.field('continuous_scroll', br.bit(), default=False)
+		ps.field('reverse_scroll', br.bit(), default=False)
+		ps.field('horizontal_scroll', br.bit(), default=False)
+		ps.field('scroll_out', br.bit(), default=False)
+		ps.field('scroll_in', br.bit(), default=False)
+		ps.reserved('reserved_4', br.bit())
+		ps.field('use_movie_background_color', br.bit(), default=False)
+		ps.reserved('reserved_2', br.bit())
+		ps.field('no_auto_scale', br.bit(), default=False)
+		ps.reserved('reserved_0', br.bit())
+	ps.field('text_justification', ps.int(4))
+	parse_48bit_color(ps, 'background_color')
+	ps.field('default_text_box', ps.int(8), '#016x') # FIXME
+	ps.reserved('reserved', ps.int(8))
+	ps.field('font_number', ps.int(2))
+	ps.field('font_face', ps.int(2))
+	ps.reserved('reserved', ps.int(1))
+	ps.reserved('reserved', ps.int(2))
+	parse_48bit_color(ps, 'foreground_color')
+	ps.string('text_name')
+
 	parse_boxes(ps)
 
 def parse_data_box(ps: Parser):
