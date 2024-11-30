@@ -406,7 +406,7 @@ def parse_box(ps: Parser, contents_fn: Callable[[str, Parser], T]) -> T:
 	with ps.subparser(length) as data, data.handle_errors():
 		return contents_fn(btype, data)
 
-nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'sinf', 'schi' }
+nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'sinf', 'schi', 'gmhd' }
 # metadata?
 nesting_boxes |= { 'aART', 'trkn', 'covr', '----' }
 

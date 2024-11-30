@@ -1,0 +1,22 @@
+;FFMETADATA1
+title=ffmpeg metadata test
+; test generated with:
+; $ ffmpeg -re -f lavfi -i testsrc=s=800x600:r=30 -i tests/metadata.ffmeta -map_metadata 1 -g 30 -t 4 tests/metadata.mp4
+
+[CHAPTER]
+TIMEBASE=1/25
+START=0
+END=25
+title=The one
+
+[CHAPTER]
+TIMEBASE=1/25
+START=25
+END=50
+title=The two
+
+[CHAPTER]
+TIMEBASE=1/25
+START=75
+END=100
+title=Gap and a three
