@@ -892,6 +892,7 @@ def parse_data_box(ps: Parser):
 	else:
 		ps.field_dump('value')
 
+
 # CHAPTER LIST
 #
 # As far as I know, there is no standard-sanctioned way to implement chapters in MP4.
@@ -925,7 +926,7 @@ def parse_chpl_box(ps: Parser):
 	# VLC will ignore chpl box version 0.
 	if version == 1:
 		ps.field('dummy', ps.int(4))
-	
+
 	entry_count = ps.int(1)
 	ps.field('entry_count', entry_count)
 	for i in range(entry_count):

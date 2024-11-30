@@ -332,13 +332,13 @@ box_registry = [
 		'gmin': ('BaseMediaInfoBox', 'Box'),
         'ftab': ('FontTableBox', 'Box'),
 	}),
-    ({
-        'title': 'Video File Format Specification',
-        'alias': 'F4V',
-        'url': 'https://www.adobe.com/content/dam/acom/en/devnet/flv/video_file_format_spec_v10.pdf'
+	({
+		'title': 'Video File Format Specification',
+		'alias': 'F4V',
+		'url': 'https://www.adobe.com/content/dam/acom/en/devnet/flv/video_file_format_spec_v10.pdf'
 	}, {
-        # class names guessed; the F4V spec doesn't give boxes names other than their FourCC's
-        'chpl': ('ChapterListBox', 'FullBox'),
+		# class names guessed; the F4V spec doesn't give boxes names other than their FourCC's
+		'chpl': ('ChapterListBox', 'FullBox'),
 	}),
 ]
 
