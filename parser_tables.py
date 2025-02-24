@@ -340,6 +340,15 @@ box_registry = [
 		# class names guessed; the F4V spec doesn't give boxes names other than their FourCC's
 		'chpl': ('ChapterListBox', 'FullBox'),
 	}),
+    ({
+		'name': 'ISO/IEC 23009-1',
+		'title': 'Information technology — Dynamic adaptive streaming over HTTP (DASH) — Part 1: Media presentation description and segment formats',
+		'alias': 'DASH',
+		'version': '2022',
+		'url': 'https://www.iso.org/standard/83314.html',
+	}, {
+		'emsg': ('DASHEventMessageBox', 'FullBox'),
+	}),
 ]
 
 

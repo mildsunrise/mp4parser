@@ -893,6 +893,27 @@ def parse_data_box(ps: Parser):
 		ps.field_dump('value')
 
 
+# EMSG
+
+def parse_emsg_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps, max_version=2)
+	if version == 0:
+		ps.field('scheme_id_uri', ps.string())
+		ps.field('value', ps.string())
+		ps.field('timescale', ps.int(4))
+		ps.field('presentation_time_delta', ps.int(4))
+		ps.field('event_duration', ps.int(4))
+		ps.field('id', ps.int(4))
+	elif version == 1:
+		ps.field('timescale', ps.int(32))
+		ps.field('presentation_time', ps.int(64))
+		ps.field('event_duration', ps.int(32))
+		ps.field('id', ps.int(32))
+		ps.field('scheme_id_uri', ps.string())
+		ps.field('value', ps.string())
+	ps.field_dump('message_data')
+
+
 # CHAPTER LIST
 #
 # As far as I know, there is no standard-sanctioned way to implement chapters in MP4.
