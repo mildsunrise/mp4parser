@@ -212,7 +212,7 @@ class Parser(MVIO):
 			text += f' ({description})'
 		self.raw_field(name, text)
 
-	def field_dump(self, name: str, pre_offset=None, n=-1):
+	def field_dump(self, name: str, pre_offset:Optional[int] = None, n: int = -1):
 		offset = self.offset
 		data = self.read(n)
 		pre_offset_text = f'{pre_offset:#x}, ' if pre_offset != None else ''
@@ -220,6 +220,7 @@ class Parser(MVIO):
 		length_text = f' ({len(data)})' if show_lengths else ''
 		self.print(ansi_fg3(name) + ' ' + ansi_fg1('=') + ansi_fg4(offset_text + length_text))
 		print_hex_dump(data, self.prefix + '  ')
+		return data
 
 	def reserved(self, name: str, value: T, expected: Optional[T] = None):
 		ok = (value == expected) if expected != None else \
@@ -406,7 +407,7 @@ def parse_box(ps: Parser, contents_fn: Callable[[str, Parser], T]) -> T:
 	with ps.subparser(length) as data, data.handle_errors():
 		return contents_fn(btype, data)
 
-nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'sinf', 'schi', 'gmhd' }
+nesting_boxes = { 'moov', 'trak', 'mdia', 'minf', 'dinf', 'stbl', 'mvex', 'moof', 'traf', 'mfra', 'meco', 'edts', 'udta', 'sinf', 'schi', 'gmhd', 'cmov' }
 # metadata?
 nesting_boxes |= { 'aART', 'trkn', 'covr', '----' }
 
