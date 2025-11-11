@@ -331,6 +331,9 @@ box_registry = [
 		'gmhd': ('BaseMediaInformationHeaderBox', 'Box'),
 		'gmin': ('BaseMediaInfoBox', 'Box'),
         'ftab': ('FontTableBox', 'Box'),
+        'cmov': ('CompressedMovieBox', 'Box'),
+        'dcom': ('DataCompressionBox', 'Box'),
+        'cmvd': ('CompressedMovieDataBox', 'Box'),
 	}),
 	({
 		'title': 'Video File Format Specification',

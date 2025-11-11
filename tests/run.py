@@ -13,7 +13,7 @@ def delete_if_present(fname: str):
 
 os.chdir(os.path.dirname(__file__))
 
-case_exts = { '.mp4', '.heif' }
+case_exts = { '.mp4', '.heif', '.m4a', '.mov' }
 is_case = lambda f: any(f.endswith(ext) for ext in case_exts)
 cases = sorted(filter(is_case, os.listdir()))
 
