@@ -1,0 +1,462 @@
+[ftyp] FileType @ 0x0, 0x8 .. 0x14 (12)
+    major_brand = 'qt  '
+    minor_version = 00000000
+    - compatible: 'qt  '
+[wide] @ 0x14, 0x1c .. 0x1c (0)
+[mdat] MediaData @ 0x1c, 0x24 .. 0x371de6 (3612098)
+    21 20 03 40  68 1c 21 4e  fe d7 fe e7  6a 51 d0 af   ! .@h.!N....jQ..
+    7d 6b b4 62  1d 78 17 47  80 40 00 00  00 00 9f 81   }k.b.x.G.@......
+    f7 e4 2f dd  27 a6 4d 0e  72 1c a3 9c  91 bd 18 8f   ../.'.M.r.......
+    c5 2d b1 1c  50 c0 00 00  00 32 b8 32  26 dc cb d6   .-..P....2.2&...
+    71 b7 2f 87  ba 80 3f f3  ff fe 9e 1b  67 dd bc af   q./...?.....g...
+    d1 78 20 1f  f8 7f f4 3a  3d bf 6f eb  af ad 0d 6f   .x ....:=.o....o
+    2b f7 4f d4  c0 3e fc de  7e 9a 1c 7d  af d4 3b 70   +.O..>..~..}..;p
+    ...
+[moov] Movie @ 0x371de6, 0x371dee .. 0x37436e (9600)
+    [mvhd] MovieHeader @ 0x371dee, 0x371df6 .. 0x371e5a (100)
+        creation_time = 2021-05-29 19:14:19Z
+        modification_time = 2021-05-29 19:14:23Z
+        timescale = 600
+        duration = 2000
+        next_track_ID = 6
+    [trak] Track @ 0x371e5a, 0x371e62 .. 0x372964 (2818)
+        [tkhd] TrackHeader @ 0x371e62, 0x371e6a .. 0x371ebe (84)
+            flags = 00000f
+            creation_time = 2021-05-29 19:14:19Z
+            modification_time = 2021-05-29 19:14:23Z
+            track_ID = 1
+            duration = 2000
+            volume = 0.0
+            matrix = [0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 1080.0, 0.0, 16384.0]
+            size = 1920.0 × 1080.0
+        [tapt] @ 0x371ebe, 0x371ec6 .. 0x371f02 (60)
+            00 00 00 14  63 6c 65 66  00 00 00 00  07 80 00 00   ....clef........
+            04 38 00 00  00 00 00 14  70 72 6f 66  00 00 00 00   .8......prof....
+            07 80 00 00  04 38 00 00  00 00 00 14  65 6e 6f 66   .....8......enof
+            00 00 00 00  07 80 00 00  04 38 00 00                .........8..
+        [edts] Edit @ 0x371f02, 0x371f0a .. 0x371f26 (28)
+            [elst] EditList @ 0x371f0a, 0x371f12 .. 0x371f26 (20)
+                entry_count = 1
+                [edit segment   0] duration =   2000, media_time =      0, media_rate = 1.0
+        [mdia] Media @ 0x371f26, 0x371f2e .. 0x372964 (2614)
+            [mdhd] MediaHeader @ 0x371f2e, 0x371f36 .. 0x371f4e (24)
+                creation_time = 2021-05-29 19:14:19Z
+                modification_time = 2021-05-29 19:14:23Z
+                timescale = 600
+                duration = 2001
+                language = und (Undetermined)
+            [hdlr] Handler @ 0x371f4e, 0x371f56 .. 0x371f7f (41)
+                invalid pre_defined: b'mhlr'
+                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                handler_type = 'vide', name = '\x10Core Media Video'
+            [minf] MediaInformation @ 0x371f7f, 0x371f87 .. 0x372964 (2525)
+                [vmhd] VideoMediaHeader @ 0x371f87, 0x371f8f .. 0x371f9b (12)
+                    graphicsmode = 64
+                    opcolor = (32768, 32768, 32768)
+                [hdlr] Handler @ 0x371f9b, 0x371fa3 .. 0x371fd3 (48)
+                    invalid pre_defined: b'dhlr'
+                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                [dinf] DataInformation @ 0x371fd3, 0x371fdb .. 0x371ff7 (28)
+                    [dref] DataReference @ 0x371fdb, 0x371fe3 .. 0x371ff7 (20)
+                        [alis] @ 0x371feb, 0x371ff3 .. 0x371ff7 (4)
+                            00 00 00 01                                          ....
+                [stbl] SampleTable @ 0x371ff7, 0x371fff .. 0x372964 (2405)
+                    [stsd] SampleDescription @ 0x371fff, 0x372007 .. 0x3722ca (707)
+                        [hvc1] HEVCSampleEntry @ 0x37200f, 0x372017 .. 0x3722ca (691)
+                            data_reference_index = 1
+                            00 00 00 00  00 00 00 00  00 00 02 00  00 00 02 00   ................
+                            07 80 04 38  00 48 00 00  00 48 00 00  00 00 00 00   ...8.H...H......
+                            00 01 04 48  45 56 43 00  00 00 00 00  00 00 00 00   ...HEVC.........
+                            00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00   ................
+                            00 00 00 18  ff ff 00 00  02 2f 68 76  63 43 01 02   ........./hvcC..
+                            20 00 00 00  b0 00 00 00  00 00 78 f0  00 fc fd fa    .........x.....
+                            fa 00 00 0b  04 a0 00 01  00 18 40 01  0c 01 ff ff   ..........@.....
+                            ...
+                    [sgpd] SampleGroupDescription @ 0x3722ca, 0x3722d2 .. 0x3722f6 (36)
+                        version = 1
+                        grouping_type = 'tscl'
+                        default_length = 20
+                        description = @ 0x3722e2, 0x3722e2 .. 0x3722f6 (20)
+                          00 02 00 00  00 00 b3 80  00 00 00 00  78 00 00 00   ............x...
+                          00 00 00 00                                          ....
+                    [sgpd] SampleGroupDescription @ 0x3722f6, 0x3722fe .. 0x372310 (18)
+                        version = 1
+                        grouping_type = 'sync'
+                        default_length = 1
+                        description = @ 0x37230e, 0x37230e .. 0x37230f (1)
+                          14                                                   .
+                        description = @ 0x37230f, 0x37230f .. 0x372310 (1)
+                          15                                                   .
+                    [sbgp] SampleToGroup @ 0x372310, 0x372318 .. 0x372364 (76)
+                        grouping_type = 'sync'
+                        entry_count = 8
+                        [entry     1] [sample =      1] sample_count =     1, group_description_index =     1
+                        [entry     2] [sample =      2] sample_count =    28, group_description_index =     0
+                        [entry     3] [sample =     30] sample_count =     1, group_description_index =     2
+                        [entry     4] [sample =     31] sample_count =    31, group_description_index =     0
+                        [entry     5] [sample =     62] sample_count =     1, group_description_index =     2
+                        [entry     6] [sample =     63] sample_count =    31, group_description_index =     0
+                        [entry     7] [sample =     94] sample_count =     1, group_description_index =     2
+                        ...
+                        [samples =    100]
+                    [stts] TimeToSample @ 0x372364, 0x37236c .. 0x37238c (32)
+                        entry_count = 3
+                        [entry   0] [sample =      1, time =      0] sample_count =    34, sample_delta =    20
+                        [entry   1] [sample =     35, time =    680] sample_count =     1, sample_delta =    21
+                        [entry   2] [sample =     36, time =    701] sample_count =    65, sample_delta =    20
+                        [samples =    100, time =   2001]
+                    [ctts] CompositionOffset @ 0x37238c, 0x372394 .. 0x3726bc (808)
+                        entry_count = 100
+                        [entry   0] [sample =      1] sample_count =     1, sample_offset =     0
+                        [entry   1] [sample =      2] sample_count =     1, sample_offset =    60
+                        [entry   2] [sample =      3] sample_count =     1, sample_offset =     0
+                        [entry   3] [sample =      4] sample_count =     1, sample_offset =   -40
+                        [entry   4] [sample =      5] sample_count =     1, sample_offset =   -20
+                        [entry   5] [sample =      6] sample_count =     1, sample_offset =    60
+                        [entry   6] [sample =      7] sample_count =     1, sample_offset =     0
+                        ...
+                        [samples =    100]
+                    [cslg] CompositionToDecode @ 0x3726bc, 0x3726c4 .. 0x3726dc (24)
+                        compositionToDTSShift = 41
+                        leastDecodeToDisplayDelta = -41
+                        greatestDecodeToDisplayDelta = 61
+                        compositionStartTime = 0
+                        compositionEndTime = 2001
+                    [stss] SyncSample @ 0x3726dc, 0x3726e4 .. 0x3726fc (24)
+                        entry_count = 4
+                        [sync sample     0] sample_number =      1
+                        [sync sample     1] sample_number =     30
+                        [sync sample     2] sample_number =     62
+                        [sync sample     3] sample_number =     94
+                    [sdtp] SampleDependencyType @ 0x3726fc, 0x372704 .. 0x37276c (104)
+                        00 00 00 00  20 10 10 18  18 10 10 18  18 10 10 18   .... ...........
+                        18 10 10 18  18 10 10 18  18 10 10 18  18 10 10 18   ................
+                        18 20 10 18  18 10 10 18  18 10 10 18  18 10 10 18   . ..............
+                        18 10 10 18  18 10 10 18  18 10 10 18  18 10 10 18   ................
+                        18 20 10 18  18 10 10 18  18 10 10 18  18 10 10 18   . ..............
+                        18 10 10 18  18 10 10 18  18 10 10 18  18 10 10 18   ................
+                        18 20 10 18  18 10 10 18                             . ......
+                    [stsc] SampleToChunk @ 0x37276c, 0x372774 .. 0x372794 (32)
+                        entry_count = 2
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =   15, sample_description_index = 1
+                        [entry   1] [sample =     91] first_chunk =     7, samples_per_chunk =   10, sample_description_index = 1
+                    [stsz] SampleSize @ 0x372794, 0x37279c .. 0x372938 (412)
+                        sample_count = 100
+                        [sample      1] sample_size = 63375
+                        [sample      2] sample_size = 46706
+                        [sample      3] sample_size = 29766
+                        [sample      4] sample_size = 19409
+                        [sample      5] sample_size = 21086
+                        [sample      6] sample_size = 62043
+                        [sample      7] sample_size = 36175
+                        ...
+                    [stco] ChunkOffset @ 0x372938, 0x372940 .. 0x372964 (36)
+                        entry_count = 7
+                        [chunk     1] offset = 0x009011
+                        [chunk     2] offset = 0x09490b
+                        [chunk     3] offset = 0x11f9bf
+                        [chunk     4] offset = 0x197b9a
+                        [chunk     5] offset = 0x215acc
+                        [chunk     6] offset = 0x29dd78
+                        [chunk     7] offset = 0x31a4d1
+    [trak] Track @ 0x372964, 0x37296c .. 0x372e48 (1244)
+        [tkhd] TrackHeader @ 0x37296c, 0x372974 .. 0x3729c8 (84)
+            flags = 00000f
+            creation_time = 2021-05-29 19:14:19Z
+            modification_time = 2021-05-29 19:14:23Z
+            track_ID = 2
+            duration = 2000
+        [edts] Edit @ 0x3729c8, 0x3729d0 .. 0x3729ec (28)
+            [elst] EditList @ 0x3729d0, 0x3729d8 .. 0x3729ec (20)
+                entry_count = 1
+                [edit segment   0] duration =   2000, media_time =      0, media_rate = 1.0
+        [mdia] Media @ 0x3729ec, 0x3729f4 .. 0x372e48 (1108)
+            [mdhd] MediaHeader @ 0x3729f4, 0x3729fc .. 0x372a14 (24)
+                creation_time = 2021-05-29 19:14:19Z
+                modification_time = 2021-05-29 19:14:23Z
+                timescale = 44100
+                duration = 149504
+                language = und (Undetermined)
+            [hdlr] Handler @ 0x372a14, 0x372a1c .. 0x372a45 (41)
+                invalid pre_defined: b'mhlr'
+                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                handler_type = 'soun', name = '\x10Core Media Audio'
+            [minf] MediaInformation @ 0x372a45, 0x372a4d .. 0x372e48 (1019)
+                [smhd] SoundMediaHeader @ 0x372a4d, 0x372a55 .. 0x372a5d (8)
+                [hdlr] Handler @ 0x372a5d, 0x372a65 .. 0x372a95 (48)
+                    invalid pre_defined: b'dhlr'
+                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                [dinf] DataInformation @ 0x372a95, 0x372a9d .. 0x372ab9 (28)
+                    [dref] DataReference @ 0x372a9d, 0x372aa5 .. 0x372ab9 (20)
+                        [alis] @ 0x372aad, 0x372ab5 .. 0x372ab9 (4)
+                            00 00 00 01                                          ....
+                [stbl] SampleTable @ 0x372ab9, 0x372ac1 .. 0x372e48 (903)
+                    [stsd] SampleDescription @ 0x372ac1, 0x372ac9 .. 0x372b60 (151)
+                        [mp4a] MP4AudioSampleEntry @ 0x372ad1, 0x372ad9 .. 0x372b60 (135)
+                            data_reference_index = 1
+                            00 01 00 00  00 00 00 00  00 02 00 10  ff fe 00 00   ................
+                            ac 44 00 00  00 00 04 00  00 00 00 01  00 00 00 02   .D..............
+                            00 00 00 02  00 00 00 5b  77 61 76 65  00 00 00 0c   .......[wave....
+                            66 72 6d 61  6d 70 34 61  00 00 00 0c  6d 70 34 61   frmamp4a....mp4a
+                            00 00 00 00  00 00 00 33  65 73 64 73  00 00 00 00   .......3esds....
+                            03 80 80 80  22 00 00 00  04 80 80 80  14 40 14 00   ...."........@..
+                            18 00 00 02  ee 00 00 00  00 00 05 80  80 80 02 12   ................
+                            ...
+                    [stts] TimeToSample @ 0x372b60, 0x372b68 .. 0x372b78 (16)
+                        entry_count = 1
+                        [entry   0] [sample =      1, time =      0] sample_count =   146, sample_delta =  1024
+                        [samples =    146, time = 149504]
+                    [stsc] SampleToChunk @ 0x372b78, 0x372b80 .. 0x372bc4 (68)
+                        entry_count = 5
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =   43, sample_description_index = 1
+                        [entry   1] [sample =     87] first_chunk =     3, samples_per_chunk =    1, sample_description_index = 1
+                        [entry   2] [sample =     88] first_chunk =     4, samples_per_chunk =   21, sample_description_index = 1
+                        [entry   3] [sample =    109] first_chunk =     5, samples_per_chunk =   22, sample_description_index = 1
+                        [entry   4] [sample =    131] first_chunk =     6, samples_per_chunk =   16, sample_description_index = 1
+                    [stsz] SampleSize @ 0x372bc4, 0x372bcc .. 0x372e20 (596)
+                        sample_count = 146
+                        [sample      1] sample_size =     6
+                        [sample      2] sample_size =   251
+                        [sample      3] sample_size =   389
+                        [sample      4] sample_size =   356
+                        [sample      5] sample_size =   339
+                        [sample      6] sample_size =   405
+                        [sample      7] sample_size =   449
+                        ...
+                    [stco] ChunkOffset @ 0x372e20, 0x372e28 .. 0x372e48 (32)
+                        entry_count = 6
+                        [chunk     1] offset = 0x000024
+                        [chunk     2] offset = 0x004630
+                        [chunk     3] offset = 0x008e36
+                        [chunk     4] offset = 0x0923eb
+                        [chunk     5] offset = 0x11d454
+                        [chunk     6] offset = 0x19609d
+    [trak] Track @ 0x372e48, 0x372e50 .. 0x3730b9 (617)
+        [tkhd] TrackHeader @ 0x372e50, 0x372e58 .. 0x372eac (84)
+            flags = 00000f
+            creation_time = 2021-05-29 19:14:19Z
+            modification_time = 2021-05-29 19:14:23Z
+            track_ID = 3
+            duration = 2000
+            volume = 0.0
+        [edts] Edit @ 0x372eac, 0x372eb4 .. 0x372ed0 (28)
+            [elst] EditList @ 0x372eb4, 0x372ebc .. 0x372ed0 (20)
+                entry_count = 1
+                [edit segment   0] duration =   2000, media_time =      0, media_rate = 1.0
+        [tref] TrackReference @ 0x372ed0, 0x372ed8 .. 0x372ef0 (24)
+            [cdsc] @ 0x372ed8, 0x372ee0 .. 0x372ee4 (4)
+                - track_ID: 1
+            [cdep] @ 0x372ee4, 0x372eec .. 0x372ef0 (4)
+                - track_ID: 1
+        [mdia] Media @ 0x372ef0, 0x372ef8 .. 0x3730b9 (449)
+            [mdhd] MediaHeader @ 0x372ef8, 0x372f00 .. 0x372f18 (24)
+                creation_time = 2021-05-29 19:14:19Z
+                modification_time = 2021-05-29 19:14:23Z
+                timescale = 600
+                duration = 2001
+                language = und (Undetermined)
+            [hdlr] Handler @ 0x372f18, 0x372f20 .. 0x372f4c (44)
+                invalid pre_defined: b'mhlr'
+                invalid reserved: b'appl\x00\x00\x00\x01\x00\x00\x00\x00'
+                handler_type = 'meta', name = '\x13Core Media Metadata'
+            [minf] MediaInformation @ 0x372f4c, 0x372f54 .. 0x3730b9 (357)
+                [gmhd] BaseMediaInformationHeader @ 0x372f54, 0x372f5c .. 0x372f74 (24)
+                    [gmin] BaseMediaInfo @ 0x372f5c, 0x372f64 .. 0x372f74 (16)
+                        00 00 00 00  00 40 80 00  80 00 80 00  00 00 00 00   .....@..........
+                [hdlr] Handler @ 0x372f74, 0x372f7c .. 0x372fac (48)
+                    invalid pre_defined: b'dhlr'
+                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                [dinf] DataInformation @ 0x372fac, 0x372fb4 .. 0x372fd0 (28)
+                    [dref] DataReference @ 0x372fb4, 0x372fbc .. 0x372fd0 (20)
+                        [alis] @ 0x372fc4, 0x372fcc .. 0x372fd0 (4)
+                            00 00 00 01                                          ....
+                [stbl] SampleTable @ 0x372fd0, 0x372fd8 .. 0x3730b9 (225)
+                    [stsd] SampleDescription @ 0x372fd8, 0x372fe0 .. 0x37305d (125)
+                        [mebx] @ 0x372fe8, 0x372ff0 .. 0x37305d (109)
+                            data_reference_index = 1
+                            00 00 00 65  6b 65 79 73  00 00 00 5d  00 00 00 01   ...ekeys...]....
+                            00 00 00 31  6b 65 79 64  6d 64 74 61  63 6f 6d 2e   ...1keydmdtacom.
+                            61 70 70 6c  65 2e 71 75  69 63 6b 74  69 6d 65 2e   apple.quicktime.
+                            76 69 64 65  6f 2d 6f 72  69 65 6e 74  61 74 69 6f   video-orientatio
+                            6e 00 00 00  10 64 74 79  70 00 00 00  00 00 00 00   n....dtyp.......
+                            42 00 00 00  14 73 64 70  64 00 00 00  0c 73 64 70   B....sdpd....sdp
+                            69 00 00 00  00                                      i....
+                    [stts] TimeToSample @ 0x37305d, 0x373065 .. 0x373075 (16)
+                        entry_count = 1
+                        [entry   0] [sample =      1, time =      0] sample_count =     1, sample_delta =  2001
+                        [samples =      1, time =   2001]
+                    [stsc] SampleToChunk @ 0x373075, 0x37307d .. 0x373091 (20)
+                        entry_count = 1
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =    1, sample_description_index = 1
+                    [stsz] SampleSize @ 0x373091, 0x373099 .. 0x3730a5 (12)
+                        sample_size = 10
+                        sample_count = 1
+                    [stco] ChunkOffset @ 0x3730a5, 0x3730ad .. 0x3730b9 (12)
+                        entry_count = 1
+                        [chunk     1] offset = 0x21524a
+    [trak] Track @ 0x3730b9, 0x3730c1 .. 0x3734e7 (1062)
+        [tkhd] TrackHeader @ 0x3730c1, 0x3730c9 .. 0x37311d (84)
+            flags = 00000f
+            creation_time = 2021-05-29 19:14:19Z
+            modification_time = 2021-05-29 19:14:23Z
+            track_ID = 4
+            duration = 2000
+            volume = 0.0
+        [edts] Edit @ 0x37311d, 0x373125 .. 0x373141 (28)
+            [elst] EditList @ 0x373125, 0x37312d .. 0x373141 (20)
+                entry_count = 1
+                [edit segment   0] duration =   2000, media_time =      0, media_rate = 1.0
+        [tref] TrackReference @ 0x373141, 0x373149 .. 0x373161 (24)
+            [cdsc] @ 0x373149, 0x373151 .. 0x373155 (4)
+                - track_ID: 1
+            [cdep] @ 0x373155, 0x37315d .. 0x373161 (4)
+                - track_ID: 1
+        [mdia] Media @ 0x373161, 0x373169 .. 0x3734e7 (894)
+            [mdhd] MediaHeader @ 0x373169, 0x373171 .. 0x373189 (24)
+                creation_time = 2021-05-29 19:14:19Z
+                modification_time = 2021-05-29 19:14:23Z
+                timescale = 600
+                duration = 2001
+                language = und (Undetermined)
+            [hdlr] Handler @ 0x373189, 0x373191 .. 0x3731bd (44)
+                invalid pre_defined: b'mhlr'
+                invalid reserved: b'appl\x00\x00\x00\x01\x00\x00\x00\x00'
+                handler_type = 'meta', name = '\x13Core Media Metadata'
+            [minf] MediaInformation @ 0x3731bd, 0x3731c5 .. 0x3734e7 (802)
+                [gmhd] BaseMediaInformationHeader @ 0x3731c5, 0x3731cd .. 0x3731e5 (24)
+                    [gmin] BaseMediaInfo @ 0x3731cd, 0x3731d5 .. 0x3731e5 (16)
+                        00 00 00 00  00 40 80 00  80 00 80 00  00 00 00 00   .....@..........
+                [hdlr] Handler @ 0x3731e5, 0x3731ed .. 0x37321d (48)
+                    invalid pre_defined: b'dhlr'
+                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                [dinf] DataInformation @ 0x37321d, 0x373225 .. 0x373241 (28)
+                    [dref] DataReference @ 0x373225, 0x37322d .. 0x373241 (20)
+                        [alis] @ 0x373235, 0x37323d .. 0x373241 (4)
+                            00 00 00 01                                          ....
+                [stbl] SampleTable @ 0x373241, 0x373249 .. 0x3734e7 (670)
+                    [stsd] SampleDescription @ 0x373249, 0x373251 .. 0x37348b (570)
+                        [mebx] @ 0x373259, 0x373261 .. 0x37348b (554)
+                            data_reference_index = 1
+                            00 00 01 f6  6b 65 79 73  00 00 00 60  00 00 00 03   ....keys...`....
+                            00 00 00 34  6b 65 79 64  66 69 65 6c  63 6f 6d 2e   ...4keydfielcom.
+                            61 70 70 6c  65 2e 71 75  69 63 6b 74  69 6d 65 2e   apple.quicktime.
+                            64 65 74 65  63 74 65 64  2d 66 61 63  65 2e 62 6f   detected-face.bo
+                            75 6e 64 73  00 00 00 10  64 74 79 70  00 00 00 00   unds....dtyp....
+                            00 00 00 50  00 00 00 14  73 64 70 64  00 00 00 0c   ...P....sdpd....
+                            73 64 70 69  00 00 00 00  00 00 00 7a  00 00 00 01   sdpi.......z....
+                            ...
+                    [stts] TimeToSample @ 0x37348b, 0x373493 .. 0x3734a3 (16)
+                        entry_count = 1
+                        [entry   0] [sample =      1, time =      0] sample_count =     1, sample_delta =  2001
+                        [samples =      1, time =   2001]
+                    [stsc] SampleToChunk @ 0x3734a3, 0x3734ab .. 0x3734bf (20)
+                        entry_count = 1
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =    1, sample_description_index = 1
+                    [stsz] SampleSize @ 0x3734bf, 0x3734c7 .. 0x3734d3 (12)
+                        sample_size = 8
+                        sample_count = 1
+                    [stco] ChunkOffset @ 0x3734d3, 0x3734db .. 0x3734e7 (12)
+                        entry_count = 1
+                        [chunk     1] offset = 0x215254
+    [trak] Track @ 0x3734e7, 0x3734ef .. 0x37395e (1135)
+        [tkhd] TrackHeader @ 0x3734ef, 0x3734f7 .. 0x37354b (84)
+            flags = 00000f
+            creation_time = 2021-05-29 19:14:19Z
+            modification_time = 2021-05-29 19:14:23Z
+            track_ID = 5
+            duration = 2000
+            volume = 0.0
+        [edts] Edit @ 0x37354b, 0x373553 .. 0x37356f (28)
+            [elst] EditList @ 0x373553, 0x37355b .. 0x37356f (20)
+                entry_count = 1
+                [edit segment   0] duration =   2000, media_time =      0, media_rate = 1.0
+        [tref] TrackReference @ 0x37356f, 0x373577 .. 0x37358f (24)
+            [cdsc] @ 0x373577, 0x37357f .. 0x373583 (4)
+                - track_ID: 1
+            [cdep] @ 0x373583, 0x37358b .. 0x37358f (4)
+                - track_ID: 1
+        [mdia] Media @ 0x37358f, 0x373597 .. 0x37395e (967)
+            [mdhd] MediaHeader @ 0x373597, 0x37359f .. 0x3735b7 (24)
+                creation_time = 2021-05-29 19:14:19Z
+                modification_time = 2021-05-29 19:14:23Z
+                timescale = 600
+                duration = 2001
+                language = und (Undetermined)
+            [hdlr] Handler @ 0x3735b7, 0x3735bf .. 0x3735eb (44)
+                invalid pre_defined: b'mhlr'
+                invalid reserved: b'appl\x00\x00\x00\x01\x00\x00\x00\x00'
+                handler_type = 'meta', name = '\x13Core Media Metadata'
+            [minf] MediaInformation @ 0x3735eb, 0x3735f3 .. 0x37395e (875)
+                [gmhd] BaseMediaInformationHeader @ 0x3735f3, 0x3735fb .. 0x373613 (24)
+                    [gmin] BaseMediaInfo @ 0x3735fb, 0x373603 .. 0x373613 (16)
+                        00 00 00 00  00 40 80 00  80 00 80 00  00 00 00 00   .....@..........
+                [hdlr] Handler @ 0x373613, 0x37361b .. 0x37364b (48)
+                    invalid pre_defined: b'dhlr'
+                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
+                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                [dinf] DataInformation @ 0x37364b, 0x373653 .. 0x37366f (28)
+                    [dref] DataReference @ 0x373653, 0x37365b .. 0x37366f (20)
+                        [alis] @ 0x373663, 0x37366b .. 0x37366f (4)
+                            00 00 00 01                                          ....
+                [stbl] SampleTable @ 0x37366f, 0x373677 .. 0x37395e (743)
+                    [stsd] SampleDescription @ 0x373677, 0x37367f .. 0x3738ce (591)
+                        [mebx] @ 0x373687, 0x37368f .. 0x3738ce (575)
+                            data_reference_index = 1
+                            00 00 02 37  6b 65 79 73  00 00 02 2f  00 00 00 01   ...7keys.../....
+                            00 00 00 2f  6b 65 79 64  6d 64 74 61  63 6f 6d 2e   .../keydmdtacom.
+                            61 70 70 6c  65 2e 71 75  69 63 6b 74  69 6d 65 2e   apple.quicktime.
+                            6c 69 76 65  2d 70 68 6f  74 6f 2d 69  6e 66 6f 00   live-photo-info.
+                            00 00 43 64  74 79 70 00  00 00 01 63  6f 6d 2e 61   ..Cdtyp....com.a
+                            70 70 6c 65  2e 71 75 69  63 6b 74 69  6d 65 2e 63   pple.quicktime.c
+                            6f 6d 2e 61  70 70 6c 65  2e 71 75 69  63 6b 74 69   om.apple.quickti
+                            ...
+                    [stts] TimeToSample @ 0x3738ce, 0x3738d6 .. 0x3738f6 (32)
+                        entry_count = 3
+                        [entry   0] [sample =      1, time =      0] sample_count =    34, sample_delta =    20
+                        [entry   1] [sample =     35, time =    680] sample_count =     1, sample_delta =    21
+                        [entry   2] [sample =     36, time =    701] sample_count =    65, sample_delta =    20
+                        [samples =    100, time =   2001]
+                    [stsc] SampleToChunk @ 0x3738f6, 0x3738fe .. 0x37391e (32)
+                        entry_count = 2
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =   15, sample_description_index = 1
+                        [entry   1] [sample =     91] first_chunk =     7, samples_per_chunk =   10, sample_description_index = 1
+                    [stsz] SampleSize @ 0x37391e, 0x373926 .. 0x373932 (12)
+                        sample_size = 144
+                        sample_count = 100
+                    [stco] ChunkOffset @ 0x373932, 0x37393a .. 0x37395e (36)
+                        entry_count = 7
+                        [chunk     1] offset = 0x091b7b
+                        [chunk     2] offset = 0x11cbe4
+                        [chunk     3] offset = 0x19582d
+                        [chunk     4] offset = 0x21525c
+                        [chunk     5] offset = 0x29d508
+                        [chunk     6] offset = 0x319c61
+                        [chunk     7] offset = 0x371846
+    [udta] UserData @ 0x37395e, 0x373966 .. 0x373966 (0)
+    [free] FreeSpace @ 0x373966, 0x37396e .. 0x373d66 (1016)
+        (1016 empty bytes)
+    [meta] Meta @ 0x373d66, 0x373d6e .. 0x3742c6 (1368)
+        flags = 000022
+        ERROR: invalid type '\x00\x00\x00\x00'
+
+        00 00 00 22  68 64 6c 72  00 00 00 00  00 00 00 00   ..."hdlr........
+        6d 64 74 61  00 00 00 00  00 00 00 00  00 00 00 00   mdta............
+        00 00 00 00  00 9d 6b 65  79 73 00 00  00 00 00 00   ......keys......
+        00 04 00 00  00 20 6d 64  74 61 63 6f  6d 2e 61 70   ..... mdtacom.ap
+        70 6c 65 2e  71 75 69 63  6b 74 69 6d  65 2e 6d 61   ple.quicktime.ma
+        6b 65 00 00  00 21 6d 64  74 61 63 6f  6d 2e 61 70   ke...!mdtacom.ap
+        70 6c 65 2e  71 75 69 63  6b 74 69 6d  65 2e 6d 6f   ple.quicktime.mo
+        ...
+    [free] FreeSpace @ 0x3742c6, 0x3742ce .. 0x37436e (160)
+        00 00 00 20  74 72 65 78  00 00 00 00  00 00 00 01   ... trex........
+        00 00 00 01  00 00 00 14  00 00 f7 8f  01 01 00 00   ................
+        00 00 00 20  74 72 65 78  00 00 00 00  00 00 00 02   ... trex........
+        00 00 00 01  00 00 04 00  00 00 00 06  00 00 00 00   ................
+        00 00 00 20  74 72 65 78  00 00 00 00  00 00 00 03   ... trex........
+        00 00 00 01  00 00 07 d1  00 00 00 0a  00 00 00 00   ................
+        00 00 00 20  74 72 65 78  00 00 00 00  00 00 00 04   ... trex........
+        ...
