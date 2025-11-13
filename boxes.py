@@ -13,6 +13,12 @@ from parser_tables import \
 	protection_systems, qtff_well_known_types, iso_369_2t_lang_codes
 import descriptors
 
+NULL_FOURCC = '\x00\x00\x00\x00'
+
+def hex_formatter(width_bytes: int):
+	def hex_format(val: int):
+		return f'{val:#0{2 + 2 * width_bytes}x}'
+	return hex_format
 
 def parse_skip_box(ps: Parser):
 	data = ps.read()
@@ -36,12 +42,24 @@ last_handler_seen = None
 
 def parse_hdlr_box(ps: Parser):
 	parse_fullbox(ps)
-	# FIXME: a lot of videos seem to put stuff in the 2nd reserved (apple metadata?), some in the 1st
-	ps.reserved('pre_defined', ps.bytes(4))
+
+	# QuickTime's component_type was reserved as 0 in ISO BMFF.
+	component_type = ps.fourcc()
+	style = 'ISO BMFF' if component_type == NULL_FOURCC else 'QuickTime'
+	ps.field('component_type', component_type, default=NULL_FOURCC)
+
+	# QuickTime's component_subtype became handler_type in ISO BMFF
 	handler_type = ps.fourcc()
-	ps.reserved('reserved', ps.bytes(4 * 3))
-	name = ps.bytes().decode('utf-8')
-	ps.print(f'handler_type = {repr(handler_type)}, name = {repr(name)}')
+	ps.field({
+		'QuickTime': 'component_subtype',
+		'ISO BMFF': 'handler_type'
+	}[style], handler_type)
+	ps.field('component_manufacturer', ps.fourcc(), default=NULL_FOURCC)
+
+	ps.field('component_flags', ps.int(4), hex_formatter(4), default=0)
+	ps.field('component_flags_mask', ps.int(4), hex_formatter(4), default=0)
+	# ISO BMFF changed the string representation too!
+	ps.field('name', ps.pascal_string(1) if style == 'QuickTime' else ps.string(), default='')
 
 	global last_handler_seen
 	last_handler_seen = handler_type

@@ -36,7 +36,8 @@
                 duration = 19036000
                 language = und (Undetermined)
             [hdlr] Handler @ 0x12d, 0x135 .. 0x164 (47)
-                handler_type = 'vide', name = 'GPAC ISO Video Handler\x00'
+                handler_type = 'vide'
+                name = 'GPAC ISO Video Handler'
             [minf] MediaInformation @ 0x164, 0x16c .. 0x37058 (225004)
                 [vmhd] VideoMediaHeader @ 0x16c, 0x174 .. 0x180 (12)
                 [dinf] DataInformation @ 0x180, 0x188 .. 0x1a4 (28)
@@ -128,7 +129,8 @@
                 duration = 30441600
                 language = und (Undetermined)
             [hdlr] Handler @ 0x370e4, 0x370ec .. 0x3711b (47)
-                handler_type = 'soun', name = 'GPAC ISO Audio Handler\x00'
+                handler_type = 'soun'
+                name = 'GPAC ISO Audio Handler'
             [minf] MediaInformation @ 0x3711b, 0x37123 .. 0x386ce (5547)
                 [smhd] SoundMediaHeader @ 0x37123, 0x3712b .. 0x37133 (8)
                 [dinf] DataInformation @ 0x37133, 0x3713b .. 0x37157 (28)
@@ -190,7 +192,8 @@
                 duration = 30438912
                 language = und (Undetermined)
             [hdlr] Handler @ 0x3875a, 0x38762 .. 0x38791 (47)
-                handler_type = 'soun', name = 'GPAC ISO Audio Handler\x00'
+                handler_type = 'soun'
+                name = 'GPAC ISO Audio Handler'
             [minf] MediaInformation @ 0x38791, 0x38799 .. 0x39d2c (5523)
                 [smhd] SoundMediaHeader @ 0x38799, 0x387a1 .. 0x387a9 (8)
                 [dinf] DataInformation @ 0x387a9, 0x387b1 .. 0x387cd (28)
@@ -229,7 +232,7 @@
     [udta] UserData @ 0x39d2c, 0x39d34 .. 0x39eb8 (388)
         [meta] Meta @ 0x39d34, 0x39d3c .. 0x39eb8 (380)
             [hdlr] Handler @ 0x39d40, 0x39d48 .. 0x39d61 (25)
-                handler_type = 'mdir', name = '\x00'
+                handler_type = 'mdir'
             [ilst] MetadataItemList @ 0x39d61, 0x39d69 .. 0x39eb8 (335)
                 [©nam] @ 0x39d69, 0x39d71 .. 0x39da2 (49)
                     [data] @ 0x39d71, 0x39d79 .. 0x39da2 (41)

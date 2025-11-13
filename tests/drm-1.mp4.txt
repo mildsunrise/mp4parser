@@ -19,7 +19,8 @@
                 duration = 0
                 language = und (Undetermined)
             [hdlr] Handler @ 0x114, 0x11c .. 0x149 (45)
-                handler_type = 'vide', name = 'Bento4 Video Handler\x00'
+                handler_type = 'vide'
+                name = 'Bento4 Video Handler'
             [minf] MediaInformation @ 0x149, 0x151 .. 0x2cf (382)
                 [vmhd] VideoMediaHeader @ 0x151, 0x159 .. 0x165 (12)
                 [dinf] DataInformation @ 0x165, 0x16d .. 0x189 (28)

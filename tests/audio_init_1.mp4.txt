@@ -40,7 +40,8 @@
                 duration = 0
                 language = eng (English)
             [hdlr] Handler @ 0x16c, 0x174 .. 0x199 (37)
-                handler_type = 'soun', name = 'SoundHandler\x00'
+                handler_type = 'soun'
+                name = 'SoundHandler'
             [minf] MediaInformation @ 0x199, 0x1a1 .. 0x2cd (300)
                 [smhd] SoundMediaHeader @ 0x1a1, 0x1a9 .. 0x1b1 (8)
                 [dinf] DataInformation @ 0x1b1, 0x1b9 .. 0x1d5 (28)

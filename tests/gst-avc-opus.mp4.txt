@@ -44,7 +44,8 @@
                 duration = 96600
                 language = und (Undetermined)
             [hdlr] Handler @ 0xd303f, 0xd3047 .. 0xd306c (37)
-                handler_type = 'vide', name = 'VideoHandler\x00'
+                handler_type = 'vide'
+                name = 'VideoHandler'
             [minf] MediaInformation @ 0xd306c, 0xd3074 .. 0xd4379 (4869)
                 [vmhd] VideoMediaHeader @ 0xd3074, 0xd307c .. 0xd3088 (12)
                 [dinf] DataInformation @ 0xd3088, 0xd3090 .. 0xd30ac (28)
@@ -115,8 +116,8 @@
         [udta] UserData @ 0xd4379, 0xd4381 .. 0xd43d2 (81)
             [meta] Meta @ 0xd4381, 0xd4389 .. 0xd43d2 (73)
                 [hdlr] Handler @ 0xd438d, 0xd4395 .. 0xd43ae (25)
-                    invalid pre_defined: b'mhlr'
-                    handler_type = 'mdir', name = '\x00'
+                    component_type = 'mhlr'
+                    component_subtype = 'mdir'
                 [ilst] MetadataItemList @ 0xd43ae, 0xd43b6 .. 0xd43d2 (28)
                     [©too] @ 0xd43b6, 0xd43be .. 0xd43d2 (20)
                         [data] @ 0xd43be, 0xd43c6 .. 0xd43d2 (12)
@@ -140,7 +141,8 @@
                 duration = 1463296
                 language = und (Undetermined)
             [hdlr] Handler @ 0xd4482, 0xd448a .. 0xd44af (37)
-                handler_type = 'soun', name = 'SoundHandler\x00'
+                handler_type = 'soun'
+                name = 'SoundHandler'
             [minf] MediaInformation @ 0xd44af, 0xd44b7 .. 0xd5f5a (6819)
                 [smhd] SoundMediaHeader @ 0xd44b7, 0xd44bf .. 0xd44c7 (8)
                 [dinf] DataInformation @ 0xd44c7, 0xd44cf .. 0xd44eb (28)
@@ -192,8 +194,8 @@
         [udta] UserData @ 0xd5f5a, 0xd5f62 .. 0xd5fbd (91)
             [meta] Meta @ 0xd5f62, 0xd5f6a .. 0xd5fbd (83)
                 [hdlr] Handler @ 0xd5f6e, 0xd5f76 .. 0xd5f8f (25)
-                    invalid pre_defined: b'mhlr'
-                    handler_type = 'mdir', name = '\x00'
+                    component_type = 'mhlr'
+                    component_subtype = 'mdir'
                 [ilst] MetadataItemList @ 0xd5f8f, 0xd5f97 .. 0xd5fbd (38)
                     [©des] @ 0xd5f97, 0xd5f9f .. 0xd5fbd (30)
                         [data] @ 0xd5f9f, 0xd5fa7 .. 0xd5fbd (22)
@@ -201,6 +203,6 @@
     [udta] UserData @ 0xd5fbd, 0xd5fc5 .. 0xd5ffa (53)
         [meta] Meta @ 0xd5fc5, 0xd5fcd .. 0xd5ffa (45)
             [hdlr] Handler @ 0xd5fd1, 0xd5fd9 .. 0xd5ff2 (25)
-                invalid pre_defined: b'mhlr'
-                handler_type = 'mdir', name = '\x00'
+                component_type = 'mhlr'
+                component_subtype = 'mdir'
             [ilst] MetadataItemList @ 0xd5ff2, 0xd5ffa .. 0xd5ffa (0)
