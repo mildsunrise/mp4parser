@@ -112,9 +112,6 @@
                         [chunk     7] offset = 0x00f265
                         ...
         [udta] UserData @ 0xc49, 0xc51 .. 0xc55 (4)
-            ERROR: unexpected EOF (needed 4, got 0)
-
-            00 00 00 00                                          ....
     [trak] Track @ 0xc55, 0xc5d .. 0xf28 (715)
         [tkhd] TrackHeader @ 0xc5d, 0xc65 .. 0xcb9 (84)
             flags = 00000f
@@ -194,9 +191,6 @@
                         [chunk     7] offset = 0x00fff8
                         ...
         [udta] UserData @ 0xf1c, 0xf24 .. 0xf28 (4)
-            ERROR: unexpected EOF (needed 4, got 0)
-
-            00 00 00 00                                          ....
     [udta] UserData @ 0xf28, 0xf30 .. 0xf6b (59)
         [©cpy] @ 0xf30, 0xf38 .. 0xf5b (35)
             00 1f 00 00  a9 41 70 70  6c 65 20 43  6f 6d 70 75   .....Apple Compu
@@ -204,9 +198,3 @@
             39 39 38                                             998
         [WLOC] @ 0xf5b, 0xf63 .. 0xf67 (4)
             00 41 00 20                                          .A. 
-        ERROR: unexpected EOF (needed 4, got 0)
-
-        00 00 00 2b  a9 63 70 79  00 1f 00 00  a9 41 70 70   ...+.cpy.....App
-        6c 65 20 43  6f 6d 70 75  74 65 72 2c  20 49 6e 63   le Computer, Inc
-        2e 20 31 39  39 34 2d 31  39 39 38 00  00 00 0c 57   . 1994-1998....W
-        4c 4f 43 00  41 00 20 00  00 00 00                   LOC.A. ....
