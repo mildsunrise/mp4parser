@@ -46,17 +46,19 @@
                 duration = 2001
                 language = und (Undetermined)
             [hdlr] Handler @ 0x371f4e, 0x371f56 .. 0x371f7f (41)
-                invalid pre_defined: b'mhlr'
-                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                handler_type = 'vide', name = '\x10Core Media Video'
+                component_type = 'mhlr'
+                component_subtype = 'vide'
+                component_manufacturer = 'appl'
+                name = 'Core Media Video'
             [minf] MediaInformation @ 0x371f7f, 0x371f87 .. 0x372964 (2525)
                 [vmhd] VideoMediaHeader @ 0x371f87, 0x371f8f .. 0x371f9b (12)
                     graphicsmode = 64
                     opcolor = (32768, 32768, 32768)
                 [hdlr] Handler @ 0x371f9b, 0x371fa3 .. 0x371fd3 (48)
-                    invalid pre_defined: b'dhlr'
-                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                    component_type = 'dhlr'
+                    component_subtype = 'alis'
+                    component_manufacturer = 'appl'
+                    name = 'Core Media Data Handler'
                 [dinf] DataInformation @ 0x371fd3, 0x371fdb .. 0x371ff7 (28)
                     [dref] DataReference @ 0x371fdb, 0x371fe3 .. 0x371ff7 (20)
                         [alis] @ 0x371feb, 0x371ff3 .. 0x371ff7 (4)
@@ -179,15 +181,17 @@
                 duration = 149504
                 language = und (Undetermined)
             [hdlr] Handler @ 0x372a14, 0x372a1c .. 0x372a45 (41)
-                invalid pre_defined: b'mhlr'
-                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                handler_type = 'soun', name = '\x10Core Media Audio'
+                component_type = 'mhlr'
+                component_subtype = 'soun'
+                component_manufacturer = 'appl'
+                name = 'Core Media Audio'
             [minf] MediaInformation @ 0x372a45, 0x372a4d .. 0x372e48 (1019)
                 [smhd] SoundMediaHeader @ 0x372a4d, 0x372a55 .. 0x372a5d (8)
                 [hdlr] Handler @ 0x372a5d, 0x372a65 .. 0x372a95 (48)
-                    invalid pre_defined: b'dhlr'
-                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                    component_type = 'dhlr'
+                    component_subtype = 'alis'
+                    component_manufacturer = 'appl'
+                    name = 'Core Media Data Handler'
                 [dinf] DataInformation @ 0x372a95, 0x372a9d .. 0x372ab9 (28)
                     [dref] DataReference @ 0x372a9d, 0x372aa5 .. 0x372ab9 (20)
                         [alis] @ 0x372aad, 0x372ab5 .. 0x372ab9 (4)
@@ -258,17 +262,20 @@
                 duration = 2001
                 language = und (Undetermined)
             [hdlr] Handler @ 0x372f18, 0x372f20 .. 0x372f4c (44)
-                invalid pre_defined: b'mhlr'
-                invalid reserved: b'appl\x00\x00\x00\x01\x00\x00\x00\x00'
-                handler_type = 'meta', name = '\x13Core Media Metadata'
+                component_type = 'mhlr'
+                component_subtype = 'meta'
+                component_manufacturer = 'appl'
+                component_flags = 0x00000001
+                name = 'Core Media Metadata'
             [minf] MediaInformation @ 0x372f4c, 0x372f54 .. 0x3730b9 (357)
                 [gmhd] BaseMediaInformationHeader @ 0x372f54, 0x372f5c .. 0x372f74 (24)
                     [gmin] BaseMediaInfo @ 0x372f5c, 0x372f64 .. 0x372f74 (16)
                         00 00 00 00  00 40 80 00  80 00 80 00  00 00 00 00   .....@..........
                 [hdlr] Handler @ 0x372f74, 0x372f7c .. 0x372fac (48)
-                    invalid pre_defined: b'dhlr'
-                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                    component_type = 'dhlr'
+                    component_subtype = 'alis'
+                    component_manufacturer = 'appl'
+                    name = 'Core Media Data Handler'
                 [dinf] DataInformation @ 0x372fac, 0x372fb4 .. 0x372fd0 (28)
                     [dref] DataReference @ 0x372fb4, 0x372fbc .. 0x372fd0 (20)
                         [alis] @ 0x372fc4, 0x372fcc .. 0x372fd0 (4)
@@ -322,17 +329,20 @@
                 duration = 2001
                 language = und (Undetermined)
             [hdlr] Handler @ 0x373189, 0x373191 .. 0x3731bd (44)
-                invalid pre_defined: b'mhlr'
-                invalid reserved: b'appl\x00\x00\x00\x01\x00\x00\x00\x00'
-                handler_type = 'meta', name = '\x13Core Media Metadata'
+                component_type = 'mhlr'
+                component_subtype = 'meta'
+                component_manufacturer = 'appl'
+                component_flags = 0x00000001
+                name = 'Core Media Metadata'
             [minf] MediaInformation @ 0x3731bd, 0x3731c5 .. 0x3734e7 (802)
                 [gmhd] BaseMediaInformationHeader @ 0x3731c5, 0x3731cd .. 0x3731e5 (24)
                     [gmin] BaseMediaInfo @ 0x3731cd, 0x3731d5 .. 0x3731e5 (16)
                         00 00 00 00  00 40 80 00  80 00 80 00  00 00 00 00   .....@..........
                 [hdlr] Handler @ 0x3731e5, 0x3731ed .. 0x37321d (48)
-                    invalid pre_defined: b'dhlr'
-                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                    component_type = 'dhlr'
+                    component_subtype = 'alis'
+                    component_manufacturer = 'appl'
+                    name = 'Core Media Data Handler'
                 [dinf] DataInformation @ 0x37321d, 0x373225 .. 0x373241 (28)
                     [dref] DataReference @ 0x373225, 0x37322d .. 0x373241 (20)
                         [alis] @ 0x373235, 0x37323d .. 0x373241 (4)
@@ -387,17 +397,20 @@
                 duration = 2001
                 language = und (Undetermined)
             [hdlr] Handler @ 0x3735b7, 0x3735bf .. 0x3735eb (44)
-                invalid pre_defined: b'mhlr'
-                invalid reserved: b'appl\x00\x00\x00\x01\x00\x00\x00\x00'
-                handler_type = 'meta', name = '\x13Core Media Metadata'
+                component_type = 'mhlr'
+                component_subtype = 'meta'
+                component_manufacturer = 'appl'
+                component_flags = 0x00000001
+                name = 'Core Media Metadata'
             [minf] MediaInformation @ 0x3735eb, 0x3735f3 .. 0x37395e (875)
                 [gmhd] BaseMediaInformationHeader @ 0x3735f3, 0x3735fb .. 0x373613 (24)
                     [gmin] BaseMediaInfo @ 0x3735fb, 0x373603 .. 0x373613 (16)
                         00 00 00 00  00 40 80 00  80 00 80 00  00 00 00 00   .....@..........
                 [hdlr] Handler @ 0x373613, 0x37361b .. 0x37364b (48)
-                    invalid pre_defined: b'dhlr'
-                    invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                    handler_type = 'alis', name = '\x17Core Media Data Handler'
+                    component_type = 'dhlr'
+                    component_subtype = 'alis'
+                    component_manufacturer = 'appl'
+                    name = 'Core Media Data Handler'
                 [dinf] DataInformation @ 0x37364b, 0x373653 .. 0x37366f (28)
                     [dref] DataReference @ 0x373653, 0x37365b .. 0x37366f (20)
                         [alis] @ 0x373663, 0x37366b .. 0x37366f (4)

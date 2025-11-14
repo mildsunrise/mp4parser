@@ -37,7 +37,8 @@
                 duration = 64000
                 language = und (Undetermined)
             [hdlr] Handler @ 0x37eb0, 0x37eb8 .. 0x37edd (37)
-                handler_type = 'vide', name = 'VideoHandler\x00'
+                handler_type = 'vide'
+                name = 'VideoHandler'
             [minf] MediaInformation @ 0x37edd, 0x37ee5 .. 0x391a4 (4799)
                 [vmhd] VideoMediaHeader @ 0x37ee5, 0x37eed .. 0x37ef9 (12)
                 [dinf] DataInformation @ 0x37ef9, 0x37f01 .. 0x37f1d (28)
@@ -172,7 +173,8 @@
                 duration = 221524
                 language = und (Undetermined)
             [hdlr] Handler @ 0x39254, 0x3925c .. 0x39281 (37)
-                handler_type = 'soun', name = 'SoundHandler\x00'
+                handler_type = 'soun'
+                name = 'SoundHandler'
             [minf] MediaInformation @ 0x39281, 0x39289 .. 0x39c5d (2516)
                 [smhd] SoundMediaHeader @ 0x39289, 0x39291 .. 0x39299 (8)
                 [dinf] DataInformation @ 0x39299, 0x392a1 .. 0x392bd (28)
@@ -253,8 +255,8 @@
     [udta] UserData @ 0x39c5d, 0x39c65 .. 0x39cbf (90)
         [meta] Meta @ 0x39c65, 0x39c6d .. 0x39cbf (82)
             [hdlr] Handler @ 0x39c71, 0x39c79 .. 0x39c92 (25)
-                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                handler_type = 'mdir', name = '\x00'
+                handler_type = 'mdir'
+                component_manufacturer = 'appl'
             [ilst] MetadataItemList @ 0x39c92, 0x39c9a .. 0x39cbf (37)
                 [©too] @ 0x39c9a, 0x39ca2 .. 0x39cbf (29)
                     [data] @ 0x39ca2, 0x39caa .. 0x39cbf (21)

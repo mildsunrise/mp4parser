@@ -38,7 +38,8 @@
                 duration = 64000
                 language = und (Undetermined)
             [hdlr] Handler @ 0x287f, 0x2887 .. 0x28ac (37)
-                handler_type = 'vide', name = 'VideoHandler\x00'
+                handler_type = 'vide'
+                name = 'VideoHandler'
             [minf] MediaInformation @ 0x28ac, 0x28b4 .. 0x2c07 (851)
                 [vmhd] VideoMediaHeader @ 0x28b4, 0x28bc .. 0x28c8 (12)
                 [dinf] DataInformation @ 0x28c8, 0x28d0 .. 0x28ec (28)
@@ -97,8 +98,8 @@
     [udta] UserData @ 0x2c07, 0x2c0f .. 0x2c69 (90)
         [meta] Meta @ 0x2c0f, 0x2c17 .. 0x2c69 (82)
             [hdlr] Handler @ 0x2c1b, 0x2c23 .. 0x2c3c (25)
-                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                handler_type = 'mdir', name = '\x00'
+                handler_type = 'mdir'
+                component_manufacturer = 'appl'
             [ilst] MetadataItemList @ 0x2c3c, 0x2c44 .. 0x2c69 (37)
                 [©too] @ 0x2c44, 0x2c4c .. 0x2c69 (29)
                     [data] @ 0x2c4c, 0x2c54 .. 0x2c69 (21)

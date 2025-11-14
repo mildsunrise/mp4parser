@@ -14,6 +14,7 @@ from parser_tables import box_registry
 from contextlib import contextmanager
 from typing import Optional, Union, Callable, TypeVar, Iterable, List, Tuple
 T = TypeVar('T')
+Int = int  # needed to avoid a name collision with MVIO.int() in type signatures
 
 args = options.parser.parse_args()
 fname = args.filename
@@ -136,11 +137,24 @@ class MVIO:
 		return int.from_bytes(self.read(n), 'big')
 
 	def string(self, encoding='utf-8') -> str:
+		"""Parse a C-like string."""
 		data = self.peek()
 		if (size := data.tobytes().find(b'\0')) == -1:
 			raise EOFError('EOF while reading string')
 		self.pos += size + 1
 		return data[:size].tobytes().decode(encoding)
+
+	def pascal_string(self, prefix_size_bytes: Int, encoding: str = 'utf-8') -> str:
+		"""Parse a length-prefixed string."""
+		try:
+			string_length = self.int(prefix_size_bytes)
+		except EOFError:
+			raise EOFError('EOF while reading string size')
+		if self.remaining < string_length:
+			raise EOFError(f'EOF before end of string, expected {string_length} bytes, '
+				f'found {self.remaining} bytes: {bytes(self.read(self.remaining))}')
+		data = self.bytes(string_length)
+		return data.decode(encoding)
 
 	@contextmanager
 	def bits(self, n = -1):

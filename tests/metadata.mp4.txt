@@ -41,7 +41,8 @@
                 duration = 61440
                 language = und (Undetermined)
             [hdlr] Handler @ 0xf7be, 0xf7c6 .. 0xf7eb (37)
-                handler_type = 'vide', name = 'VideoHandler\x00'
+                handler_type = 'vide'
+                name = 'VideoHandler'
             [minf] MediaInformation @ 0xf7eb, 0xf7f3 .. 0xff09 (1814)
                 [vmhd] VideoMediaHeader @ 0xf7f3, 0xf7fb .. 0xf807 (12)
                 [dinf] DataInformation @ 0xf807, 0xf80f .. 0xf82b (28)
@@ -122,7 +123,8 @@
                 timescale = 1000
                 duration = 4000
             [hdlr] Handler @ 0xffb9, 0xffc1 .. 0xffe9 (40)
-                handler_type = 'text', name = 'SubtitleHandler\x00'
+                handler_type = 'text'
+                name = 'SubtitleHandler'
             [minf] MediaInformation @ 0xffe9, 0xfff1 .. 0x10140 (335)
                 [gmhd] BaseMediaInformationHeader @ 0xfff1, 0xfff9 .. 0x1003d (68)
                     [gmin] BaseMediaInfo @ 0xfff9, 0x10001 .. 0x10011 (16)
@@ -168,8 +170,8 @@
     [udta] UserData @ 0x10140, 0x10148 .. 0x10216 (206)
         [meta] Meta @ 0x10148, 0x10150 .. 0x101cd (125)
             [hdlr] Handler @ 0x10154, 0x1015c .. 0x10175 (25)
-                invalid reserved: b'appl\x00\x00\x00\x00\x00\x00\x00\x00'
-                handler_type = 'mdir', name = '\x00'
+                handler_type = 'mdir'
+                component_manufacturer = 'appl'
             [ilst] MetadataItemList @ 0x10175, 0x1017d .. 0x101cd (80)
                 [©nam] @ 0x1017d, 0x10185 .. 0x101a9 (36)
                     [data] @ 0x10185, 0x1018d .. 0x101a9 (28)

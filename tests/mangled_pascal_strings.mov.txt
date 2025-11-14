@@ -1,0 +1,212 @@
+[moov] Movie @ 0x0, 0x8 .. 0xf6b (3939)
+    [mvhd] MovieHeader @ 0x8, 0x10 .. 0x74 (100)
+        creation_time = 1998-03-25 11:41:11Z
+        modification_time = 1998-03-25 11:41:11Z
+        timescale = 600
+        duration = 3739
+        next_track_ID = 6
+    [trak] Track @ 0x74, 0x7c .. 0xc55 (3033)
+        [tkhd] TrackHeader @ 0x7c, 0x84 .. 0xd8 (84)
+            flags = 00000f
+            creation_time = 1998-03-23 12:33:11Z
+            modification_time = 1998-03-25 11:41:11Z
+            track_ID = 2
+            duration = 3739
+            layer = -3
+            volume = 0.0
+            size = 206.0 × 243.0
+        [edts] Edit @ 0xd8, 0xe0 .. 0xfc (28)
+            [elst] EditList @ 0xe0, 0xe8 .. 0xfc (20)
+                entry_count = 1
+                [edit segment   0] duration =   3739, media_time =      0, media_rate = 0.94677734375
+        [mdia] Media @ 0xfc, 0x104 .. 0xc49 (2885)
+            [mdhd] MediaHeader @ 0x104, 0x10c .. 0x124 (24)
+                creation_time = 1998-03-25 11:41:11Z
+                modification_time = 1998-03-25 11:41:11Z
+                timescale = 600
+                duration = 3540
+            [hdlr] Handler @ 0x124, 0x12c .. 0x15e (50)
+                component_type = 'mhlr'
+                component_subtype = 'vide'
+                component_manufacturer = 'appl'
+                component_flags = 0x40000000
+                component_flags_mask = 0x0001004b
+                name = 'Apple Video Media Handler'
+            [minf] MediaInformation @ 0x15e, 0x166 .. 0xc49 (2787)
+                [vmhd] VideoMediaHeader @ 0x166, 0x16e .. 0x17a (12)
+                    graphicsmode = 64
+                    opcolor = (32768, 32768, 32768)
+                [hdlr] Handler @ 0x17a, 0x182 .. 0x1b3 (49)
+                    component_type = 'dhlr'
+                    component_subtype = 'alis'
+                    component_manufacturer = 'appl'
+                    component_flags = 0x40000001
+                    component_flags_mask = 0x00010066
+                    ERROR: EOF before end of string, expected 53 bytes, found 24 bytes: b'Not a long enough string'
+
+                    00 00 00 00  64 68 6c 72  61 6c 69 73  61 70 70 6c   ....dhlralisappl
+                    40 00 00 01  00 01 00 66  35 4e 6f 74  20 61 20 6c   @......f5Not a l
+                    6f 6e 67 20  65 6e 6f 75  67 68 20 73  74 72 69 6e   ong enough strin
+                    67                                                   g
+                [dinf] DataInformation @ 0x1b3, 0x1bb .. 0x1d7 (28)
+                    [dref] DataReference @ 0x1bb, 0x1c3 .. 0x1d7 (20)
+                        [alis] @ 0x1cb, 0x1d3 .. 0x1d7 (4)
+                            00 00 00 01                                          ....
+                [stbl] SampleTable @ 0x1d7, 0x1df .. 0xc49 (2666)
+                    [stsd] SampleDescription @ 0x1df, 0x1e7 .. 0xa0d (2086)
+                        [smc ] @ 0x1ef, 0x1f7 .. 0xa0d (2070)
+                            data_reference_index = 1
+                            invalid reserved: b'\x00\x01\x00\x02appl\x00\x00\x04\x00\x00\x00\x04\x00'
+                            size = 206 × 243
+                            compressorname = 'Graphics'
+                            depth = 8
+                            invalid pre_defined_3: 0
+                            ERROR: invalid type '\x00\x00\x00÷'
+
+                            00 00 00 00  00 00 00 01  00 01 00 02  61 70 70 6c   ............appl
+                            00 00 04 00  00 00 04 00  00 ce 00 f3  00 48 00 00   .............H..
+                            00 48 00 00  00 00 00 00  00 01 08 47  72 61 70 68   .H.........Graph
+                            69 63 73 00  00 00 00 00  00 00 00 00  00 00 00 00   ics.............
+                            00 00 00 00  00 00 00 00  00 00 00 08  00 00 00 00   ................
+                            00 00 00 00  00 f7 00 00  ff ff ff ff  f7 bd 00 01   ................
+                            6b 5a c6 31  c6 31 00 02  de f7 84 21  94 a5 00 03   kZ.1.1.....!....
+                            ...
+                    [stts] TimeToSample @ 0xa0d, 0xa15 .. 0xa35 (32)
+                        entry_count = 3
+                        [entry   0] [sample =      1, time =      0] sample_count =     1, sample_delta =   600
+                        [entry   1] [sample =      2, time =    600] sample_count =    39, sample_delta =    60
+                        [entry   2] [sample =     41, time =   2940] sample_count =     1, sample_delta =   600
+                        [samples =     41, time =   3540]
+                    [stss] SyncSample @ 0xa35, 0xa3d .. 0xa4d (16)
+                        entry_count = 2
+                        [sync sample     0] sample_number =      1
+                        [sync sample     1] sample_number =     25
+                    [stsc] SampleToChunk @ 0xa4d, 0xa55 .. 0xb35 (224)
+                        entry_count = 18
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk =    1, sample_description_index = 1
+                        [entry   1] [sample =      2] first_chunk =     2, samples_per_chunk =    3, sample_description_index = 1
+                        [entry   2] [sample =      5] first_chunk =     3, samples_per_chunk =    2, sample_description_index = 1
+                        [entry   3] [sample =      7] first_chunk =     4, samples_per_chunk =    3, sample_description_index = 1
+                        [entry   4] [sample =     10] first_chunk =     5, samples_per_chunk =    1, sample_description_index = 1
+                        [entry   5] [sample =     11] first_chunk =     6, samples_per_chunk =    3, sample_description_index = 1
+                        [entry   6] [sample =     14] first_chunk =     7, samples_per_chunk =    2, sample_description_index = 1
+                        ...
+                    [stsz] SampleSize @ 0xb35, 0xb3d .. 0xbed (176)
+                        sample_count = 41
+                        [sample      1] sample_size =  6393
+                        [sample      2] sample_size =  1525
+                        [sample      3] sample_size =  1784
+                        [sample      4] sample_size =  1817
+                        [sample      5] sample_size =  1966
+                        [sample      6] sample_size =  1769
+                        [sample      7] sample_size =  1765
+                        ...
+                    [stco] ChunkOffset @ 0xbed, 0xbf5 .. 0xc49 (84)
+                        entry_count = 19
+                        [chunk     1] offset = 0x003512
+                        [chunk     2] offset = 0x00791c
+                        [chunk     3] offset = 0x008d22
+                        [chunk     4] offset = 0x00b142
+                        [chunk     5] offset = 0x00c6ee
+                        [chunk     6] offset = 0x00e37b
+                        [chunk     7] offset = 0x00f265
+                        ...
+        [udta] UserData @ 0xc49, 0xc51 .. 0xc55 (4)
+            ERROR: unexpected EOF (needed 4, got 0)
+
+            00 00 00 00                                          ....
+    [trak] Track @ 0xc55, 0xc5d .. 0xf28 (715)
+        [tkhd] TrackHeader @ 0xc5d, 0xc65 .. 0xcb9 (84)
+            flags = 00000f
+            creation_time = 1998-03-25 01:14:09Z
+            modification_time = 1998-03-25 11:41:11Z
+            track_ID = 5
+            duration = 3720
+            layer = -4
+        [edts] Edit @ 0xcb9, 0xcc1 .. 0xcdd (28)
+            [elst] EditList @ 0xcc1, 0xcc9 .. 0xcdd (20)
+                entry_count = 1
+                [edit segment   0] duration =   3720, media_time =      0, media_rate = 1.0
+        [mdia] Media @ 0xcdd, 0xce5 .. 0xf1c (567)
+            [mdhd] MediaHeader @ 0xce5, 0xced .. 0xd05 (24)
+                creation_time = 1998-03-25 11:41:11Z
+                modification_time = 1998-03-25 11:41:11Z
+                timescale = 11025
+                duration = 68355
+            [hdlr] Handler @ 0xd05, 0xd0d .. 0xd25 (24)
+                component_type = 'mhlr'
+                component_subtype = 'soun'
+                component_manufacturer = 'appl'
+                component_flags = 0x40000000
+                component_flags_mask = 0x0001004c
+                ERROR: EOF while reading string size
+
+                00 00 00 00  6d 68 6c 72  73 6f 75 6e  61 70 70 6c   ....mhlrsounappl
+                40 00 00 00  00 01 00 4c                             @......L
+            [free] FreeSpace @ 0xd25, 0xd2d .. 0xd3f (18)
+                43 6c 69 70  70 65 64 20  70 72 65 76  2e 20 62 6f   Clipped prev. bo
+                78 21                                                x!
+            [minf] MediaInformation @ 0xd3f, 0xd47 .. 0xf1c (469)
+                [smhd] SoundMediaHeader @ 0xd47, 0xd4f .. 0xd57 (8)
+                [hdlr] Handler @ 0xd57, 0xd5f .. 0xd90 (49)
+                    component_type = 'dhlr'
+                    component_subtype = 'alis'
+                    component_manufacturer = 'appl'
+                    component_flags = 0x40000001
+                    component_flags_mask = 0x00010066
+                    name = 'Apple Alias Data Handler'
+                [dinf] DataInformation @ 0xd90, 0xd98 .. 0xdb4 (28)
+                    [dref] DataReference @ 0xd98, 0xda0 .. 0xdb4 (20)
+                        [alis] @ 0xda8, 0xdb0 .. 0xdb4 (4)
+                            00 00 00 01                                          ....
+                [stbl] SampleTable @ 0xdb4, 0xdbc .. 0xf1c (352)
+                    [stsd] SampleDescription @ 0xdbc, 0xdc4 .. 0xe00 (60)
+                        [twos] @ 0xdcc, 0xdd4 .. 0xe00 (44)
+                            data_reference_index = 1
+                            00 01 00 00  00 00 00 00  00 01 00 08  00 00 00 00   ................
+                            2b 11 00 00  00 00 00 00  00 00 00 00  00 00 00 00   +...............
+                            00 00 00 00                                          ....
+                    [stts] TimeToSample @ 0xe00, 0xe08 .. 0xe18 (16)
+                        entry_count = 1
+                        [entry   0] [sample =      1, time =      0] sample_count = 68355, sample_delta =     1
+                        [samples =  68355, time =  68355]
+                    [stsc] SampleToChunk @ 0xe18, 0xe20 .. 0xec4 (164)
+                        entry_count = 13
+                        [entry   0] [sample =      1] first_chunk =     1, samples_per_chunk = 5513, sample_description_index = 1
+                        [entry   1] [sample =   5514] first_chunk =     2, samples_per_chunk = 5512, sample_description_index = 1
+                        [entry   2] [sample =  11026] first_chunk =     3, samples_per_chunk = 5513, sample_description_index = 1
+                        [entry   3] [sample =  16539] first_chunk =     4, samples_per_chunk = 5512, sample_description_index = 1
+                        [entry   4] [sample =  22051] first_chunk =     5, samples_per_chunk = 5513, sample_description_index = 1
+                        [entry   5] [sample =  27564] first_chunk =     6, samples_per_chunk = 5512, sample_description_index = 1
+                        [entry   6] [sample =  33076] first_chunk =     7, samples_per_chunk = 5513, sample_description_index = 1
+                        ...
+                    [stsz] SampleSize @ 0xec4, 0xecc .. 0xed8 (12)
+                        sample_size = 1
+                        sample_count = 68355
+                    [stco] ChunkOffset @ 0xed8, 0xee0 .. 0xf1c (60)
+                        entry_count = 13
+                        [chunk     1] offset = 0x000a01
+                        [chunk     2] offset = 0x001f8a
+                        [chunk     3] offset = 0x004e0b
+                        [chunk     4] offset = 0x006394
+                        [chunk     5] offset = 0x009bb9
+                        [chunk     6] offset = 0x00cdf3
+                        [chunk     7] offset = 0x00fff8
+                        ...
+        [udta] UserData @ 0xf1c, 0xf24 .. 0xf28 (4)
+            ERROR: unexpected EOF (needed 4, got 0)
+
+            00 00 00 00                                          ....
+    [udta] UserData @ 0xf28, 0xf30 .. 0xf6b (59)
+        [©cpy] @ 0xf30, 0xf38 .. 0xf5b (35)
+            00 1f 00 00  a9 41 70 70  6c 65 20 43  6f 6d 70 75   .....Apple Compu
+            74 65 72 2c  20 49 6e 63  2e 20 31 39  39 34 2d 31   ter, Inc. 1994-1
+            39 39 38                                             998
+        [WLOC] @ 0xf5b, 0xf63 .. 0xf67 (4)
+            00 41 00 20                                          .A. 
+        ERROR: unexpected EOF (needed 4, got 0)
+
+        00 00 00 2b  a9 63 70 79  00 1f 00 00  a9 41 70 70   ...+.cpy.....App
+        6c 65 20 43  6f 6d 70 75  74 65 72 2c  20 49 6e 63   le Computer, Inc
+        2e 20 31 39  39 34 2d 31  39 39 38 00  00 00 0c 57   . 1994-1998....W
+        4c 4f 43 00  41 00 20 00  00 00 00                   LOC.A. ....

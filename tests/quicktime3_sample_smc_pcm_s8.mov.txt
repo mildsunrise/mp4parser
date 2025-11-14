@@ -41,17 +41,23 @@
                             timescale = 600
                             duration = 3540
                         [hdlr] Handler @ 0x124, 0x12c .. 0x15e (50)
-                            invalid pre_defined: b'mhlr'
-                            invalid reserved: b'appl@\x00\x00\x00\x00\x01\x00K'
-                            handler_type = 'vide', name = '\x19Apple Video Media Handler'
+                            component_type = 'mhlr'
+                            component_subtype = 'vide'
+                            component_manufacturer = 'appl'
+                            component_flags = 0x40000000
+                            component_flags_mask = 0x0001004b
+                            name = 'Apple Video Media Handler'
                         [minf] MediaInformation @ 0x15e, 0x166 .. 0xc49 (2787)
                             [vmhd] VideoMediaHeader @ 0x166, 0x16e .. 0x17a (12)
                                 graphicsmode = 64
                                 opcolor = (32768, 32768, 32768)
                             [hdlr] Handler @ 0x17a, 0x182 .. 0x1b3 (49)
-                                invalid pre_defined: b'dhlr'
-                                invalid reserved: b'appl@\x00\x00\x01\x00\x01\x00f'
-                                handler_type = 'alis', name = '\x18Apple Alias Data Handler'
+                                component_type = 'dhlr'
+                                component_subtype = 'alis'
+                                component_manufacturer = 'appl'
+                                component_flags = 0x40000001
+                                component_flags_mask = 0x00010066
+                                name = 'Apple Alias Data Handler'
                             [dinf] DataInformation @ 0x1b3, 0x1bb .. 0x1d7 (28)
                                 [dref] DataReference @ 0x1bb, 0x1c3 .. 0x1d7 (20)
                                     [alis] @ 0x1cb, 0x1d3 .. 0x1d7 (4)
@@ -131,15 +137,21 @@
                             timescale = 11025
                             duration = 68355
                         [hdlr] Handler @ 0xd05, 0xd0d .. 0xd3f (50)
-                            invalid pre_defined: b'mhlr'
-                            invalid reserved: b'appl@\x00\x00\x00\x00\x01\x00L'
-                            handler_type = 'soun', name = '\x19Apple Sound Media Handler'
+                            component_type = 'mhlr'
+                            component_subtype = 'soun'
+                            component_manufacturer = 'appl'
+                            component_flags = 0x40000000
+                            component_flags_mask = 0x0001004c
+                            name = 'Apple Sound Media Handler'
                         [minf] MediaInformation @ 0xd3f, 0xd47 .. 0xf1c (469)
                             [smhd] SoundMediaHeader @ 0xd47, 0xd4f .. 0xd57 (8)
                             [hdlr] Handler @ 0xd57, 0xd5f .. 0xd90 (49)
-                                invalid pre_defined: b'dhlr'
-                                invalid reserved: b'appl@\x00\x00\x01\x00\x01\x00f'
-                                handler_type = 'alis', name = '\x18Apple Alias Data Handler'
+                                component_type = 'dhlr'
+                                component_subtype = 'alis'
+                                component_manufacturer = 'appl'
+                                component_flags = 0x40000001
+                                component_flags_mask = 0x00010066
+                                name = 'Apple Alias Data Handler'
                             [dinf] DataInformation @ 0xd90, 0xd98 .. 0xdb4 (28)
                                 [dref] DataReference @ 0xd98, 0xda0 .. 0xdb4 (20)
                                     [alis] @ 0xda8, 0xdb0 .. 0xdb4 (4)
