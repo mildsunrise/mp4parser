@@ -337,6 +337,15 @@ def parse_sgpd_box(ps: Parser):
 		else:
 			raise NotImplementedError('TODO: parse box')
 
+def parse_cslg_box(ps: Parser):
+	version, box_flags = parse_fullbox(ps, 1)
+	int_size = [4, 8][version]
+	ps.field("compositionToDTSShift", ps.sint(int_size))
+	ps.field("leastDecodeToDisplayDelta", ps.sint(int_size))
+	ps.field("greatestDecodeToDisplayDelta", ps.sint(int_size))
+	ps.field("compositionStartTime", ps.sint(int_size))
+	ps.field("compositionEndTime", ps.sint(int_size))
+
 
 # CODEC-SPECIFIC BOXES
 
