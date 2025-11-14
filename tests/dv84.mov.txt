@@ -67,13 +67,74 @@
                     [stsd] SampleDescription @ 0x371fff, 0x372007 .. 0x3722ca (707)
                         [hvc1] HEVCSampleEntry @ 0x37200f, 0x372017 .. 0x3722ca (691)
                             data_reference_index = 1
-                            00 00 00 00  00 00 00 00  00 00 02 00  00 00 02 00   ................
-                            07 80 04 38  00 48 00 00  00 48 00 00  00 00 00 00   ...8.H...H......
-                            00 01 04 48  45 56 43 00  00 00 00 00  00 00 00 00   ...HEVC.........
+                            invalid reserved: b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x02\x00'
+                            size = 1920 × 1080
+                            compressorname = 'HEVC'
+                            [hvcC] HEVCConfiguration @ 0x372065, 0x37206d .. 0x372294 (551)
+                                general_profile_space = 0
+                                general_tier_flag = 0
+                                general_profile_idc = 02
+                                general_profile_compatibility_flags = 20000000
+                                general_constraint_indicator_flags = b00000000000
+                                general_level_idc = 78
+                                min_spatial_segmentation_idc = 0
+                                parallelismType = 0
+                                chromaFormat = 1
+                                bitDepthLumaMinus8 = 2
+                                bitDepthChromaMinus8 = 2
+                                avgFrameRate = 0
+                                constantFrameRate = 0
+                                numTemporalLayers = 1
+                                temporalIdNested = False
+                                lengthSizeMinusOne = 3
+                                - array 0:
+                                    array_completeness = True
+                                    NAL_unit_type = 32
+                                    - NALU 0
+                                        40 01 0c 01  ff ff 02 20  00 00 03 00  b0 00 00 03   @...... ........
+                                        00 00 03 00  78 15 c0 90                             ....x...
+                                - array 1:
+                                    array_completeness = True
+                                    NAL_unit_type = 33
+                                    - NALU 0
+                                        42 01 01 02  20 00 00 03  00 b0 00 00  03 00 00 03   B... ...........
+                                        00 78 a0 03  c0 80 11 07  ca d8 81 5e  e4 59 54 d4   .x.........^.YT.
+                                        24 48 24 02                                          $H$.
+                                - array 2:
+                                    array_completeness = True
+                                    NAL_unit_type = 34
+                                    - NALU 0
+                                        44 01 c0 28  64 b8 64 14  c9                         D..(d.d..
+                                    - NALU 1
+                                        44 01 50 0a  19 2e 19 05  3c 21 f3 16  43 0c 1a 0a   D.P.....<!..C...
+                                        a0 52 84 3e  62 c8 61 83  41 54 0a 50  87 cc 59 0c   .R.>b.a.AT.P..Y.
+                                        30 68 2a 81  4a 10 f9 38  ac 21 07 50  87 c9 c5 61   0h*.J..8.!.P...a
+                                        08 3a 84 3e  4e 2b 08 41  d4 21 ff 4d  34 9a b4 62   .:.>N+.A.!.M4..b
+                                        a4 d9 0c 59  25 91 48 63  96 20 82 22  4a 38 70 a1   ...Y%.Hc. ."J8p.
+                                        63 c3 c1 68  5c 18 04 82  60 42 81 4a  10 ff a6 9a   c..h\...`B.J....
+                                        4d 5a 31 52  6c 86 2c 92  c8 a4 31 cb  10 41 11 25   MZ1Rl.,...1..A.%
+                                        ...
+                                - array 3:
+                                    array_completeness = True
+                                    NAL_unit_type = 39
+                                    - NALU 0
+                                        4e 01 94 08  00 2f e9 a0  3d 13 40 42  80            N..../..=.@B.
+                            [dvvC] @ 0x372294, 0x37229c .. 0x3722b4 (24)
+                                01 00 10 25  40 00 00 00  00 00 00 00  00 00 00 00   ...%@...........
+                                00 00 00 00  00 00 00 00                             ........
+                            [colr] ColourInformation @ 0x3722b4, 0x3722bc .. 0x3722c6 (10)
+                                colour_type = 'nclc'
+                                data = @ 0x3722c0 .. 0x3722c6 (6)
+                                  00 09 00 12  00 09                                   ......
+                            ERROR: unexpected EOF (needed 4, got 0)
+
+                            00 00 00 00  00 00 00 01  00 00 00 00  00 00 00 00   ................
+                            00 00 02 00  00 00 02 00  07 80 04 38  00 48 00 00   ...........8.H..
+                            00 48 00 00  00 00 00 00  00 01 04 48  45 56 43 00   .H.........HEVC.
                             00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00   ................
-                            00 00 00 18  ff ff 00 00  02 2f 68 76  63 43 01 02   ........./hvcC..
-                            20 00 00 00  b0 00 00 00  00 00 78 f0  00 fc fd fa    .........x.....
-                            fa 00 00 0b  04 a0 00 01  00 18 40 01  0c 01 ff ff   ..........@.....
+                            00 00 00 00  00 00 00 00  00 00 00 18  ff ff 00 00   ................
+                            02 2f 68 76  63 43 01 02  20 00 00 00  b0 00 00 00   ./hvcC.. .......
+                            00 00 78 f0  00 fc fd fa  fa 00 00 0b  04 a0 00 01   ..x.............
                             ...
                     [sgpd] SampleGroupDescription @ 0x3722ca, 0x3722d2 .. 0x3722f6 (36)
                         version = 1
@@ -200,13 +261,18 @@
                     [stsd] SampleDescription @ 0x372ac1, 0x372ac9 .. 0x372b60 (151)
                         [mp4a] MP4AudioSampleEntry @ 0x372ad1, 0x372ad9 .. 0x372b60 (135)
                             data_reference_index = 1
-                            00 01 00 00  00 00 00 00  00 02 00 10  ff fe 00 00   ................
-                            ac 44 00 00  00 00 04 00  00 00 00 01  00 00 00 02   .D..............
-                            00 00 00 02  00 00 00 5b  77 61 76 65  00 00 00 0c   .......[wave....
-                            66 72 6d 61  6d 70 34 61  00 00 00 0c  6d 70 34 61   frmamp4a....mp4a
-                            00 00 00 00  00 00 00 33  65 73 64 73  00 00 00 00   .......3esds....
-                            03 80 80 80  22 00 00 00  04 80 80 80  14 40 14 00   ...."........@..
-                            18 00 00 02  ee 00 00 00  00 00 05 80  80 80 02 12   ................
+                            invalid reserved_1_2: b'\x00\x01'
+                            invalid pre_defined_1: 65534
+                            samplerate = 44100.0
+                            ERROR: invalid type '\x00\x00\x00\x01'
+
+                            00 00 00 00  00 00 00 01  00 01 00 00  00 00 00 00   ................
+                            00 02 00 10  ff fe 00 00  ac 44 00 00  00 00 04 00   .........D......
+                            00 00 00 01  00 00 00 02  00 00 00 02  00 00 00 5b   ...............[
+                            77 61 76 65  00 00 00 0c  66 72 6d 61  6d 70 34 61   wave....frmamp4a
+                            00 00 00 0c  6d 70 34 61  00 00 00 00  00 00 00 33   ....mp4a.......3
+                            65 73 64 73  00 00 00 00  03 80 80 80  22 00 00 00   esds........"...
+                            04 80 80 80  14 40 14 00  18 00 00 02  ee 00 00 00   .....@..........
                             ...
                     [stts] TimeToSample @ 0x372b60, 0x372b68 .. 0x372b78 (16)
                         entry_count = 1
@@ -284,13 +350,13 @@
                     [stsd] SampleDescription @ 0x372fd8, 0x372fe0 .. 0x37305d (125)
                         [mebx] @ 0x372fe8, 0x372ff0 .. 0x37305d (109)
                             data_reference_index = 1
-                            00 00 00 65  6b 65 79 73  00 00 00 5d  00 00 00 01   ...ekeys...]....
-                            00 00 00 31  6b 65 79 64  6d 64 74 61  63 6f 6d 2e   ...1keydmdtacom.
-                            61 70 70 6c  65 2e 71 75  69 63 6b 74  69 6d 65 2e   apple.quicktime.
-                            76 69 64 65  6f 2d 6f 72  69 65 6e 74  61 74 69 6f   video-orientatio
-                            6e 00 00 00  10 64 74 79  70 00 00 00  00 00 00 00   n....dtyp.......
-                            42 00 00 00  14 73 64 70  64 00 00 00  0c 73 64 70   B....sdpd....sdp
-                            69 00 00 00  00                                      i....
+                            [keys] MetadataItemKeys @ 0x372ff8, 0x373000 .. 0x37305d (93)
+                                00 00 00 5d  00 00 00 01  00 00 00 31  6b 65 79 64   ...].......1keyd
+                                6d 64 74 61  63 6f 6d 2e  61 70 70 6c  65 2e 71 75   mdtacom.apple.qu
+                                69 63 6b 74  69 6d 65 2e  76 69 64 65  6f 2d 6f 72   icktime.video-or
+                                69 65 6e 74  61 74 69 6f  6e 00 00 00  10 64 74 79   ientation....dty
+                                70 00 00 00  00 00 00 00  42 00 00 00  14 73 64 70   p.......B....sdp
+                                64 00 00 00  0c 73 64 70  69 00 00 00  00            d....sdpi....
                     [stts] TimeToSample @ 0x37305d, 0x373065 .. 0x373075 (16)
                         entry_count = 1
                         [entry   0] [sample =      1, time =      0] sample_count =     1, sample_delta =  2001
@@ -351,14 +417,20 @@
                     [stsd] SampleDescription @ 0x373249, 0x373251 .. 0x37348b (570)
                         [mebx] @ 0x373259, 0x373261 .. 0x37348b (554)
                             data_reference_index = 1
-                            00 00 01 f6  6b 65 79 73  00 00 00 60  00 00 00 03   ....keys...`....
-                            00 00 00 34  6b 65 79 64  66 69 65 6c  63 6f 6d 2e   ...4keydfielcom.
-                            61 70 70 6c  65 2e 71 75  69 63 6b 74  69 6d 65 2e   apple.quicktime.
-                            64 65 74 65  63 74 65 64  2d 66 61 63  65 2e 62 6f   detected-face.bo
-                            75 6e 64 73  00 00 00 10  64 74 79 70  00 00 00 00   unds....dtyp....
-                            00 00 00 50  00 00 00 14  73 64 70 64  00 00 00 0c   ...P....sdpd....
-                            73 64 70 69  00 00 00 00  00 00 00 7a  00 00 00 01   sdpi.......z....
-                            ...
+                            [keys] MetadataItemKeys @ 0x373269, 0x373271 .. 0x37345f (494)
+                                00 00 00 60  00 00 00 03  00 00 00 34  6b 65 79 64   ...`.......4keyd
+                                66 69 65 6c  63 6f 6d 2e  61 70 70 6c  65 2e 71 75   fielcom.apple.qu
+                                69 63 6b 74  69 6d 65 2e  64 65 74 65  63 74 65 64   icktime.detected
+                                2d 66 61 63  65 2e 62 6f  75 6e 64 73  00 00 00 10   -face.bounds....
+                                64 74 79 70  00 00 00 00  00 00 00 50  00 00 00 14   dtyp.......P....
+                                73 64 70 64  00 00 00 0c  73 64 70 69  00 00 00 00   sdpd....sdpi....
+                                00 00 00 7a  00 00 00 01  00 00 00 2d  6b 65 79 64   ...z.......-keyd
+                                ...
+                            [lidp] @ 0x37345f, 0x373467 .. 0x37346b (4)
+                                00 00 00 01                                          ....
+                            [lidl] @ 0x37346b, 0x373473 .. 0x37348b (24)
+                                00 00 00 18  01 00 00 00  00 00 00 02  00 00 00 03   ................
+                                00 00 00 04  00 00 00 05                             ........
                     [stts] TimeToSample @ 0x37348b, 0x373493 .. 0x3734a3 (16)
                         entry_count = 1
                         [entry   0] [sample =      1, time =      0] sample_count =     1, sample_delta =  2001
@@ -419,14 +491,15 @@
                     [stsd] SampleDescription @ 0x373677, 0x37367f .. 0x3738ce (591)
                         [mebx] @ 0x373687, 0x37368f .. 0x3738ce (575)
                             data_reference_index = 1
-                            00 00 02 37  6b 65 79 73  00 00 02 2f  00 00 00 01   ...7keys.../....
-                            00 00 00 2f  6b 65 79 64  6d 64 74 61  63 6f 6d 2e   .../keydmdtacom.
-                            61 70 70 6c  65 2e 71 75  69 63 6b 74  69 6d 65 2e   apple.quicktime.
-                            6c 69 76 65  2d 70 68 6f  74 6f 2d 69  6e 66 6f 00   live-photo-info.
-                            00 00 43 64  74 79 70 00  00 00 01 63  6f 6d 2e 61   ..Cdtyp....com.a
-                            70 70 6c 65  2e 71 75 69  63 6b 74 69  6d 65 2e 63   pple.quicktime.c
-                            6f 6d 2e 61  70 70 6c 65  2e 71 75 69  63 6b 74 69   om.apple.quickti
-                            ...
+                            [keys] MetadataItemKeys @ 0x373697, 0x37369f .. 0x3738ce (559)
+                                00 00 02 2f  00 00 00 01  00 00 00 2f  6b 65 79 64   .../......./keyd
+                                6d 64 74 61  63 6f 6d 2e  61 70 70 6c  65 2e 71 75   mdtacom.apple.qu
+                                69 63 6b 74  69 6d 65 2e  6c 69 76 65  2d 70 68 6f   icktime.live-pho
+                                74 6f 2d 69  6e 66 6f 00  00 00 43 64  74 79 70 00   to-info...Cdtyp.
+                                00 00 01 63  6f 6d 2e 61  70 70 6c 65  2e 71 75 69   ...com.apple.qui
+                                63 6b 74 69  6d 65 2e 63  6f 6d 2e 61  70 70 6c 65   cktime.com.apple
+                                2e 71 75 69  63 6b 74 69  6d 65 2e 6c  69 76 65 2d   .quicktime.live-
+                                ...
                     [stts] TimeToSample @ 0x3738ce, 0x3738d6 .. 0x3738f6 (32)
                         entry_count = 3
                         [entry   0] [sample =      1, time =      0] sample_count =    34, sample_delta =    20
