@@ -5,9 +5,9 @@ Handlers for each box
 from typing import List
 
 from mp4parser import \
-	Parser, max_dump, max_rows, mask, print_hex_dump, args, \
-	format_time, format_size, format_fraction, decode_language, \
-	parse_boxes, parse_fullbox, \
+	Parser, max_dump, max_rows, mask, parse_box, parse_contents, \
+	print_hex_dump, args, format_time, format_size, format_fraction, \
+	decode_language, parse_boxes, parse_fullbox, \
 	ansi_bold, ansi_dim, ansi_fg1, ansi_fg2
 from parser_tables import \
 	protection_systems, qtff_well_known_types, iso_369_2t_lang_codes
@@ -918,6 +918,21 @@ def parse_data_box(ps: Parser):
 		ps.field('value', ps.bytes().decode('utf-8'))
 	else:
 		ps.field_dump('value')
+
+def parse_udta_box(ps: Parser):
+	# From the QuickTime spec:
+	# > For historical reasons, the data list is optionally terminated by a
+	# > 32-bit integer set to 0.
+	# (Otherwise this is a regular directory box.)
+	with ps.in_list():
+		while ps.remaining > 4:
+			with ps.in_list_item():
+				parse_box(ps, parse_contents)
+	if ps.ended:
+		return
+	trailer = bytes(ps.read())
+	if trailer != b'\x00\x00\x00\x00':
+		raise AssertionError(f'Optional udta trailer must be a single 32-bit zero, found: {trailer}')
 
 def parse_dcom_box(ps: Parser):
     ps.field('compression_method', ps.fourcc())
