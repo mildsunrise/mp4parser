@@ -61,8 +61,10 @@ def parse_hdlr_box(ps: Parser):
 	# ISO BMFF changed the string representation too!
 	ps.field('name', ps.pascal_string(1) if style == 'QuickTime' else ps.string(), default='')
 
-	global last_handler_seen
-	last_handler_seen = handler_type
+	# For stsd parsing we only care about media handlers (mhlr), not QuickTime data handlers (dhlr).
+	if style == "ISO BMFF" or component_type == "mhlr":
+		global last_handler_seen
+		last_handler_seen = handler_type
 
 def parse_stsd_box(ps: Parser):
 	version, _ = parse_fullbox(ps, max_version=255)
