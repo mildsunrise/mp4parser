@@ -64,22 +64,25 @@
                                         00 00 00 01                                          ....
                             [stbl] SampleTable @ 0x1d7, 0x1df .. 0xc49 (2666)
                                 [stsd] SampleDescription @ 0x1df, 0x1e7 .. 0xa0d (2086)
-                                    [smc ] @ 0x1ef, 0x1f7 .. 0xa0d (2070)
+                                    [smc ] SMCSampleEntry @ 0x1ef, 0x1f7 .. 0xa0d (2070)
                                         data_reference_index = 1
-                                        invalid reserved: b'\x00\x01\x00\x02appl\x00\x00\x04\x00\x00\x00\x04\x00'
+                                        sample_entry_version = 1
+                                        sample_entry_revision_level = 2
+                                        vendor = 'appl'
+                                        temporal_quality = 1024
+                                        spatial_quality = 1024
                                         size = 206 × 243
                                         compressorname = 'Graphics'
                                         depth = 8
-                                        invalid pre_defined_3: 0
-                                        ERROR: invalid type '\x00\x00\x00÷'
-
-                                        00 00 00 00  00 00 00 01  00 01 00 02  61 70 70 6c   ............appl
-                                        00 00 04 00  00 00 04 00  00 ce 00 f3  00 48 00 00   .............H..
-                                        00 48 00 00  00 00 00 00  00 01 08 47  72 61 70 68   .H.........Graph
-                                        69 63 73 00  00 00 00 00  00 00 00 00  00 00 00 00   ics.............
-                                        00 00 00 00  00 00 00 00  00 00 00 08  00 00 00 00   ................
-                                        00 00 00 00  00 f7 00 00  ff ff ff ff  f7 bd 00 01   ................
-                                        6b 5a c6 31  c6 31 00 02  de f7 84 21  94 a5 00 03   kZ.1.1.....!....
+                                        color_table_id = 0
+                                        color_table_size_minus_one = 247
+                                        [color   0] dummy=0x0000 r=0xffff g=0xffff b=0xf7bd
+                                        [color   1] dummy=0x0001 r=0x6b5a g=0xc631 b=0xc631
+                                        [color   2] dummy=0x0002 r=0xdef7 g=0x8421 b=0x94a5
+                                        [color   3] dummy=0x0003 r=0xffff g=0xc631 b=0x94a5
+                                        [color   4] dummy=0x0004 r=0x739c g=0x4a52 b=0x318c
+                                        [color   5] dummy=0x0005 r=0x7bde g=0x7bde b=0x6318
+                                        [color   6] dummy=0x0006 r=0xffff g=0xb5ad b=0x739c
                                         ...
                                 [stts] TimeToSample @ 0xa0d, 0xa15 .. 0xa35 (32)
                                     entry_count = 3
