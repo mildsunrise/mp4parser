@@ -90,11 +90,16 @@ def parse_sample_entry_contents(btype: str, ps: Parser, version: int):
 def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 	assert version == 0, 'invalid version'
 
-	ps.reserved('reserved', ps.bytes(16))
+	# Fields defined in QuickTime but «pre_defined» as 0 in BMFF
+	ps.field('sample_entry_version', ps.int(2), default=0)
+	ps.field('sample_entry_revision_level', ps.int(2), default=0)
+	ps.field('vendor', ps.fourcc(), default=NULL_FOURCC)
+	ps.field('temporal_quality', ps.int(4), default=0)
+	ps.field('spatial_quality', ps.int(4), default=0)
 
 	ps.field('size', (ps.int(2), ps.int(2)), format_size)
 	ps.field('resolution', (ps.fixed16(), ps.fixed16()), format_size, default=(72, 72))
-	ps.reserved('reserved_2', ps.int(4))
+	ps.reserved('data_size', ps.int(4))  # reserved even in QuickTime
 	ps.field('frame_count', ps.int(2), default=1)
 
 	with ps.subparser(32) as ps2:
@@ -102,7 +107,25 @@ def parse_video_sample_entry_contents(btype: str, ps: Parser, version: int):
 		ps.reserved('compressorname_pad', ps2.bytes())
 
 	ps.field('depth', ps.int(2), default=24)
-	ps.reserved('pre_defined_3', ps.sint(2), -1)
+	ps.field('color_table_id', color_table_id := ps.sint(2), default=-1)
+	if color_table_id == 0:
+		ps.reserved('color_table_seed', ps.int(4), expected=0)
+		ps.field('color_table_flags', ps.int(2), hex_formatter(2), default=0)
+		# > This is a zero-relative value; setting this field to 0 means that
+		# > there is one color in the array.
+		ps.field('color_table_size_minus_one', table_size := ps.int(2))
+		table_size += 1
+		def fmt(color_16bit: int):
+			# Most users (and demuxers) won't care about the lower 8 bits of each color component.
+			high = f'{color_16bit >> 8:02x}'
+			low = f'{color_16bit & 0xFF:02x}'
+			return f'0x{ansi_bold(high)}{low}'
+		for i in range(table_size):
+			dummy, r, g, b = ps.int(2), ps.int(2), ps.int(2), ps.int(2)
+			if i < max_rows:
+				ps.print(f'[color {i:3}] dummy={dummy:#06x} r={fmt(r)} g={fmt(g)} b={fmt(b)}')
+		if table_size > max_rows:
+			ps.print('...')
 
 	parse_boxes(ps)
 

@@ -67,7 +67,8 @@
                     [stsd] SampleDescription @ 0x371fff, 0x372007 .. 0x3722ca (707)
                         [hvc1] HEVCSampleEntry @ 0x37200f, 0x372017 .. 0x3722ca (691)
                             data_reference_index = 1
-                            invalid reserved: b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x02\x00'
+                            temporal_quality = 512
+                            spatial_quality = 512
                             size = 1920 × 1080
                             compressorname = 'HEVC'
                             [hvcC] HEVCConfiguration @ 0x372065, 0x37206d .. 0x372294 (551)

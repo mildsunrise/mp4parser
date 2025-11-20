@@ -334,6 +334,7 @@ box_registry = [
         'cmov': ('CompressedMovieBox', 'Box'),
         'dcom': ('DataCompressionBox', 'Box'),
         'cmvd': ('CompressedMovieDataBox', 'Box'),
+        'smc ': ('SMCSampleEntry', 'VisualSampleEntry'),
 	}),
 	({
 		'title': 'Video File Format Specification',
