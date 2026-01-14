@@ -3,6 +3,7 @@
 Core parsing logic
 '''
 
+from errno import EPIPE
 import sys
 import mmap
 import itertools
@@ -251,6 +252,26 @@ class Parser(MVIO):
 	def handle_errors(self):
 		try:
 			with self: yield self
+		except BrokenPipeError:
+			# All of this is necessary so that no exceptions are printed when
+			# the user pipes `mp4parser --rows 1000 large_file.mp4 | less` and
+			# quits with 'q' before getting close to the end of the file.
+
+			# Attempt to close the stdout buffer. This will in turn try to flush
+			# its current buffer if not empty, which will also cause a
+			# BrokenPipeError but will close the file regardless -- see
+			# cpython/Modules/_io/bufferedio.c, _io__Buffered_close_impl().
+			# The goal is to force that flush to occur here and have it fail
+			# silently, rather than having Python attempt it inside
+			# _Py_Finalize() in response to our raise SystemExit, which would
+			# print the following useless message to the user in stderr:
+			# > Exception ignored while flushing sys.stdout:
+			# > BrokenPipeError: [Errno 32] Broken pipe
+			try:
+				sys.stdout.close()
+			except BrokenPipeError:
+				pass
+			raise SystemExit(EPIPE)
 		except Exception as e:
 			print_error(e, self.prefix)
 			if max_dump and self.buffer:
