@@ -3,7 +3,7 @@
 Core parsing logic
 '''
 
-from errno import EPIPE
+import os
 import sys
 import mmap
 import itertools
@@ -252,7 +252,7 @@ class Parser(MVIO):
 	def handle_errors(self):
 		try:
 			with self: yield self
-		except BrokenPipeError:
+		except (BrokenPipeError, KeyboardInterrupt) as err:
 			# All of this is necessary so that no exceptions are printed when
 			# the user pipes `mp4parser --rows 1000 large_file.mp4 | less` and
 			# quits with 'q' before getting close to the end of the file.
@@ -271,7 +271,15 @@ class Parser(MVIO):
 				sys.stdout.close()
 			except BrokenPipeError:
 				pass
-			raise SystemExit(EPIPE)
+			if os.name == "posix":
+				from signal import SIGINT, SIGPIPE
+			else:
+				# If we're in Windows or any other platform without signal ids,
+				# use the Linux x86 signal ids, just to give something helpful.
+				SIGINT, SIGPIPE = 2, 13
+			# Standard exit codes are 128 + signal id.
+			exit_code = 128 + (SIGINT if isinstance(err, KeyboardInterrupt) else SIGPIPE)
+			raise SystemExit(exit_code)
 		except Exception as e:
 			print_error(e, self.prefix)
 			if max_dump and self.buffer:
