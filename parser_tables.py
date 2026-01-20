@@ -330,10 +330,10 @@ box_registry = [
 		'mdta': ('QuickTimeMetadataBox', 'Box'),
 		'gmhd': ('BaseMediaInformationHeaderBox', 'Box'),
 		'gmin': ('BaseMediaInfoBox', 'Box'),
-        'ftab': ('FontTableBox', 'Box'),
-        'cmov': ('CompressedMovieBox', 'Box'),
-        'dcom': ('DataCompressionBox', 'Box'),
-        'cmvd': ('CompressedMovieDataBox', 'Box'),
+		'ftab': ('FontTableBox', 'Box'),
+		'cmov': ('CompressedMovieBox', 'Box'),
+		'dcom': ('DataCompressionBox', 'Box'),
+		'cmvd': ('CompressedMovieDataBox', 'Box'),
 	}),
 	({
 		'title': 'Video File Format Specification',
@@ -343,7 +343,7 @@ box_registry = [
 		# class names guessed; the F4V spec doesn't give boxes names other than their FourCC's
 		'chpl': ('ChapterListBox', 'FullBox'),
 	}),
-    ({
+	({
 		'name': 'ISO/IEC 23009-1',
 		'title': 'Information technology — Dynamic adaptive streaming over HTTP (DASH) — Part 1: Media presentation description and segment formats',
 		'alias': 'DASH',

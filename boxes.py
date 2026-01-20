@@ -937,15 +937,15 @@ def parse_udta_box(ps: Parser):
 		raise AssertionError(f'Optional udta trailer must be a single 32-bit zero, found: {trailer}')
 
 def parse_dcom_box(ps: Parser):
-    ps.field('compression_method', ps.fourcc())
+	ps.field('compression_method', ps.fourcc())
 
 def parse_cmvd_box(ps: Parser):
-    ps.field('uncompressed_size', ps.int(4))
-    compressed_bytes = ps.field_dump('compressed_bytes')
-    import zlib
-    uncompressed_bytes = zlib.decompress(compressed_bytes)
-    sub_ps = Parser(memoryview(uncompressed_bytes), 0, ps.indent)
-    parse_boxes(sub_ps)
+	ps.field('uncompressed_size', ps.int(4))
+	compressed_bytes = ps.field_dump('compressed_bytes')
+	import zlib
+	uncompressed_bytes = zlib.decompress(compressed_bytes)
+	sub_ps = Parser(memoryview(uncompressed_bytes), 0, ps.indent)
+	parse_boxes(sub_ps)
 
 # EMSG
 
