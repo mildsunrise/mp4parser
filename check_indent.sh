@@ -1,2 +1,3 @@
 #!/bin/bash
-rg -tpy '^\t* +'; [[ $? -eq 1 ]]
+rg -tpy '^\t* +'; echo $?;
+hexdump -C test.py
