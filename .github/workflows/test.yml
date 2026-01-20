@@ -58,4 +58,6 @@ jobs:
           python-version: '3.8'
       - name: Check indentation
         id: indent
-        run: rg -tpy '^\t* +'
+        run: |
+          apt install ripgrep
+          rg -tpy '^\t* +'
