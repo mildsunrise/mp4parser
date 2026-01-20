@@ -60,4 +60,4 @@ jobs:
         run: sudo apt-get install ripgrep
       - name: Check indentation
         id: indent
-        run: rg -tpy '^\t* +'
+        run: set +e; rg -tpy '^\t* +'; [[ $? -eq 1 ]]
