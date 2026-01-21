@@ -43,6 +43,17 @@ def main():
 	with ps.handle_errors():
 		parse_boxes(ps)
 
+		# Ensure that the stdout flush occurs while inside the handle_errors()
+		# context manager.
+		#
+		# Otherwise, the last few lines of output would be flushed inside the
+		# Python exit handler, leaving any potential BrokenPipeError unhandled
+		# by our code and handled instead by CPython which would print the
+		# following message to stderr to stderr:
+		#
+		# > Exception ignored while flushing sys.stdout:
+		# > BrokenPipeError: [Errno 32] Broken pipe
+		sys.stdout.flush()
 
 # PARSING
 
